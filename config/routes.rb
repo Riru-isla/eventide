@@ -11,6 +11,7 @@ Rails.application.routes.draw do
   root "galaxies#show"
 
   resource :session, only: %i[new create destroy]
+  resources :users, only: %i[new create]
 
   resources :galaxies, only: [ :show ] do
     resources :fleets, only: [ :create ]

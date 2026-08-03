@@ -2,26 +2,27 @@ class SessionsController < ApplicationController
   skip_before_action :require_login, only: %i[new create]
 
   def new
-    redirect_to galaxy_path(Galaxy.first) if current_empire
+    redirect_to galaxy_path(Galaxy.first) if current_player
     @galaxy = Galaxy.first
   end
 
   def create
-    galaxy = Galaxy.find(params[:galaxy_id])
-    empire = galaxy.empires.find_by(id: params[:empire_id])
+    player = Player.find_by(username: params[:username])
 
-    if empire&.authenticate(params[:password])
-      session[:empire_id] = empire.id
-      redirect_to galaxy_path(galaxy), notice: "Welcome, #{empire.player.name}."
+    if player&.authenticate(params[:password])
+      session[:player_id] = player.id
+      session[:empire_id] = player.empires.first&.id
+      redirect_to galaxy_path(Galaxy.first), notice: "Welcome back, #{player.name}."
     else
-      flash.now[:alert] = "Invalid empire or password."
-      @galaxy = galaxy
+      flash.now[:alert] = "Invalid username or password."
+      @galaxy = Galaxy.first
       render :new, status: :unprocessable_content
     end
   end
 
   def destroy
+    session.delete(:player_id)
     session.delete(:empire_id)
-    redirect_to root_path, notice: "Logged out."
+    redirect_to new_session_path, notice: "Logged out."
   end
 end

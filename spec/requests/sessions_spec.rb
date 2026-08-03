@@ -10,36 +10,36 @@ RSpec.describe "Sessions", type: :request do
     ).generate
   end
 
-  let(:empire) { galaxy.empires.first }
+  let(:player) { galaxy.empires.first.player }
 
   describe "GET /session/new" do
     it "renders the login page" do
       get new_session_path
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("Choose your empire")
+      expect(response.body).to include("Log in")
     end
   end
 
   describe "POST /session" do
     it "logs in with valid credentials" do
-      post session_path, params: { galaxy_id: galaxy.id, empire_id: empire.id, password: "eventide" }
+      post session_path, params: { username: player.username, password: "eventide" }
       expect(response).to redirect_to(galaxy_path(galaxy))
-      expect(session[:empire_id]).to eq(empire.id)
+      expect(session[:player_id]).to eq(player.id)
     end
 
     it "rejects invalid credentials" do
-      post session_path, params: { galaxy_id: galaxy.id, empire_id: empire.id, password: "wrong" }
+      post session_path, params: { username: player.username, password: "wrong" }
       expect(response).to have_http_status(:unprocessable_content)
-      expect(session[:empire_id]).to be_nil
+      expect(session[:player_id]).to be_nil
     end
   end
 
   describe "DELETE /session" do
     it "logs out" do
-      sign_in(empire)
+      sign_in_player(player)
       delete session_path
-      expect(response).to redirect_to(root_path)
-      expect(session[:empire_id]).to be_nil
+      expect(response).to redirect_to(new_session_path)
+      expect(session[:player_id]).to be_nil
     end
   end
 end

@@ -5,7 +5,8 @@
       <p class="text-gray-400">Tick <%= @galaxy.current_tick %> · <%= @galaxy.status %></p>
     </div>
     <div class="text-right">
-      <p class="text-white font-medium"><%= @empire.player.name %> <span class="text-gray-500">(<%= @empire.role %>)</span></p>
+      <p class="text-white font-medium"><%= current_player.name %></p>
+      <p class="text-sm text-gray-500"><%= @empire.player.name %>'s <%= @empire.role %> empire</p>
       <%= button_to "Log out", session_path, method: :delete, class: "text-sm text-blue-400 hover:text-blue-300" %>
     </div>
   </header>

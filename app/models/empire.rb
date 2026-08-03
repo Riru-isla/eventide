@@ -7,8 +7,6 @@ class Empire < ApplicationRecord
   has_many :sectors, dependent: :nullify
   has_many :fleets, dependent: :destroy
 
-  has_secure_password
-
   validates :role, inclusion: { in: ROLES }
   validates :metal, :crystal, :energy, numericality: { greater_than_or_equal_to: 0 }
 

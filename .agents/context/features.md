@@ -6,7 +6,8 @@
 - [x] Escalating NPC factions toward the galaxy core.
 - [x] Empire roles: `cultivator`, `foundry`, `warden` with resource bonuses.
 - [x] Tick-based resource income.
-- [x] Session-based empire login/logout with passwords.
+- [x] Player signup and login with username/password.
+- [x] Session-based auth (player + current empire).
 - [x] Galaxy map (SVG) showing sectors, owners, and core.
 - [x] Sector / planet detail view with resource generation rates.
 - [x] Fleet dispatch from owned sectors to targets.

@@ -29,6 +29,16 @@ bin/rails runner 'TickJob.perform_now(Galaxy.first.id)'
 
 After the first tick, `TickJob` reschedules itself every minute.
 
+## Demo accounts
+
+After `db:seed`, three demo accounts exist:
+
+- Username: `ada`, Password: `eventide`
+- Username: `ben`, Password: `eventide`
+- Username: `cara`, Password: `eventide`
+
+New players can sign up at `/users/new`.
+
 ## Run tests
 
 ```bash

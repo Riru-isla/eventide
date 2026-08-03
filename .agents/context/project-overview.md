@@ -45,10 +45,16 @@ Then trigger the first tick:
 bin/rails runner 'TickJob.perform_now(Galaxy.first.id)'
 ```
 
-Open `http://localhost:3000`. Demo empires: Ada (cultivator), Ben (foundry), Cara (warden). Default password: `eventide`.
+Open `http://localhost:3000`.
+
+### Auth
+
+- Players sign up with username, password, commander name, and empire role.
+- Existing demo accounts: `ada`, `ben`, `cara` — password `eventide`.
+- Session stores `player_id` and `current_empire_id`.
 
 ## Last Known State
 
-- All 82 specs passing.
+- All 91 specs passing.
 - 100% line coverage.
-- Latest commit: `4e6ce59` — Add empire login, sector management, and ship construction.
+- Latest commit: username/password player signup and login.

@@ -1,6 +1,8 @@
 FactoryBot.define do
   factory :player do
     sequence(:name) { |n| "Player #{n}" }
+    sequence(:username) { |n| "player#{n}" }
+    password { "eventide" }
   end
 
   factory :galaxy do
@@ -26,7 +28,6 @@ FactoryBot.define do
     metal { 500 }
     crystal { 500 }
     energy { 500 }
-    password { "eventide" }
   end
 
   factory :sector do

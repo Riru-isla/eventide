@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_03_134637) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_03_170445) do
   create_table "empires", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "crystal"
@@ -18,7 +18,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_134637) do
     t.integer "galaxy_id", null: false
     t.integer "home_sector_id"
     t.integer "metal"
-    t.string "password_digest"
     t.integer "player_id", null: false
     t.string "role"
     t.datetime "updated_at", null: false
@@ -64,7 +63,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_134637) do
   create_table "players", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name"
+    t.string "password_digest"
     t.datetime "updated_at", null: false
+    t.string "username"
+    t.index ["username"], name: "index_players_on_username", unique: true
   end
 
   create_table "sectors", force: :cascade do |t|

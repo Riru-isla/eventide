@@ -86,8 +86,13 @@ RSpec.configure do |config|
 
   # Authentication helper for request specs
   config.include Module.new {
-    def sign_in(empire, password = "eventide")
-      post session_path, params: { galaxy_id: empire.galaxy_id, empire_id: empire.id, password: password }
+    def sign_in(empire)
+      player = empire.player
+      post session_path, params: { username: player.username, password: "eventide" }
+    end
+
+    def sign_in_player(player)
+      post session_path, params: { username: player.username, password: "eventide" }
     end
   }, type: :request
 
