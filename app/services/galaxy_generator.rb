@@ -178,7 +178,8 @@ class GalaxyGenerator
         home_sector: sector,
         metal: 500,
         crystal: 500,
-        energy: 500
+        energy: 500,
+        password: config[:password] || "eventide"
       )
 
       sector.update!(

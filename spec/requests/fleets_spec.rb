@@ -14,6 +14,8 @@ RSpec.describe "Fleets", type: :request do
   let(:origin) { empire.home_sector }
   let(:target) { galaxy.sectors.npc.first }
 
+  before { sign_in(empire) }
+
   describe "POST /galaxies/:galaxy_id/fleets" do
     it "creates a moving fleet" do
       expect {

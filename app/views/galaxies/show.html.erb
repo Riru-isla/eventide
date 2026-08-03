@@ -1,7 +1,13 @@
 <div class="w-full" data-controller="galaxy-map">
-  <header class="mb-6">
-    <h1 class="text-3xl font-bold text-white"><%= @galaxy.name %></h1>
-    <p class="text-gray-400">Tick <%= @galaxy.current_tick %> · <%= @galaxy.status %></p>
+  <header class="mb-6 flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl font-bold text-white"><%= @galaxy.name %></h1>
+      <p class="text-gray-400">Tick <%= @galaxy.current_tick %> · <%= @galaxy.status %></p>
+    </div>
+    <div class="text-right">
+      <p class="text-white font-medium"><%= @empire.player.name %> <span class="text-gray-500">(<%= @empire.role %>)</span></p>
+      <%= button_to "Log out", session_path, method: :delete, class: "text-sm text-blue-400 hover:text-blue-300" %>
+    </div>
   </header>
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -33,18 +39,25 @@
 
     <aside class="space-y-6">
       <div class="bg-gray-900 rounded-lg p-4">
-        <h2 class="text-xl font-semibold text-white mb-3">Empires</h2>
-        <ul class="space-y-2">
-          <% @empires.each_with_index do |empire, i| %>
-            <li class="flex items-center justify-between text-sm">
-              <span class="text-white font-medium">
-                <span class="inline-block w-3 h-3 rounded-full mr-2" style="background-color: <%= empire_color(i) %>"></span>
-                <%= empire.player.name %> <span class="text-gray-500">(<%= empire.role %>)</span>
-              </span>
-              <span class="text-gray-400">M<%= empire.metal %> C<%= empire.crystal %> E<%= empire.energy %></span>
-            </li>
-          <% end %>
-        </ul>
+        <h2 class="text-xl font-semibold text-white mb-3">Your Empire</h2>
+        <div class="grid grid-cols-3 gap-2 text-center mb-3">
+          <div class="bg-gray-800 rounded p-2">
+            <p class="text-xs text-gray-400">Metal</p>
+            <p class="text-lg font-bold text-white"><%= @empire.metal %></p>
+          </div>
+          <div class="bg-gray-800 rounded p-2">
+            <p class="text-xs text-gray-400">Crystal</p>
+            <p class="text-lg font-bold text-white"><%= @empire.crystal %></p>
+          </div>
+          <div class="bg-gray-800 rounded p-2">
+            <p class="text-xs text-gray-400">Energy</p>
+            <p class="text-lg font-bold text-white"><%= @empire.energy %></p>
+          </div>
+        </div>
+        <p class="text-sm text-gray-400">
+          Sectors: <%= @empire.sectors.count %> ·
+          Fleets: <%= @empire.fleets.count %>
+        </p>
       </div>
 
       <div class="bg-gray-900 rounded-lg p-4">
@@ -58,11 +71,6 @@
           <%= f.hidden_field :target_sector_id, data: { galaxy_map_target: "targetInput" } %>
 
           <div>
-            <%= f.label :empire_id, "Empire", class: "block text-sm text-gray-400 mb-1" %>
-            <%= f.select :empire_id, @empires.map { |e| [ e.player.name, e.id ] }, {}, class: "w-full bg-gray-800 text-white rounded px-3 py-2" %>
-          </div>
-
-          <div>
             <%= f.label :ships, "Fighters", class: "block text-sm text-gray-400 mb-1" %>
             <%= number_field_tag "fleet[ships][Fighter]", 5, min: 0, class: "w-full bg-gray-800 text-white rounded px-3 py-2" %>
           </div>
@@ -72,13 +80,22 @@
       </div>
 
       <div class="bg-gray-900 rounded-lg p-4">
-        <h2 class="text-xl font-semibold text-white mb-3">Fleets</h2>
+        <h2 class="text-xl font-semibold text-white mb-3">Your Sectors</h2>
+        <ul class="space-y-1 text-sm max-h-40 overflow-y-auto">
+          <% @empire.sectors.each do |sector| %>
+            <li>
+              <%= link_to "#{sector.name} (#{sector.coordinate})", galaxy_sector_path(@galaxy, sector), class: "text-blue-400 hover:text-blue-300" %>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+
+      <div class="bg-gray-900 rounded-lg p-4">
+        <h2 class="text-xl font-semibold text-white mb-3">Your Fleets</h2>
         <ul class="space-y-2 text-sm">
           <% @fleets.each do |fleet| %>
             <li class="text-gray-300">
-              <%= fleet.empire.player.name %>
-              · <%= fleet.total_ships %> ships
-              · <%= fleet.status %>
+              <%= fleet.total_ships %> ships · <%= fleet.status %>
               <% if fleet.target_sector %>
                 → <%= fleet.target_sector.coordinate %> (arrives tick <%= fleet.arrival_tick %>)
               <% else %>

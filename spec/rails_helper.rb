@@ -84,6 +84,13 @@ RSpec.configure do |config|
   # Factory Bot integration
   config.include FactoryBot::Syntax::Methods
 
+  # Authentication helper for request specs
+  config.include Module.new {
+    def sign_in(empire, password = "eventide")
+      post session_path, params: { galaxy_id: empire.galaxy_id, empire_id: empire.id, password: password }
+    end
+  }, type: :request
+
   # Filter lines from Rails gems in backtraces.
   config.filter_rails_from_backtrace!
   # arbitrary gems may also be filtered via:

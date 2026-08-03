@@ -26,6 +26,7 @@ FactoryBot.define do
     metal { 500 }
     crystal { 500 }
     energy { 500 }
+    password { "eventide" }
   end
 
   factory :sector do

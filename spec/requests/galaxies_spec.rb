@@ -10,6 +10,10 @@ RSpec.describe "Galaxies", type: :request do
     ).generate
   end
 
+  let(:empire) { galaxy.empires.first }
+
+  before { sign_in(empire) }
+
   describe "GET /" do
     it "renders the galaxy map" do
       get root_path
