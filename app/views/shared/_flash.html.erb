@@ -1,0 +1,6 @@
+<%# Always rendered, even when empty, so a Turbo Stream can replace it in place. %>
+<div id="flash" class="flex flex-col gap-2 <%= "pt-4" if flash.any? %>">
+  <% flash.each do |type, message| %>
+    <p class="flash flash-<%= type.to_s == "notice" ? "notice" : "alert" %>"><%= message %></p>
+  <% end %>
+</div>

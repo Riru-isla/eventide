@@ -29,7 +29,7 @@
 
     <% if tips_into_deficit %>
       <p class="font-sans text-[0.8125rem] text-bad">
-        This tips <%= @planet.name %> into deficit. Extraction drops to
+        This tips <%= planet.name %> into deficit. Extraction drops to
         <%= (PlanetEconomy::THROTTLE * 100).round %>% until the Solar Array catches up.
       </p>
     <% end %>

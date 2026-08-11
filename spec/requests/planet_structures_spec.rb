@@ -92,4 +92,54 @@ RSpec.describe "Planet structures", type: :request do
       expect(response).to redirect_to(new_user_session_path)
     end
   end
+
+  # Selecting and upgrading must not be page visits, or the browser scrolls back to
+  # the top every time you touch a structure.
+  describe "PATCH as a Turbo request" do
+    it "replaces only the regions that changed, without redirecting" do
+      empire.update!(metal: 10_000, crystal: 10_000)
+
+      patch planet_structure_path("solar_array"), as: :turbo_stream
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("text/vnd.turbo-stream.html")
+      expect(response.body).to include('target="flash"')
+      expect(response.body).to include('target="hud"')
+      expect(response.body).to include('target="planet-main"')
+    end
+
+    it "keeps the turbo-frame intact by updating its contents" do
+      empire.update!(metal: 10_000, crystal: 10_000)
+
+      patch planet_structure_path("solar_array"), as: :turbo_stream
+
+      expect(response.body).to include('action="update" target="planet-main"')
+    end
+
+    it "reports the new level and the charged resources" do
+      empire.update!(metal: 10_000, crystal: 10_000)
+
+      patch planet_structure_path("solar_array"), as: :turbo_stream
+
+      expect(response.body).to include("Solar Array raised to level 2")
+      expect(response.body).to include(ActiveSupport::NumberHelper.number_to_delimited(empire.reload.metal))
+    end
+
+    it "reports failures in the flash without redirecting" do
+      empire.update!(metal: 0, crystal: 0)
+
+      patch planet_structure_path("solar_array"), as: :turbo_stream
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Could not upgrade")
+    end
+  end
+
+  describe "GET /planet in a turbo frame" do
+    it "wraps the management area in a frame so selecting does not reload the page" do
+      get planet_path
+
+      expect(response.body).to match(/<turbo-frame[^>]*id="planet-main"/)
+    end
+  end
 end
