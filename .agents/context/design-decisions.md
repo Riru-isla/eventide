@@ -47,9 +47,25 @@ Still open: whether a third stored resource (deuterium or similar) replaces the 
 
 ## Construction takes time
 
-Buildings and ships complete after N ticks, queued per planet. Instant construction
-removes the reason to log in again, which is the core rhythm for a game played by
-colleagues checking in a couple of times a day.
+Buildings complete after N ticks, queued per planet. Instant construction removes the
+reason to log in again, which is the core rhythm for a game played by colleagues
+checking in a couple of times a day.
+
+**Implemented** for structures. Durations grow with level and are shortened by the
+Robotics Bay. Ship construction is still instant.
+
+Durations are counted in **ticks**, so a queue only advances while the server is up.
+That is the same limitation as the game-time model below, and `completes_at_tick` is
+the field that changes if game time moves to wall-clock timestamps.
+
+## Screen structure
+
+Overview, Resources and Facilities are views onto **the current planet**; Research is
+empire-wide. Overview is a planet's dashboard — what is building, extractor levels, the
+energy balance, and the planet's vital statistics — not an empire summary.
+
+The game is **cooperative**, so nothing should rank players against each other. Shared
+progress toward the core is the framing, never "you are behind".
 
 ## `Planet` is its own model
 

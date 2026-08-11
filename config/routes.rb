@@ -9,12 +9,13 @@ Rails.application.routes.draw do
   # get "manifest" => "pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "pwa#service_worker", as: :pwa_service_worker
 
-  # The planet is the main management screen, so it is also the landing page.
+  # The planet overview is the main management screen, so it is also the landing page.
   root "planets#show"
 
-  resource :planet, only: [ :show ] do
-    resources :structures, only: [ :update ], controller: "planet_structures"
-  end
+  get "planet", to: "planets#show", as: :planet
+  get "planet/:section", to: "planets#structures", as: :planet_structures,
+      constraints: { section: /resources|facilities/ }
+  patch "planet/structures/:id", to: "planet_structures#update", as: :planet_structure
 
   resources :galaxies, only: [ :show ] do
     resources :fleets, only: [ :create ]

@@ -2,6 +2,7 @@ class Planet < ApplicationRecord
   belongs_to :empire
   belongs_to :sector
   has_many :structures, class_name: "PlanetStructure", dependent: :destroy
+  has_many :build_orders, dependent: :destroy
 
   validates :name, presence: true
 
@@ -19,5 +20,17 @@ class Planet < ApplicationRecord
 
   def economy
     @economy ||= PlanetEconomy.new(self)
+  end
+
+  def queue
+    @queue ||= BuildQueue.new(self)
+  end
+
+  # Both helpers cache the planet's state, including the galaxy's current tick, so
+  # they have to go when the record is reloaded or they answer with stale numbers.
+  def reload(...)
+    @economy = nil
+    @queue = nil
+    super
   end
 end

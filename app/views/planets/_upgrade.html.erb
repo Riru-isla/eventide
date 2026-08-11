@@ -1,13 +1,16 @@
 <% definition = structure.definition %>
-<% cost = structure.upgrade_cost %>
-<% next_level = structure.level + 1 %>
-<% affordable = economy.affordable?(structure) %>
+<% queued_level = planet.queue.queued_level_for(structure.kind) %>
+<% from_level = queued_level || structure.level %>
+<% next_level = from_level + 1 %>
+<% cost = definition.upgrade_cost(from_level) %>
+<% affordable = empire.metal >= cost[:metal] && empire.crystal >= cost[:crystal] %>
+<% ticks = definition.build_ticks(from_level, speed_multiplier: economy.build_speed) %>
 <% balance_after = economy.energy_balance_after_upgrade(structure) %>
 <% tips_into_deficit = balance_after.negative? && !economy.deficit? %>
 
 <section class="mod" aria-label="Upgrade">
   <div class="mod-head">
-    <h2 class="mod-title">Upgrade</h2>
+    <h2 class="mod-title">Queue upgrade</h2>
     <span class="mod-note"><%= definition.name %> → <%= next_level %></span>
   </div>
 
@@ -18,6 +21,7 @@
       <% [
            [ "Metal", number_with_delimiter(cost[:metal]), (empire.metal >= cost[:metal] ? "text-metal" : "text-bad") ],
            [ "Crystal", number_with_delimiter(cost[:crystal]), (empire.crystal >= cost[:crystal] ? "text-crystal" : "text-bad") ],
+           [ "Build time", pluralize(ticks, "tick"), "text-ink-2" ],
            [ "Energy balance after", number_with_sign(balance_after), (balance_after.negative? ? "text-bad" : "text-good") ]
          ].each do |term, value, tone| %>
         <div class="flex justify-between gap-3 border-b border-line-soft py-2 text-[0.8125rem] last:border-b-0">
@@ -27,6 +31,12 @@
       <% end %>
     </dl>
 
+    <% if queued_level %>
+      <p class="font-sans text-[0.8125rem] text-ink-3">
+        Level <%= queued_level %> is already in the queue; this stacks on top of it.
+      </p>
+    <% end %>
+
     <% if tips_into_deficit %>
       <p class="font-sans text-[0.8125rem] text-bad">
         This tips <%= planet.name %> into deficit. Extraction drops to
@@ -34,8 +44,8 @@
       </p>
     <% end %>
 
-    <%= button_to "Upgrade to #{next_level}",
-                  planet_structure_path(structure.kind),
+    <%= button_to "Add to queue",
+                  planet_structure_path(structure.kind, section: section),
                   method: :patch,
                   disabled: !affordable,
                   class: "btn w-full",

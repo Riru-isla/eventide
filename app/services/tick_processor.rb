@@ -5,6 +5,9 @@ class TickProcessor
 
   def process
     ActiveRecord::Base.transaction do
+      # Builds finish before income is collected, so a structure that completes this
+      # tick contributes to it.
+      complete_builds
       collect_resources
       resolve_fleet_arrivals
       @galaxy.increment!(:current_tick)
@@ -12,6 +15,11 @@ class TickProcessor
   end
 
   private
+
+  def complete_builds
+    Planet.where(empire_id: @galaxy.empires.select(:id)).includes(:build_orders, :structures, :sector)
+          .find_each { |planet| planet.queue.advance! }
+  end
 
   # Income comes from two places: the empire's planet, where structure levels and
   # the energy balance decide the yield, and any other sector it holds, which still

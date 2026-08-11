@@ -1,0 +1,53 @@
+<% balance = economy.energy_balance %>
+
+<section class="mod" aria-label="Extraction">
+  <div class="mod-head">
+    <h2 class="mod-title">Extraction</h2>
+    <%= link_to "Manage", planet_structures_path(section: "resources"), class: "mod-note hover:text-amber" %>
+  </div>
+
+  <%# Energy first: it is the constraint the extractor levels are read against. %>
+  <div class="flex items-baseline justify-between gap-3 border-b border-line-soft px-4 py-3">
+    <span class="flex items-baseline gap-2.5">
+      <span class="text-[0.8125rem] tracking-[0.06em] text-ink">Energy</span>
+      <span class="label"><%= economy.energy_production %> produced · <%= economy.energy_consumption %> drawn</span>
+    </span>
+    <span class="num text-lg font-bold <%= balance.negative? ? "text-bad" : "text-good" %>">
+      <%= number_with_sign(balance) %>
+    </span>
+  </div>
+
+  <% if economy.deficit? %>
+    <p class="border-b border-line-soft bg-bad-dim px-4 py-2 font-sans text-[0.8125rem] text-bad">
+      Extraction throttled to <%= (PlanetEconomy::THROTTLE * 100).round %>%. Raise the Solar Array.
+    </p>
+  <% end %>
+
+  <div class="flex flex-col">
+    <% Structure.in_category("extraction").each do |definition| %>
+      <% level = planet.level_of(definition.key) %>
+      <div class="flex items-baseline justify-between gap-3 border-b border-line-soft px-4 py-3 last:border-b-0">
+        <span class="flex items-baseline gap-2.5">
+          <span class="text-[0.8125rem] tracking-[0.06em] text-ink"><%= definition.name %></span>
+          <span class="lvl-chip" data-unbuilt="<%= level.zero? %>">LV <%= level %></span>
+        </span>
+        <span class="num text-[0.8125rem] <%= structure_glyph_tone(definition) %>">
+          <%= number_with_sign(economy.output(definition.resource)) %> / tick
+        </span>
+      </div>
+    <% end %>
+
+    <% solar = Structure.find("solar_array") %>
+    <div class="flex items-baseline justify-between gap-3 border-b border-line-soft px-4 py-3 last:border-b-0">
+      <span class="flex items-baseline gap-2.5">
+        <span class="text-[0.8125rem] tracking-[0.06em] text-ink"><%= solar.name %></span>
+        <span class="lvl-chip" data-unbuilt="<%= planet.level_of(solar.key).zero? %>">
+          LV <%= planet.level_of(solar.key) %>
+        </span>
+      </span>
+      <span class="num text-[0.8125rem] text-amber">
+        <%= number_with_sign(economy.energy_production) %> energy
+      </span>
+    </div>
+  </div>
+</section>

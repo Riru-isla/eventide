@@ -1,7 +1,7 @@
 <% definition = structure.definition %>
 <% cost = structure.upgrade_cost %>
 
-<%= link_to planet_path(structure: structure.kind),
+<%= link_to planet_structures_path(section: section, structure: structure.kind),
             class: "row", "aria-current": selected.to_s do %>
   <span class="flex min-w-0 items-baseline gap-2.5">
     <span class="tracking-[0.06em] text-ink"><%= definition.name %></span>

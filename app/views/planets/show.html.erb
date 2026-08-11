@@ -2,14 +2,11 @@
 
 <div class="mt-5 grid items-start gap-5 lg:grid-cols-[148px_minmax(0,1fr)]">
 
-  <%= render "shared/nav", current: :planet %>
+  <%= render "shared/nav", current: :overview %>
 
   <main class="min-w-0">
-    <%# Selecting a structure and upgrading one both navigate this frame rather than the
-        page, so the browser keeps its scroll position instead of jumping to the top. %>
     <%= turbo_frame_tag "planet-main", class: "flex flex-col gap-5" do %>
-      <%= render "planets/main",
-                 planet: @planet, economy: @economy, selected: @selected, empire: @empire %>
+      <%= render "planets/overview", planet: @planet, economy: @economy, empire: @empire %>
     <% end %>
   </main>
 </div>

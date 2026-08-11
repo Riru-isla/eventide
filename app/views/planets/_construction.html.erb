@@ -1,0 +1,47 @@
+<% orders = planet.queue.orders.to_a %>
+
+<section class="mod" aria-label="Construction">
+  <div class="mod-head">
+    <h2 class="mod-title">Construction</h2>
+    <span class="mod-note">
+      <%= orders.any? ? "#{orders.size} in queue" : "Idle" %>
+    </span>
+  </div>
+
+  <% if orders.empty? %>
+    <div class="p-4">
+      <p class="font-sans text-[0.8125rem] text-ink-2">
+        Nothing under construction. Queue an upgrade from
+        <%= link_to "Resources", planet_structures_path(section: "resources"),
+                    class: "text-amber hover:underline" %> or
+        <%= link_to "Facilities", planet_structures_path(section: "facilities"),
+                    class: "text-amber hover:underline" %>.
+      </p>
+    </div>
+  <% else %>
+    <div class="flex flex-col">
+      <% orders.each do |order| %>
+        <div class="border-b border-line-soft p-4 last:border-b-0">
+          <div class="mb-2 flex items-baseline justify-between gap-3.5">
+            <span class="text-[0.8125rem] tracking-[0.06em] <%= order.building? ? "text-ink" : "text-ink-3" %>">
+              <%= order.name %> →
+              <b class="font-semibold <%= order.building? ? "text-amber" : "text-ink-2" %>"><%= order.target_level %></b>
+            </span>
+            <span class="num text-[0.6875rem] tracking-[0.08em] text-ink-3">
+              <% if order.building? %>
+                <%= pluralize(order.ticks_remaining(current_tick), "tick") %> left
+              <% else %>
+                queued · <%= pluralize(order.ticks_required, "tick") %>
+              <% end %>
+            </span>
+          </div>
+
+          <div class="h-[5px] border border-line-soft bg-ground-2">
+            <div class="h-full bg-gradient-to-r from-amber-2 to-amber"
+                 style="width: <%= order.progress(current_tick).round(1) %>%"></div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</section>

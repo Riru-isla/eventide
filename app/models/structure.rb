@@ -11,12 +11,16 @@ class Structure
   # Each upgrade costs this much more than the one before it.
   COST_GROWTH = 1.6
 
+  # And takes this much longer to build.
+  BUILD_GROWTH = 1.45
+
   attr_reader :key, :name, :category, :summary, :resource,
               :energy_draw_per_level, :energy_output_per_level,
-              :base_metal_cost, :base_crystal_cost, :effect
+              :base_metal_cost, :base_crystal_cost, :base_build_ticks, :effect
 
   def initialize(key:, name:, category:, summary:, base_metal_cost:, base_crystal_cost:,
-                 resource: nil, energy_draw_per_level: 0, energy_output_per_level: 0, effect: nil)
+                 base_build_ticks: 2, resource: nil, energy_draw_per_level: 0,
+                 energy_output_per_level: 0, effect: nil)
     @key = key
     @name = name
     @category = category
@@ -26,6 +30,7 @@ class Structure
     @energy_output_per_level = energy_output_per_level
     @base_metal_cost = base_metal_cost
     @base_crystal_cost = base_crystal_cost
+    @base_build_ticks = base_build_ticks
     @effect = effect
   end
 
@@ -34,35 +39,35 @@ class Structure
       key: "metal_extractor", name: "Metal Extractor", category: "extraction",
       summary: "Pulls metal from the planet's deposits. Each level multiplies the base yield.",
       resource: :metal, energy_draw_per_level: 34,
-      base_metal_cost: 60, base_crystal_cost: 15
+      base_metal_cost: 60, base_crystal_cost: 15, base_build_ticks: 2
     ),
     new(
       key: "crystal_extractor", name: "Crystal Extractor", category: "extraction",
       summary: "Cuts crystal from the planet's seams. Each level multiplies the base yield.",
       resource: :crystal, energy_draw_per_level: 35,
-      base_metal_cost: 48, base_crystal_cost: 24
+      base_metal_cost: 48, base_crystal_cost: 24, base_build_ticks: 2
     ),
     new(
       key: "solar_array", name: "Solar Array", category: "energy",
       summary: "Generates the energy every other structure draws on. Never throttled.",
       energy_output_per_level: 100,
-      base_metal_cost: 75, base_crystal_cost: 30
+      base_metal_cost: 75, base_crystal_cost: 30, base_build_ticks: 2
     ),
     new(
       key: "refinery", name: "Refinery", category: "facility",
       summary: "Refines raw ore on site. Adds 10% to this planet's metal yield per level.",
-      base_metal_cost: 120, base_crystal_cost: 80, effect: :metal_bonus
+      base_metal_cost: 120, base_crystal_cost: 80, base_build_ticks: 4, effect: :metal_bonus
     ),
     new(
       key: "robotics_bay", name: "Robotics Bay", category: "facility",
       summary: "Automated crews cut 5% from construction time per level.",
-      base_metal_cost: 140, base_crystal_cost: 100, effect: :build_speed
+      base_metal_cost: 140, base_crystal_cost: 100, base_build_ticks: 5, effect: :build_speed
     ),
     new(
       key: "shipyard", name: "Shipyard", category: "facility",
       summary: "Required to build ships at this planet. Higher levels unlock larger hulls.",
       energy_draw_per_level: 20,
-      base_metal_cost: 90, base_crystal_cost: 60, effect: :shipyard
+      base_metal_cost: 90, base_crystal_cost: 60, base_build_ticks: 6, effect: :shipyard
     )
   ].freeze
 
@@ -96,6 +101,12 @@ class Structure
   def energy_draw(level) = energy_draw_per_level * level
 
   def energy_output(level) = energy_output_per_level * level
+
+  # Ticks needed to raise the structure from `level` to `level + 1`. A speed
+  # multiplier below 1 (from the Robotics Bay) shortens it.
+  def build_ticks(level, speed_multiplier: 1.0)
+    [ (base_build_ticks * BUILD_GROWTH**level * speed_multiplier).ceil, 1 ].max
+  end
 
   # Cost of raising the structure from `level` to `level + 1`.
   def upgrade_cost(level)

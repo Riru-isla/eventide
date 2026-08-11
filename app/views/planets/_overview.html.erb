@@ -1,0 +1,11 @@
+<% current_tick = planet.sector.galaxy.current_tick %>
+
+<div class="grid items-start gap-5 md:grid-cols-[minmax(0,300px)_minmax(0,1fr)]">
+
+  <%= render "planets/vitals", planet: planet, economy: economy %>
+
+  <div class="flex flex-col gap-5">
+    <%= render "planets/construction", planet: planet, current_tick: current_tick %>
+    <%= render "planets/extraction_summary", planet: planet, economy: economy %>
+  </div>
+</div>

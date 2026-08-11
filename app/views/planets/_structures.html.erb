@@ -11,31 +11,28 @@
   </div>
 <% end %>
 
-<div class="grid items-start gap-5 md:grid-cols-[minmax(0,300px)_minmax(0,1fr)]">
-  <%= render "planets/vitals", planet: planet, economy: economy %>
+<% if section == "resources" %>
   <%= render "planets/energy_bus", economy: economy %>
-</div>
+<% end %>
 
-<section class="mod" aria-label="Structures">
+<section class="mod" aria-label="<%= section.capitalize %>">
   <div class="mod-head">
-    <h2 class="mod-title">Structures</h2>
+    <h2 class="mod-title"><%= section %></h2>
     <span class="mod-note">Select to inspect</span>
   </div>
 
   <div class="flex flex-col">
-    <% economy.structures.each do |structure| %>
+    <% structures.each do |structure| %>
       <%= render "planets/structure_row",
-                 structure: structure, economy: economy, selected: structure.kind == selected.kind %>
+                 structure: structure, economy: economy, section: section,
+                 selected: structure.kind == selected.kind %>
     <% end %>
   </div>
 </section>
 
 <div class="grid items-start gap-5 md:grid-cols-2">
   <%= render "planets/breakdown", economy: economy, structure: selected %>
-  <%= render "planets/upgrade", economy: economy, structure: selected, empire: empire, planet: planet %>
+  <%= render "planets/upgrade",
+             economy: economy, structure: selected, empire: empire,
+             planet: planet, section: section %>
 </div>
-
-<p class="font-sans text-[0.8125rem] text-ink-2">
-  Upgrades are instant while game time is still being settled. Once it is, these become
-  queued builds and the Robotics Bay starts mattering.
-</p>

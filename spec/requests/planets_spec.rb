@@ -16,47 +16,54 @@ RSpec.describe "Planets", type: :request do
 
   before { sign_in(user) }
 
-  describe "GET /planet" do
-    it "renders the planet screen" do
+  describe "GET /planet — the overview" do
+    it "renders the planet overview" do
       get planet_path
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(ERB::Util.html_escape(planet.name))
-      expect(response.body).to include("Energy bus")
-      expect(response.body).to include("Structures")
+      expect(response.body).to include("Construction")
+      expect(response.body).to include("Extraction")
     end
 
     it "is the landing page" do
       get root_path
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include(ERB::Util.html_escape(planet.name))
+      expect(response.body).to include("Construction")
     end
 
-    it "shows every catalogue structure" do
+    it "shows the planet's vital statistics" do
       get planet_path
 
-      Structure.all.each { |structure| expect(response.body).to include(structure.name) }
+      expect(response.body).to include("Distance to core")
+      expect(response.body).to include("Metal deposit")
     end
 
-    it "defaults to inspecting the metal extractor" do
+    it "shows extractor levels and the energy balance" do
       get planet_path
 
-      expect(response.body).to include("Metal output")
-    end
-
-    it "inspects the structure named in the query string" do
-      get planet_path(structure: "solar_array")
-
+      expect(response.body).to include("Metal Extractor")
       expect(response.body).to include("Solar Array")
-      expect(response.body).to include("Energy produced")
+      expect(response.body).to include("produced")
     end
 
-    it "falls back to the first structure when given an unknown one" do
-      get planet_path(structure: "orbital_casino")
+    it "says the queue is idle when nothing is building" do
+      get planet_path
 
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include("Metal output")
+      expect(response.body).to include("Idle")
+      expect(response.body).to include("Nothing under construction")
+    end
+
+    it "lists what is under construction" do
+      empire.update!(metal: 10_000, crystal: 10_000)
+      planet.queue.enqueue!("solar_array")
+
+      get planet_path
+
+      expect(response.body).to include("1 in queue")
+      expect(response.body).to include("tick")
+      expect(response.body).not_to include("Nothing under construction")
     end
 
     it "warns when the planet is in energy deficit" do
@@ -64,7 +71,6 @@ RSpec.describe "Planets", type: :request do
 
       get planet_path
 
-      expect(response.body).to include("Deficit")
       expect(response.body).to include("throttled")
     end
 
@@ -75,6 +81,61 @@ RSpec.describe "Planets", type: :request do
 
       expect(response).to redirect_to(galaxy_path(Galaxy.first))
       expect(flash[:alert]).to match(/no planet/)
+    end
+  end
+
+  describe "GET /planet/resources" do
+    it "lists extraction and energy structures, and not facilities" do
+      get planet_structures_path(section: "resources")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Metal Extractor")
+      expect(response.body).to include("Crystal Extractor")
+      expect(response.body).to include("Solar Array")
+      expect(response.body).not_to include("Robotics Bay")
+    end
+
+    it "shows the energy bus, since extraction is managed against it" do
+      get planet_structures_path(section: "resources")
+
+      expect(response.body).to include("Energy bus")
+    end
+
+    it "defaults to inspecting the metal extractor" do
+      get planet_structures_path(section: "resources")
+
+      expect(response.body).to include("Metal output")
+    end
+
+    it "inspects the structure named in the query string" do
+      get planet_structures_path(section: "resources", structure: "solar_array")
+
+      expect(response.body).to include("Energy produced")
+    end
+
+    it "falls back to the first structure when given an unknown one" do
+      get planet_structures_path(section: "resources", structure: "orbital_casino")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Metal output")
+    end
+  end
+
+  describe "GET /planet/facilities" do
+    it "lists facilities, and not extractors" do
+      get planet_structures_path(section: "facilities")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Refinery")
+      expect(response.body).to include("Robotics Bay")
+      expect(response.body).to include("Shipyard")
+      expect(response.body).not_to include("Metal Extractor")
+    end
+
+    it "does not show the energy bus" do
+      get planet_structures_path(section: "facilities")
+
+      expect(response.body).not_to include("Energy bus")
     end
   end
 

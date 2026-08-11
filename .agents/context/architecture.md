@@ -12,6 +12,7 @@
 | `NpcFaction` | AI faction controlling sectors; stronger closer to the core. |
 | `Planet` | The management layer: what an empire builds on. Belongs to an empire and sits in a sector. One per empire for now. |
 | `PlanetStructure` | A structure on a planet, stored as `kind` + `level`. |
+| `BuildOrder` | A queued construction job. Only the front of the queue has a `completes_at_tick`. |
 | `Structure` | **Not** an Active Record model — a static Ruby catalogue of every buildable structure and its balance numbers. |
 | `Fleet` | Group of ships moving between sectors or orbiting a sector. JSON `ships` stores counts by ship type name. |
 | `ShipType` | Static ship definitions with costs and stats. Some are role-locked. |
@@ -33,7 +34,11 @@
 - `PlanetEconomy` — the planet's numbers: energy production/draw, and resource output
   reported as named contributions that sum to the total, so the screen can show where
   each figure comes from. Balance changes belong here.
-- `TickProcessor` — runs each tick: resource collection, fleet arrival resolution, simple combat.
+- `BuildQueue` — adds orders, starts the next one, and applies finished ones. Resources
+  are charged when an order is queued, not when it completes. A finished order chains
+  the next from *its* completion tick, so downtime does not lose queue time.
+- `TickProcessor` — runs each tick: completes builds, collects resources, resolves
+  fleet arrivals and combat.
 
 ## Jobs
 
@@ -45,9 +50,10 @@
 
 - `Devise::SessionsController` — login/logout (default Devise, custom views under `app/views/users/sessions`).
 - `Users::RegistrationsController` — signup; also creates the player, empire, home sector, and starting fleet.
-- `PlanetsController` — the planet screen, and the site root.
-- `PlanetStructuresController` — upgrades a structure. Instant for now; this is where a
-  build queue entry gets created once game time is settled.
+- `PlanetsController` — `#show` is the planet Overview (and the site root); `#structures`
+  serves the Resources and Facilities sections, which are the same structure list
+  filtered by catalogue category.
+- `PlanetStructuresController` — adds an upgrade to the planet's build queue.
 - `GalaxiesController` — main map view.
 - `SectorsController` — sector detail / planet management.
 - `FleetsController` — dispatch fleets from a sector to a target.

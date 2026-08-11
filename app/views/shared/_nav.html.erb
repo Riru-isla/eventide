@@ -1,16 +1,17 @@
-<%# Sections that do not exist yet are shown disabled rather than hidden, so the
-    shape of the game is visible while we build it out one section at a time. %>
+<%# Overview, Resources and Facilities are views onto the current planet; Research is
+    empire-wide. Sections that do not exist yet are shown disabled rather than hidden,
+    so the shape of the game stays visible while it gets built out. %>
 <% sections = [
-     { key: :overview,   label: "Overview" },
-     { key: :planet,     label: "Planet",   path: planet_path },
-     { key: :facilities, label: "Facilities" },
+     { key: :overview,   label: "Overview",   path: planet_path },
+     { key: :resources,  label: "Resources",  path: planet_structures_path(section: "resources") },
+     { key: :facilities, label: "Facilities", path: planet_structures_path(section: "facilities") },
      { key: :research,   label: "Research" },
      { key: :shipyard,   label: "Shipyard" },
      { key: :fleet,      label: "Fleet" },
-     { key: :galaxy,     label: "Galaxy",   path: Galaxy.first && galaxy_path(Galaxy.first) }
+     { key: :galaxy,     label: "Galaxy",     path: Galaxy.first && galaxy_path(Galaxy.first) }
    ] %>
 
-<nav aria-label="Empire sections">
+<nav aria-label="Sections">
   <ul class="flex flex-col gap-px max-lg:flex-row max-lg:flex-wrap">
     <% sections.each do |section| %>
       <li>

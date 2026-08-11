@@ -1,0 +1,14 @@
+<% content_for :title, "#{@section.capitalize} — #{@planet.name} — Eventide" %>
+
+<div class="mt-5 grid items-start gap-5 lg:grid-cols-[148px_minmax(0,1fr)]">
+
+  <%= render "shared/nav", current: @section.to_sym %>
+
+  <main class="min-w-0">
+    <%= turbo_frame_tag "planet-main", class: "flex flex-col gap-5" do %>
+      <%= render "planets/structures",
+                 planet: @planet, economy: @economy, section: @section,
+                 structures: @structures, selected: @selected, empire: @empire %>
+    <% end %>
+  </main>
+</div>

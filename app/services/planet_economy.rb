@@ -7,6 +7,10 @@ class PlanetEconomy
   # A planet drawing more energy than it produces keeps this fraction of its output.
   THROTTLE = 0.30
 
+  # However many Robotics Bay levels are stacked, construction never drops below this
+  # fraction of its base duration.
+  MINIMUM_BUILD_SPEED = 0.25
+
   Contribution = Struct.new(:label, :value, :kind, keyword_init: true)
 
   def initialize(planet)
@@ -67,6 +71,14 @@ class PlanetEconomy
     end
 
     lines
+  end
+
+  # ── Construction ──────────────────────────────────────────────────────────
+
+  # Multiplier applied to build times. The Robotics Bay shortens them; the floor
+  # stops high levels from making construction instant.
+  def build_speed
+    [ 1 - (Structure::BUILD_SPEED_PER_LEVEL * @planet.level_of("robotics_bay")), MINIMUM_BUILD_SPEED ].max
   end
 
   # ── Structures ────────────────────────────────────────────────────────────
