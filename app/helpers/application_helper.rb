@@ -41,6 +41,7 @@ module ApplicationHelper
     when :energy then "#{number_with_sign(economy.energy_production)} energy"
     when :yield_bonus then "#{yield_bonus_percent(level)} #{definition.resource} yield"
     when :crew_training then "#{number_with_sign(definition.crew_per_level * level)} crew / tick"
+    when :defence then "#{number_with_delimiter(definition.defence(level))} defence"
     when :storage then "#{number_with_delimiter(definition.storage_capacity(level))} #{definition.resource} capacity"
     when :build_speed then "#{build_speed_percent(level)} build time"
     when :research then level.positive? ? "Research available" : "Research locked"

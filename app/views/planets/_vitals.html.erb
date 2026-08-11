@@ -20,7 +20,7 @@
          [ "Distance to core", planet.sector.distance_to_center.round(1) ],
          [ "Metal deposit",    planet.sector.metal_rate ],
          [ "Crystal seams",    planet.sector.crystal_rate ],
-         [ "Defence",          planet.sector.defense_strength ],
+         [ "Defence",          planet.sector.total_defence ],
          [ "Structures",       "#{planet.structures.count(&:built?)} / #{Structure.all.size}" ]
        ].each do |term, value| %>
       <div class="flex justify-between gap-3 border-b border-line-soft px-4 py-2.5 text-[0.8125rem] last:border-b-0">

@@ -188,6 +188,36 @@ RSpec.describe "Planets", type: :request do
     end
   end
 
+  describe "GET /planet/defences" do
+    it "lists emplacements, grouped, and nothing else" do
+      get planet_structures_path(section: "defences")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Turrets")
+      expect(response.body).to include("Shielding")
+      expect(response.body).to include("Light Turret")
+      expect(response.body).to include("Planetary Shield")
+      expect(response.body).not_to include("Metal Extractor")
+    end
+
+    it "shows what a locked emplacement needs" do
+      get planet_structures_path(section: "defences")
+
+      expect(response.body).to include("Locked")
+      expect(response.body).to include("Laser Technology 1")
+      expect(response.body).to include("Shipyard 5")
+    end
+
+    it "unlocks an emplacement once its prerequisites are met" do
+      planet.structures.find_by(kind: "shipyard").update!(level: 3)
+      empire.technologies.create!(kind: "laser_technology", level: 1)
+
+      get planet_structures_path(section: "defences", structure: "ion_turret")
+
+      expect(response.body).not_to include("Laser Technology 1")
+    end
+  end
+
   it "requires a signed-in user" do
     sign_out(user)
 

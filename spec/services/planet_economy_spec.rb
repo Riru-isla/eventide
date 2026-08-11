@@ -186,6 +186,40 @@ RSpec.describe PlanetEconomy, type: :service do
     end
   end
 
+  describe "defence" do
+    it "is nothing without emplacements" do
+      expect(economy.defence_rating).to eq(0)
+    end
+
+    it "sums every emplacement on the planet" do
+      build_structure("light_turret", 4)     # 4 x 25
+      build_structure("planetary_shield", 1) # 400
+
+      expect(economy.defence_rating).to eq(500)
+    end
+
+    it "adds to what an attacker has to beat" do
+      sector.update!(defense_strength: 50)
+      build_structure("light_turret", 2)
+
+      expect(sector.reload.total_defence).to eq(100)
+    end
+
+    it "leaves a sector with no planet on its own strength" do
+      bare = create(:sector, galaxy: galaxy, defense_strength: 75)
+
+      expect(bare.total_defence).to eq(75)
+    end
+
+    it "draws energy like anything else on the grid" do
+      build_structure("solar_array", 20)
+      before = economy.energy_consumption
+      build_structure("ion_turret", 3)
+
+      expect(PlanetEconomy.new(planet.reload).energy_consumption).to eq(before + 54)
+    end
+  end
+
   describe "#structures" do
     it "returns one entry per catalogue structure, in catalogue order" do
       build_structure("metal_extractor", 4)

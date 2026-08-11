@@ -101,7 +101,7 @@ class TickProcessor
     target = fleet.target_sector
 
     if target.npc_faction
-      defender_power = target.defense_strength
+      defender_power = target.total_defence
       attacker_power = fleet.power
 
       if attacker_power >= defender_power

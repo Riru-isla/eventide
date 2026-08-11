@@ -109,6 +109,21 @@ RSpec.describe "Planet structures", type: :request do
       expect(response).to redirect_to(planet_structures_path(section: "facilities", structure: "shipyard"))
     end
 
+    it "refuses an emplacement whose prerequisites are unmet" do
+      empire.update!(metal: 100_000, crystal: 100_000)
+
+      expect { enqueue("ion_turret", section: "defences") }.not_to change { planet.build_orders.count }
+      expect(flash[:alert]).to match(/Laser Technology 1/)
+    end
+
+    it "queues an emplacement once unlocked" do
+      empire.update!(metal: 100_000, crystal: 100_000)
+      planet.structures.find_by(kind: "shipyard").update!(level: 3)
+      empire.technologies.create!(kind: "laser_technology", level: 1)
+
+      expect { enqueue("ion_turret", section: "defences") }.to change { planet.build_orders.count }.by(1)
+    end
+
     it "requires a signed-in user" do
       sign_out(user)
 

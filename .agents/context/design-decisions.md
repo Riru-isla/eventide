@@ -102,6 +102,25 @@ meant to stay scarce.
 
 A population layer underneath crew is parked in `.agents/ideas/ideas.md`.
 
+## Defences are structures, not ships
+
+Emplacements are immobile and permanent, so they are levelled `Structure` entries in
+the `defence` category rather than counted hulls. That reuses the whole structure
+system — catalogue, build queue, upgrade UI, groups — with no new tables.
+
+They cost no crew, which makes them the military option available to an empire that
+has none. They do draw energy, so a heavy defensive line throttles the economy: that
+cost is real today even though their benefit waits on an AI that attacks.
+
+`Sector#total_defence` combines the sector's own strength with its planet's
+emplacements, and combat already reads it, so defences take effect the moment
+something attacks a player.
+
+## Structures can have prerequisites
+
+A structure may require other structures and technologies, the same gating shape as
+research and hulls. Locked rows are dimmed and name exactly what is missing.
+
 ## Ships are gated like research
 
 Hulls need a Shipyard of a given level plus, for the heavier ones, technologies — the

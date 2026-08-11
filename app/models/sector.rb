@@ -5,6 +5,7 @@ class Sector < ApplicationRecord
   belongs_to :empire, optional: true
   belongs_to :npc_faction, optional: true
   has_many :stationed_fleets, class_name: "Fleet", foreign_key: "origin_sector_id", dependent: :nullify
+  has_one :planet, dependent: :destroy
 
   validates :x, :y, presence: true, numericality: { only_integer: true }
   validates :kind, inclusion: { in: KINDS }
@@ -25,6 +26,12 @@ class Sector < ApplicationRecord
   def distance_to_center
     center = galaxy.center
     distance_to(center[:x], center[:y])
+  end
+
+  # Defence a fleet actually has to beat: the sector's own strength plus whatever the
+  # planet standing on it has built.
+  def total_defence
+    defense_strength.to_i + (planet&.economy&.defence_rating).to_i
   end
 
   def owner_name

@@ -20,6 +20,10 @@
       A stockpile already over capacity is kept, not confiscated.
 - [x] Facilities: Metal and Crystal Refineries, Metal and Crystal Silos, Pilot Academy,
       Crew Quarters, Robotics Bay, Research Center, Shipyard.
+- [x] **Defences**: Light Turret, Ion Turret and Planetary Shield, gated on Shipyard
+      level and research. They raise the sector's defence and draw energy.
+- [x] **Structure prerequisites**: a structure can require other structures and
+      technologies; locked rows name what is missing.
 - [x] **Crew**: a third stored resource, trained at the Pilot Academy and held in Crew
       Quarters. Hulls cost crew, and it dies with the ship.
 - [x] **Research**: eight empire-wide technologies in a small tree, gated on Research
@@ -46,8 +50,9 @@
 ## Known Rough Edges
 
 - Build queues advance in ticks, so they only progress while the server is running.
-- The Fleet nav section is still a placeholder shown disabled, and needs a design
-  decision first: garrison, ground defences, or something else.
+- Defences raise `Sector#total_defence`, which combat already reads — but nothing
+  attacks a player yet, so their benefit is future. Their energy draw is real today.
+- Fleet movement has no screen of its own; it belongs with the galaxy layer.
 - `ShipType#energy_cost` and `Empire#energy` are dead columns since energy became a
   balance.
 - **Fleet dispatch does not check or spend ships.** `FleetsController#create` takes

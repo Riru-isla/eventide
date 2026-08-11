@@ -55,6 +55,18 @@ RSpec.describe BuildQueue, type: :service do
       expect(before - empire.reload.metal).to eq(Structure.find("solar_array").upgrade_cost(2)[:metal])
     end
 
+    it "refuses a structure whose prerequisites are unmet" do
+      expect { queue.enqueue!("planetary_shield") }
+        .to raise_error(described_class::Error, /Shipyard 5/)
+    end
+
+    it "allows it once the prerequisites are met" do
+      planet.structures.find_by(kind: "shipyard").update!(level: 5)
+      empire.technologies.create!(kind: "armor_technology", level: 3)
+
+      expect { queue.enqueue!("planetary_shield") }.to change(BuildOrder, :count).by(1)
+    end
+
     it "refuses an unknown structure" do
       expect { queue.enqueue!("orbital_casino") }.to raise_error(described_class::Error, /unknown/)
     end

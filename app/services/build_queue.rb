@@ -19,6 +19,19 @@ class BuildQueue
     orders.detect(&:building?)
   end
 
+  # Prerequisites not yet met, as readable text. Empty means it can be built.
+  def unmet_requirements(definition)
+    structures = definition.requires_structure.filter_map do |key, level|
+      "#{Structure.find!(key).name} #{level}" if @planet.level_of(key) < level
+    end
+
+    technologies = definition.requires_tech.filter_map do |key, level|
+      "#{Technology.find!(key).name} #{level}" if @planet.empire.technology_level(key) < level
+    end
+
+    structures + technologies
+  end
+
   def queued_level_for(kind)
     orders.select { |order| order.kind == kind }.map(&:target_level).max
   end
@@ -27,6 +40,9 @@ class BuildQueue
   def enqueue!(kind)
     definition = Structure.find(kind)
     raise Error, "unknown structure" if definition.nil?
+
+    missing = unmet_requirements(definition)
+    raise Error, "#{definition.name} needs #{missing.to_sentence}" if missing.any?
 
     ActiveRecord::Base.transaction do
       structure = @planet.structures.find_or_create_by!(kind: kind) { |record| record.level = 0 }

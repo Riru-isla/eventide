@@ -6,7 +6,7 @@
 # Levels are stored per planet in PlanetStructure; this class only describes what
 # a level *means*.
 class Structure
-  CATEGORIES = %w[extraction energy facility].freeze
+  CATEGORIES = %w[extraction energy facility defence].freeze
 
   # Groups split a section into readable blocks. Categories decide *which screen* a
   # structure appears on; groups decide where it sits within that screen.
@@ -16,7 +16,9 @@ class Structure
     "processing" => "Resource processing",
     "storage" => "Storage",
     "crew" => "Crew support",
-    "infrastructure" => "Infrastructure"
+    "infrastructure" => "Infrastructure",
+    "turrets" => "Turrets",
+    "shielding" => "Shielding"
   }.freeze
 
   # Each upgrade costs this much more than the one before it.
@@ -38,13 +40,15 @@ class Structure
 
   attr_reader :key, :name, :category, :group, :summary, :resource, :effect,
               :energy_draw_per_level, :energy_output_per_level, :crew_per_level,
-              :base_storage, :storage_growth,
-              :base_metal_cost, :base_crystal_cost, :base_build_ticks
+              :defence_per_level, :base_storage, :storage_growth,
+              :base_metal_cost, :base_crystal_cost, :base_build_ticks,
+              :requires_structure, :requires_tech
 
   def initialize(key:, name:, category:, group:, summary:, base_metal_cost:, base_crystal_cost:,
                  base_build_ticks: 2, resource: nil, energy_draw_per_level: 0,
-                 energy_output_per_level: 0, crew_per_level: 0, effect: nil,
-                 base_storage: BASE_STORAGE, storage_growth: STORAGE_GROWTH)
+                 energy_output_per_level: 0, crew_per_level: 0, defence_per_level: 0,
+                 effect: nil, base_storage: BASE_STORAGE, storage_growth: STORAGE_GROWTH,
+                 requires_structure: {}, requires_tech: {})
     @key = key
     @name = name
     @category = category
@@ -54,6 +58,9 @@ class Structure
     @energy_draw_per_level = energy_draw_per_level
     @energy_output_per_level = energy_output_per_level
     @crew_per_level = crew_per_level
+    @defence_per_level = defence_per_level
+    @requires_structure = requires_structure.freeze
+    @requires_tech = requires_tech.freeze
     @base_storage = base_storage
     @storage_growth = storage_growth
     @base_metal_cost = base_metal_cost
@@ -136,6 +143,26 @@ class Structure
       summary: "Required to build ships at this planet. Higher levels unlock larger hulls.",
       energy_draw_per_level: 20, effect: :shipyard,
       base_metal_cost: 90, base_crystal_cost: 60, base_build_ticks: 6
+    ),
+    new(
+      key: "light_turret", name: "Light Turret", category: "defence", group: "turrets",
+      summary: "Automated gun emplacements. No crew to spare, and nothing to fly them.",
+      effect: :defence, defence_per_level: 25, energy_draw_per_level: 5,
+      base_metal_cost: 80, base_crystal_cost: 20, base_build_ticks: 2
+    ),
+    new(
+      key: "ion_turret", name: "Ion Turret", category: "defence", group: "turrets",
+      summary: "Beam batteries that cut through armour. Draws heavily on the grid.",
+      effect: :defence, defence_per_level: 90, energy_draw_per_level: 18,
+      base_metal_cost: 260, base_crystal_cost: 180, base_build_ticks: 5,
+      requires_structure: { "shipyard" => 3 }, requires_tech: { "laser_technology" => 1 }
+    ),
+    new(
+      key: "planetary_shield", name: "Planetary Shield", category: "defence", group: "shielding",
+      summary: "A field over the whole world. Enormously expensive to hold up, and worth it.",
+      effect: :defence, defence_per_level: 400, energy_draw_per_level: 70,
+      base_metal_cost: 1_200, base_crystal_cost: 900, base_build_ticks: 12,
+      requires_structure: { "shipyard" => 5 }, requires_tech: { "armor_technology" => 3 }
     )
   ].freeze
 
@@ -160,7 +187,10 @@ class Structure
     "crew_quarters" => 0,
     "robotics_bay" => 0,
     "research_center" => 0,
-    "shipyard" => 1
+    "shipyard" => 1,
+    "light_turret" => 0,
+    "ion_turret" => 0,
+    "planetary_shield" => 0
   }.freeze
 
   class << self
@@ -208,6 +238,8 @@ class Structure
       crystal: (base_crystal_cost * factor).round
     }
   end
+
+  def defence(level) = defence_per_level * level
 
   def extraction? = category == "extraction"
 

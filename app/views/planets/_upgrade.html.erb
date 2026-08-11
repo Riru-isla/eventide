@@ -3,7 +3,8 @@
 <% from_level = queued_level || structure.level %>
 <% next_level = from_level + 1 %>
 <% cost = definition.upgrade_cost(from_level) %>
-<% affordable = empire.metal >= cost[:metal] && empire.crystal >= cost[:crystal] %>
+<% missing = planet.queue.unmet_requirements(definition) %>
+<% affordable = empire.metal >= cost[:metal] && empire.crystal >= cost[:crystal] && missing.empty? %>
 <% ticks = definition.build_ticks(from_level, speed_multiplier: economy.build_speed) %>
 <% balance_after = economy.energy_balance_after_upgrade(structure) %>
 <% tips_into_deficit = balance_after.negative? && !economy.deficit? %>
@@ -51,7 +52,9 @@
                   class: "btn w-full",
                   form_class: "w-full" %>
 
-    <% unless affordable %>
+    <% if missing.any? %>
+      <p class="text-[0.6875rem] tracking-[0.06em] text-bad">Locked — needs <%= missing.to_sentence %></p>
+    <% elsif !affordable %>
       <p class="label">Not enough resources</p>
     <% end %>
   </div>

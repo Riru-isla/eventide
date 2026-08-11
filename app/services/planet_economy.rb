@@ -116,6 +116,15 @@ class PlanetEconomy
     stored(resource) >= storage_capacity(resource)
   end
 
+  # ── Defence ───────────────────────────────────────────────────────────────
+
+  # What the emplacements on this planet add to its sector's defence. Nothing attacks
+  # a player yet, so this is preparation — but it is wired into combat resolution, so
+  # it takes effect the moment something does.
+  def defence_rating
+    Structure.in_category("defence").sum { |definition| definition.defence(@planet.level_of(definition.key)) }
+  end
+
   # ── Construction ──────────────────────────────────────────────────────────
 
   # Multiplier applied to build times. The Robotics Bay shortens them; the floor

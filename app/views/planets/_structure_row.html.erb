@@ -1,9 +1,10 @@
 <% definition = structure.definition %>
+<% missing = planet_queue.unmet_requirements(definition) %>
 <% cost = definition.upgrade_cost(planet_queue.queued_level_for(structure.kind) || structure.level) %>
 <% draw = definition.energy_draw(structure.level) %>
 
 <%= link_to planet_structures_path(section: section, structure: structure.kind),
-            class: "row", "aria-current": selected.to_s do %>
+            class: "row #{"opacity-55" if missing.any?}", "aria-current": selected.to_s do %>
   <span class="flex min-w-0 items-baseline gap-2.5">
     <span class="tracking-[0.06em] text-ink"><%= definition.name %></span>
     <span class="lvl-chip" data-unbuilt="<%= (!structure.built?).to_s %>">
@@ -19,6 +20,10 @@
       · <span class="text-amber-2"><%= draw %> ⚡</span>
     <% elsif definition.energy? %>
       · <span class="text-good">exempt from throttle</span>
+    <% end %>
+
+    <% if missing.any? %>
+      <br><span class="text-bad">Locked — needs <%= missing.to_sentence %></span>
     <% end %>
   </span>
 

@@ -4,7 +4,8 @@ class PlanetsController < ApplicationController
   # the constraint the extractors are managed against.
   SECTIONS = {
     "resources" => %w[extraction energy],
-    "facilities" => %w[facility]
+    "facilities" => %w[facility],
+    "defences" => %w[defence]
   }.freeze
 
   before_action :require_planet
