@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_11_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_11_210000) do
   create_table "build_orders", force: :cascade do |t|
     t.integer "completes_at_tick"
     t.datetime "created_at", null: false
@@ -38,6 +38,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_180000) do
 
   create_table "empires", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.integer "crew", default: 0, null: false
     t.integer "crystal"
     t.integer "energy"
     t.integer "galaxy_id", null: false

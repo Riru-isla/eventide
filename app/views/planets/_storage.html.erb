@@ -8,13 +8,12 @@
   <div class="flex flex-col gap-4 p-4">
 <%# Class names are written out in full rather than interpolated: Tailwind scans the
     source for literal strings, so a class built at runtime is never generated. %>
-<% PlanetEconomy::RESOURCES.each do |resource| %>
+<% PlanetEconomy::STORED.each do |resource| %>
       <% capacity = economy.storage_capacity(resource) %>
       <% fraction = economy.storage_fraction(resource) %>
       <% full = economy.storage_full?(resource) %>
-      <% metal = resource == :metal %>
-      <% text_tone = metal ? "text-metal" : "text-crystal" %>
-      <% bar_tone = if full then "bg-bad" elsif fraction > 0.9 then "bg-amber" else (metal ? "bg-metal" : "bg-crystal") end %>
+      <% text_tone = resource_tone(resource) %>
+      <% bar_tone = if full then "bg-bad" elsif fraction > 0.9 then "bg-amber" else resource_bar_tone(resource) end %>
 
       <div>
         <div class="mb-1.5 flex items-baseline justify-between gap-3">

@@ -4,7 +4,10 @@
 # UI can show *where* a number comes from rather than just the number. Balance work
 # should change the numbers here, not the shape.
 class PlanetEconomy
-  RESOURCES = %i[metal crystal].freeze
+  # Resources dug out of the planet, which have extractors and refineries behind them.
+  EXTRACTED = %i[metal crystal].freeze
+  # Everything the empire stockpiles, including crew, which is trained rather than mined.
+  STORED = %i[metal crystal crew].freeze
 
   # A planet drawing more energy than it produces keeps this fraction of its output.
   THROTTLE = 0.30
@@ -49,7 +52,18 @@ class PlanetEconomy
   # ── Output ────────────────────────────────────────────────────────────────
 
   def output(resource)
+    return crew_production if resource == :crew
+
     contributions(resource).sum(&:value).round
+  end
+
+  # Crew comes off the Pilot Academy rather than a deposit, so it has no breakdown —
+  # but it is still resource generation, so an energy deficit throttles it too.
+  def crew_production
+    academy = Structure.find!("pilot_academy")
+    trained = academy.crew_per_level * @planet.level_of(academy.key)
+
+    deficit? ? (trained * THROTTLE).round : trained
   end
 
   # Ordered contributions that add up to `output(resource)`. The throttle is the

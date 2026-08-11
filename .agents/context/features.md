@@ -18,8 +18,10 @@
       Robotics Bay shortens them.
 - [x] **Storage caps**: silos set how much the empire can hold; income stops when full.
       A stockpile already over capacity is kept, not confiscated.
-- [x] Facilities: Metal and Crystal Refineries, Metal and Crystal Silos, Robotics Bay,
-      Research Center, Shipyard.
+- [x] Facilities: Metal and Crystal Refineries, Metal and Crystal Silos, Pilot Academy,
+      Crew Quarters, Robotics Bay, Research Center, Shipyard.
+- [x] **Crew**: a third stored resource, trained at the Pilot Academy and held in Crew
+      Quarters. Hulls cost crew, and it dies with the ship.
 - [x] **Research**: eight empire-wide technologies in a small tree, gated on Research
       Center level and on each other. Every one has a real effect — extraction, energy,
       storage, build speed, travel time, fleet attack, and surviving a failed attack.

@@ -15,6 +15,7 @@ class Structure
   BUILD_GROWTH = 1.45
 
   # Storage a planet has with no silo at all, and how much each silo level multiplies it.
+  # Crew Quarters override both: crew is scarce and scales far more slowly.
   BASE_STORAGE = 10_000
   STORAGE_GROWTH = 1.75
 
@@ -25,12 +26,14 @@ class Structure
   BUILD_SPEED_PER_LEVEL = 0.05
 
   attr_reader :key, :name, :category, :summary, :resource, :effect,
-              :energy_draw_per_level, :energy_output_per_level,
+              :energy_draw_per_level, :energy_output_per_level, :crew_per_level,
+              :base_storage, :storage_growth,
               :base_metal_cost, :base_crystal_cost, :base_build_ticks
 
   def initialize(key:, name:, category:, summary:, base_metal_cost:, base_crystal_cost:,
                  base_build_ticks: 2, resource: nil, energy_draw_per_level: 0,
-                 energy_output_per_level: 0, effect: nil)
+                 energy_output_per_level: 0, crew_per_level: 0, effect: nil,
+                 base_storage: BASE_STORAGE, storage_growth: STORAGE_GROWTH)
     @key = key
     @name = name
     @category = category
@@ -38,6 +41,9 @@ class Structure
     @resource = resource
     @energy_draw_per_level = energy_draw_per_level
     @energy_output_per_level = energy_output_per_level
+    @crew_per_level = crew_per_level
+    @base_storage = base_storage
+    @storage_growth = storage_growth
     @base_metal_cost = base_metal_cost
     @base_crystal_cost = base_crystal_cost
     @base_build_ticks = base_build_ticks
@@ -88,6 +94,19 @@ class Structure
       base_metal_cost: 90, base_crystal_cost: 60, base_build_ticks: 3
     ),
     new(
+      key: "pilot_academy", name: "Pilot Academy", category: "facility",
+      summary: "Trains the crew every hull needs. Turns out 2 crew per tick per level.",
+      resource: :crew, effect: :crew_training, crew_per_level: 2, energy_draw_per_level: 15,
+      base_metal_cost: 150, base_crystal_cost: 120, base_build_ticks: 5
+    ),
+    new(
+      key: "crew_quarters", name: "Crew Quarters", category: "facility",
+      summary: "Bunks, mess and life support. Raises how many trained crew the empire can hold.",
+      resource: :crew, effect: :storage,
+      base_storage: 100, storage_growth: 1.35,
+      base_metal_cost: 110, base_crystal_cost: 90, base_build_ticks: 4
+    ),
+    new(
       key: "robotics_bay", name: "Robotics Bay", category: "facility",
       summary: "Automated crews cut 5% from construction time per level.",
       effect: :build_speed, energy_draw_per_level: 10,
@@ -113,7 +132,7 @@ class Structure
 
   # Which structure raises yield, and which raises storage, for each resource.
   YIELD_BONUS_KEYS = { metal: "refinery", crystal: "crystal_refinery" }.freeze
-  STORAGE_KEYS = { metal: "metal_silo", crystal: "crystal_silo" }.freeze
+  STORAGE_KEYS = { metal: "metal_silo", crystal: "crystal_silo", crew: "crew_quarters" }.freeze
   EXTRACTOR_KEYS = { metal: "metal_extractor", crystal: "crystal_extractor" }.freeze
 
   # Levels every new planet starts with.
@@ -125,6 +144,8 @@ class Structure
     "crystal_refinery" => 0,
     "metal_silo" => 0,
     "crystal_silo" => 0,
+    "pilot_academy" => 0,
+    "crew_quarters" => 0,
     "robotics_bay" => 0,
     "research_center" => 0,
     "shipyard" => 1
@@ -149,7 +170,7 @@ class Structure
   # How much of its resource this silo lets the empire hold. Level zero is the base
   # capacity every planet has without a silo at all.
   def storage_capacity(level)
-    (BASE_STORAGE * STORAGE_GROWTH**level).round
+    (base_storage * storage_growth**level).round
   end
 
   # Ticks needed to raise the structure from `level` to `level + 1`. A speed

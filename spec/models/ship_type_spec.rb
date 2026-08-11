@@ -32,7 +32,7 @@ RSpec.describe ShipType, type: :model do
 
   describe "#cost and #ticks_for" do
     it "scales cost with quantity" do
-      expect(described_class.find("light_fighter").cost(4)).to eq(metal: 120, crystal: 40)
+      expect(described_class.find("light_fighter").cost(4)).to eq(metal: 120, crystal: 40, crew: 4)
     end
 
     it "scales build time with quantity" do

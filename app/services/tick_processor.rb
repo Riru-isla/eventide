@@ -40,7 +40,8 @@ class TickProcessor
 
       empire.update!(
         metal: store(empire, :metal, income[:metal]),
-        crystal: store(empire, :crystal, income[:crystal])
+        crystal: store(empire, :crystal, income[:crystal]),
+        crew: store(empire, :crew, income[:crew])
       )
     end
   end
@@ -57,11 +58,11 @@ class TickProcessor
   end
 
   def planet_income(empire)
-    return { metal: 0, crystal: 0 } unless empire.planet
+    return { metal: 0, crystal: 0, crew: 0 } unless empire.planet
 
     economy = empire.planet.economy
 
-    { metal: economy.output(:metal), crystal: economy.output(:crystal) }
+    { metal: economy.output(:metal), crystal: economy.output(:crystal), crew: economy.crew_production }
   end
 
   def add_sector_income(empire, income)

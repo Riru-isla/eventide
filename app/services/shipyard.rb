@@ -49,7 +49,7 @@ class Shipyard
   def affordable?(definition, quantity)
     cost = definition.cost(quantity)
 
-    @empire.metal >= cost[:metal] && @empire.crystal >= cost[:crystal]
+    @empire.metal >= cost[:metal] && @empire.crystal >= cost[:crystal] && @empire.crew >= cost[:crew]
   end
 
   # Charges the empire and queues the batch. Paid up front, as with everything else.
@@ -92,14 +92,21 @@ class Shipyard
 
   private
 
+  # Crew is spent, not lent: the hull sails with it, and it is gone from the pool for
+  # good. Losing a fleet therefore costs the crew aboard as well as the hulls.
   def charge!(definition, quantity)
     cost = definition.cost(quantity)
 
     unless affordable?(definition, quantity)
-      raise Error, "#{quantity} #{definition.name} needs #{cost[:metal]} metal and #{cost[:crystal]} crystal"
+      raise Error, "#{quantity} #{definition.name} needs #{cost[:metal]} metal, " \
+                   "#{cost[:crystal]} crystal and #{cost[:crew]} crew"
     end
 
-    @empire.update!(metal: @empire.metal - cost[:metal], crystal: @empire.crystal - cost[:crystal])
+    @empire.update!(
+      metal: @empire.metal - cost[:metal],
+      crystal: @empire.crystal - cost[:crystal],
+      crew: @empire.crew - cost[:crew]
+    )
   end
 
   # New hulls join the fleet already orbiting the planet, or start a new one.

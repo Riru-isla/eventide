@@ -94,6 +94,23 @@ RSpec.describe TickProcessor, type: :service do
       expect(empire.reload.metal).to be > Structure::BASE_STORAGE
     end
 
+    it "trains crew once a Pilot Academy is built" do
+      empire.planet.structures.find_by(kind: "solar_array").update!(level: 20)
+      empire.planet.structures.find_by(kind: "pilot_academy").update!(level: 2)
+
+      expect { described_class.new(galaxy).process }.to change { empire.reload.crew }.by(4)
+    end
+
+    it "caps crew at the Crew Quarters ceiling" do
+      empire.planet.structures.find_by(kind: "solar_array").update!(level: 20)
+      empire.planet.structures.find_by(kind: "pilot_academy").update!(level: 20) # 40 / tick
+      empire.update!(crew: empire.storage_capacity(:crew) - 5)
+
+      described_class.new(galaxy).process
+
+      expect(empire.reload.crew).to eq(empire.storage_capacity(:crew))
+    end
+
     it "does not accumulate energy" do
       expect { described_class.new(galaxy).process }.not_to change { empire.reload.energy }
     end
@@ -151,7 +168,7 @@ RSpec.describe TickProcessor, type: :service do
     end
 
     it "delivers finished hulls from the shipyard" do
-      empire.update!(metal: 100_000, crystal: 100_000)
+      empire.update!(metal: 100_000, crystal: 100_000, crew: 1_000)
       order = empire.planet.shipyard.enqueue!("light_fighter", 3)
       galaxy.update!(current_tick: order.completes_at_tick)
 

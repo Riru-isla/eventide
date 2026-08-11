@@ -144,6 +144,48 @@ RSpec.describe PlanetEconomy, type: :service do
     end
   end
 
+  describe "crew" do
+    it "trains none without a Pilot Academy" do
+      expect(economy.crew_production).to eq(0)
+    end
+
+    it "trains crew per academy level" do
+      build_structure("solar_array", 20)
+      build_structure("pilot_academy", 3)
+
+      expect(economy.crew_production).to eq(6)
+      expect(economy.output(:crew)).to eq(6)
+    end
+
+    it "is throttled by an energy deficit like any other generation" do
+      build_structure("pilot_academy", 3) # draws energy, produces none
+
+      expect(economy).to be_deficit
+      expect(economy.crew_production).to eq((6 * described_class::THROTTLE).round)
+    end
+
+    it "holds far less crew than metal, and grows more slowly" do
+      expect(economy.storage_capacity(:crew)).to eq(100)
+      expect(economy.storage_capacity(:crew)).to be < economy.storage_capacity(:metal)
+    end
+
+    it "raises the crew ceiling with Crew Quarters" do
+      build_structure("crew_quarters", 4)
+
+      expect(economy.storage_capacity(:crew)).to eq((100 * 1.35**4).round)
+    end
+
+    it "grows crew capacity more slowly than a silo grows metal" do
+      build_structure("crew_quarters", 5)
+      build_structure("metal_silo", 5)
+
+      crew_growth = economy.storage_capacity(:crew) / 100.0
+      metal_growth = economy.storage_capacity(:metal) / Structure::BASE_STORAGE.to_f
+
+      expect(crew_growth).to be < metal_growth
+    end
+  end
+
   describe "#structures" do
     it "returns one entry per catalogue structure, in catalogue order" do
       build_structure("metal_extractor", 4)

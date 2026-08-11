@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe Shipyard, type: :service do
   let(:galaxy) { create(:galaxy, current_tick: 300) }
-  let(:empire) { create(:empire, galaxy: galaxy, metal: 500_000, crystal: 500_000) }
+  let(:empire) { create(:empire, galaxy: galaxy, metal: 500_000, crystal: 500_000, crew: 5_000) }
   let(:sector) { create(:sector, galaxy: galaxy) }
   let!(:planet) { Planet.create!(empire: empire, sector: sector, name: "World") }
 
@@ -92,6 +92,25 @@ RSpec.describe Shipyard, type: :service do
       empire.update!(metal: 0, crystal: 0)
 
       expect { yard.enqueue!("light_fighter", 1) rescue nil }.not_to change(ShipOrder, :count)
+    end
+
+    it "spends crew as well as metal and crystal" do
+      cost = ShipType.find("light_fighter").cost(5)
+
+      expect { yard.enqueue!("light_fighter", 5) }.to change { empire.reload.crew }.by(-cost[:crew])
+    end
+
+    it "refuses a batch the empire has no crew for" do
+      empire.update!(crew: 0)
+
+      expect { yard.enqueue!("light_fighter", 1) }.to raise_error(described_class::Error, /crew/)
+    end
+
+    it "charges the heavier hulls far more crew" do
+      set_shipyard(6)
+      empire.technologies.create!(kind: "laser_technology", level: 1)
+
+      expect(ShipType.find("battle_cruiser").crew_cost).to be > ShipType.find("light_fighter").crew_cost * 10
     end
 
     it "builds faster with a Robotics Bay" do

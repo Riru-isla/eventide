@@ -20,7 +20,7 @@ RSpec.describe "Shipyard", type: :request do
 
   before do
     sign_in(user)
-    empire.update!(metal: 500_000, crystal: 500_000)
+    empire.update!(metal: 500_000, crystal: 500_000, crew: 5_000)
   end
 
   describe "GET /shipyard" do
@@ -127,7 +127,7 @@ RSpec.describe "Shipyard", type: :request do
     end
 
     it "refuses when the empire cannot pay" do
-      empire.update!(metal: 0, crystal: 0)
+      empire.update!(metal: 0, crystal: 0, crew: 0)
 
       expect { post build_ships_path("light_fighter"), params: { quantity: 1 } }
         .not_to change(ShipOrder, :count)

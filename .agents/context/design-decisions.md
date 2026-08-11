@@ -80,6 +80,28 @@ at a time.
 Technologies sharing an effect stack additively (Weapons and Laser both feed the attack
 multiplier), so a new technology never has to know what already exists.
 
+## Crew is a third resource, and it dies with its ship
+
+Crew is trained at the Pilot Academy, held in Crew Quarters, and **spent** when a hull is
+laid down — not lent. It sails with the ship and never returns to the pool, so losing a
+fleet costs the crew aboard as well as the hulls. That makes combat expensive on purpose.
+
+Rejected: crew as a *capacity* that ships occupy and release, with an active/inactive
+toggle. It would have been arithmetic rather than a decision — always crew the best hulls
+you can and mothball the rest. The interesting version of that idea is **fleet capacity**
+(field N ships, you choose which), which is parked until combat gives ship composition a
+reason to vary.
+
+Also rejected for now: energy upkeep on active ships, and letting some crew escape a
+destroyed ship. The second opens questions — survival odds, transit home, interception —
+that need combat designed first.
+
+Crew is throttled by an energy deficit like all other generation, and capped by Crew
+Quarters, which grow far more slowly than a silo (x1.35 against x1.75) because crew is
+meant to stay scarce.
+
+A population layer underneath crew is parked in `.agents/ideas/ideas.md`.
+
 ## Ships are gated like research
 
 Hulls need a Shipyard of a given level plus, for the heavier ones, technologies — the

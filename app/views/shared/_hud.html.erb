@@ -19,6 +19,11 @@
                rate: economy&.output(:crystal), unit: "/ tick",
                capacity: empire.storage_capacity(:crystal), full: empire.storage_full?(:crystal) %>
 
+    <%= render "shared/resource",
+               glyph: :crew, tone: "text-good", amount: empire.crew,
+               rate: economy&.crew_production, unit: "/ tick",
+               capacity: empire.storage_capacity(:crew), full: empire.storage_full?(:crew) %>
+
     <% if balance %>
       <div class="flex items-center gap-2.5">
         <svg class="size-[22px] flex-none" viewBox="0 0 24 24" fill="none" aria-hidden="true">

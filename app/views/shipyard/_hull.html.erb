@@ -18,6 +18,9 @@
       <span class="<%= empire.crystal >= definition.crystal_cost ? "text-crystal" : "text-bad" %>">
         <%= number_with_delimiter(definition.crystal_cost) %> C
       </span><br>
+      <span class="<%= empire.crew >= definition.crew_cost ? "text-good" : "text-bad" %>">
+        <%= number_with_delimiter(definition.crew_cost) %> crew
+      </span><br>
       <span>each</span>
     </span>
 

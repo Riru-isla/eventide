@@ -13,11 +13,11 @@ class ShipType
   MINIMUM_SPEED_FACTOR = 0.5
 
   attr_reader :key, :name, :summary, :attack, :cargo, :speed_factor,
-              :metal_cost, :crystal_cost, :build_ticks,
+              :metal_cost, :crystal_cost, :crew_cost, :build_ticks,
               :requires_shipyard, :requires
 
   def initialize(key:, name:, summary:, attack:, cargo:, speed_factor:,
-                 metal_cost:, crystal_cost:, build_ticks:,
+                 metal_cost:, crystal_cost:, crew_cost:, build_ticks:,
                  requires_shipyard: 1, requires: {})
     @key = key
     @name = name
@@ -27,6 +27,7 @@ class ShipType
     @speed_factor = speed_factor
     @metal_cost = metal_cost
     @crystal_cost = crystal_cost
+    @crew_cost = crew_cost
     @build_ticks = build_ticks
     @requires_shipyard = requires_shipyard
     @requires = requires.freeze
@@ -37,35 +38,35 @@ class ShipType
       key: "light_fighter", name: "Light Fighter",
       summary: "Cheap, quick, and expendable. The hull every empire starts throwing at the rim.",
       attack: 5, cargo: 20, speed_factor: 1.0,
-      metal_cost: 30, crystal_cost: 10, build_ticks: 1,
+      metal_cost: 30, crystal_cost: 10, crew_cost: 1, build_ticks: 1,
       requires_shipyard: 1
     ),
     new(
       key: "transport", name: "Transport",
       summary: "Unarmed hauler. Carries plunder home from a captured sector, but slows a fleet down.",
       attack: 1, cargo: 500, speed_factor: 1.4,
-      metal_cost: 60, crystal_cost: 60, build_ticks: 2,
+      metal_cost: 60, crystal_cost: 60, crew_cost: 5, build_ticks: 2,
       requires_shipyard: 2, requires: { "propulsion_technology" => 1 }
     ),
     new(
       key: "medium_fighter", name: "Medium Fighter",
       summary: "A proper gun platform. Three times the punch of a light hull for a little more metal.",
       attack: 15, cargo: 40, speed_factor: 0.9,
-      metal_cost: 80, crystal_cost: 30, build_ticks: 2,
+      metal_cost: 80, crystal_cost: 30, crew_cost: 2, build_ticks: 2,
       requires_shipyard: 2, requires: { "weapons_technology" => 2 }
     ),
     new(
       key: "heavy_fighter", name: "Heavy Fighter",
       summary: "Armoured line hull. Slower than a medium, but survives what a medium does not.",
       attack: 40, cargo: 80, speed_factor: 1.1,
-      metal_cost: 200, crystal_cost: 80, build_ticks: 4,
+      metal_cost: 200, crystal_cost: 80, crew_cost: 6, build_ticks: 4,
       requires_shipyard: 4, requires: { "armor_technology" => 2 }
     ),
     new(
       key: "battle_cruiser", name: "Battle Cruiser",
       summary: "Capital ship. Enormously expensive, and worth a whole squadron of fighters.",
       attack: 120, cargo: 200, speed_factor: 1.3,
-      metal_cost: 600, crystal_cost: 300, build_ticks: 8,
+      metal_cost: 600, crystal_cost: 300, crew_cost: 25, build_ticks: 8,
       requires_shipyard: 6, requires: { "laser_technology" => 1 }
     )
   ].freeze
@@ -92,7 +93,7 @@ class ShipType
   end
 
   def cost(quantity)
-    { metal: metal_cost * quantity, crystal: crystal_cost * quantity }
+    { metal: metal_cost * quantity, crystal: crystal_cost * quantity, crew: crew_cost * quantity }
   end
 
   def ticks_for(quantity, speed_multiplier: 1.0)

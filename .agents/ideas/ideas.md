@@ -39,6 +39,64 @@ belonging to a system without reworking the sector/strategic layer.
 
 ---
 
+## Population underneath crew
+
+**Status:** idea only — revisit when the AI and combat are designed.
+
+Today crew appears from nothing: the Pilot Academy trains it, Crew Quarters hold it, hulls
+cost it. The richer version, closer to Stellaris, is a **population** layer beneath that:
+people grow in habitats, are fed by farms, and specialise into crew, miners, researchers
+and so on.
+
+### The thing that makes it work
+
+**Stellaris does not actually make you micromanage pops.** They auto-assign to jobs by
+priority; the manual tuning is optional min-maxing on top. A casual player never touches
+it and the planet still runs.
+
+That is the whole trick, and it answers the "is this casual friendly?" worry: **automatic
+allocation by default, manual override for people who want to optimise.** The min-maxer
+gets a dial, the once-a-day player never learns it exists. If population is ever built, it
+must arrive that way round.
+
+### The real risk to watch
+
+The feeling of *having* to log in does not come from systems existing — it comes from
+things that **expire or stall while you are away**. Eventide already has two: storage caps
+(a full silo throws income away every tick) and the build queue (an idle queue is wasted
+hours). Population adds no third pressure *if* allocation is automatic and nothing decays.
+
+What would genuinely hurt: pops that starve, riot, or need reassigning after every
+building completes. Do not build that. The cumulative weight of these pressures is what
+kills a game, not any single one.
+
+### Why it waits
+
+The allocation decision only becomes interesting when demands **compete** — pops in the
+mines mean fewer as crew, and you cannot have both. That tension needs a reason to want
+crew badly, which means combat that actually costs ships. Until the AI pushes back,
+"miners or crew?" has one obvious answer and is a queue rather than a decision.
+
+Population and combat want designing together.
+
+### How it slots in without a rewrite
+
+Crew stays exactly what it is — a resource hulls cost, with its own HUD slot and storage.
+Only its *source* changes:
+
+- Today: Pilot Academy **generates** crew.
+- Later: Pilot Academy **converts** population into crew, and a farm/habitat pair generates
+  population the way the Academy generates crew now.
+
+### Open question parked with it
+
+Crew currently dies with its ship. Letting some survive raises a chain of questions that
+need combat designed first: what fraction reaches escape pods, do they return to the pool
+instantly or travel home, and can they be intercepted on the way? Deliberately deferred —
+see the crew decision in `design-decisions.md`.
+
+---
+
 ## Soft cap: flattening yields past a threshold
 
 **Status:** idea only — a balance patch for later, not now.
