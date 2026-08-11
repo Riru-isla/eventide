@@ -9,6 +9,11 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
+    <%# A tick refresh morphs the page in place rather than replacing it, so the
+        player keeps their scroll position and whatever they were reading. %>
+    <%= turbo_refresh_method_tag :morph %>
+    <%= turbo_refresh_scroll_tag :preserve %>
+
     <%= yield :head %>
 
     <link rel="icon" href="/icon.png" type="image/png">
@@ -20,10 +25,15 @@
   </head>
 
   <body class="bg-ground text-ink font-mono">
+    <%# turbo-permanent: a morph must not touch the canvas, or the starfield is wiped
+        every tick — its pixels are not in the DOM for morphing to restore. %>
     <canvas id="starfield" class="fixed inset-0 -z-10 pointer-events-none" aria-hidden="true"
-            data-controller="starfield"></canvas>
+            data-controller="starfield" data-turbo-permanent></canvas>
 
     <% if user_signed_in? && current_empire.present? %>
+      <%# Every tick broadcasts a refresh to this stream, so queues, research and
+          resources stop going stale between page loads. %>
+      <%= turbo_stream_from current_empire.galaxy %>
       <%= render "shared/hud", empire: current_empire %>
     <% end %>
 

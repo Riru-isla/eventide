@@ -45,6 +45,14 @@ After `db:seed`, three demo accounts exist:
 
 New players can sign up at `/users/sign_up`.
 
+## After pulling schema changes
+
+```bash
+bin/rails db:prepare
+```
+
+Creates any new database, including the cable database that live updates need.
+
 ## Run tests
 
 ```bash

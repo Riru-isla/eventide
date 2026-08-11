@@ -115,6 +115,23 @@ RSpec.describe TickProcessor, type: :service do
       expect { described_class.new(galaxy).process }.not_to change { empire.reload.energy }
     end
 
+    describe "live updates" do
+      it "tells connected clients to re-render once the tick has landed" do
+        expect(Turbo::StreamsChannel).to receive(:broadcast_refresh_to).with(galaxy)
+
+        described_class.new(galaxy).process
+      end
+
+      it "broadcasts only after the work is committed" do
+        allow(Turbo::StreamsChannel).to receive(:broadcast_refresh_to) do
+          # A client refreshing on this signal must see the new tick, not the old one.
+          expect(Galaxy.find(galaxy.id).current_tick).to eq(1)
+        end
+
+        described_class.new(galaxy).process
+      end
+    end
+
     it "resolves fleet arrivals and captures NPC sectors" do
       origin = empire.home_sector
       target = galaxy.sectors.npc.first

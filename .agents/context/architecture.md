@@ -87,9 +87,26 @@
 - The unused generated views under `app/views/users/{confirmations,unlocks,mailer}`
   belong to modules that are not enabled.
 
+## Live updates
+
+Each page subscribes to its galaxy's Turbo stream. After a tick commits,
+`TickProcessor` broadcasts a `refresh`, and every connected client re-fetches the page
+it is on and **morphs** it in place, keeping scroll and focus. That is what stops a
+build queue insisting "2 ticks left" long after those ticks passed.
+
+A refresh broadcast carries no data — it only asks clients to re-fetch, and that fetch
+is authenticated normally, so subscribing to the stream leaks nothing.
+
+Solid Cable is used in development as well as production. The `async` adapter is
+in-process only, so a tick running outside Puma would silently drop the broadcast.
+
+`#starfield` is marked `data-turbo-permanent`: canvas pixels are not in the DOM, so a
+morph would wipe the stars every tick.
+
 ## Databases
 
 - Primary: `storage/development.sqlite3` / `storage/test.sqlite3`
 - Queue: `storage/development_queue.sqlite3` / `storage/test_queue.sqlite3`
+- Cable: `storage/development_cable.sqlite3` / `storage/test_cable.sqlite3`
 
 Configured in `config/database.yml`; Solid Queue connects to the `:queue` database in development/production.

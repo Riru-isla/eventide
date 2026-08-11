@@ -13,9 +13,23 @@ class TickProcessor
       resolve_fleet_arrivals
       @galaxy.increment!(:current_tick)
     end
+
+    broadcast_tick
   end
 
   private
+
+  # Tells every connected client to re-render. Without this a queue keeps claiming
+  # "2 ticks left" long after those ticks have passed, because nothing on the page
+  # ever changes until the player reloads.
+  #
+  # Deliberately sent after the transaction commits, or a client could refresh fast
+  # enough to read the previous tick's state. A refresh broadcast carries no data —
+  # it only asks each client to re-fetch the page it is already on, and that fetch is
+  # authenticated as usual.
+  def broadcast_tick
+    Turbo::StreamsChannel.broadcast_refresh_to(@galaxy)
+  end
 
   def complete_builds
     Planet.where(empire_id: @galaxy.empires.select(:id)).includes(:build_orders, :structures, :sector)

@@ -218,6 +218,27 @@ RSpec.describe "Planets", type: :request do
     end
   end
 
+  describe "live updates" do
+    it "subscribes the page to its galaxy's tick stream" do
+      get planet_path
+
+      expect(response.body).to include("turbo-cable-stream-source")
+    end
+
+    it "asks Turbo to morph and keep scroll on a tick refresh" do
+      get planet_path
+
+      expect(response.body).to include('name="turbo-refresh-method" content="morph"')
+      expect(response.body).to include('name="turbo-refresh-scroll" content="preserve"')
+    end
+
+    it "keeps the starfield out of the morph" do
+      get planet_path
+
+      expect(response.body).to match(/id="starfield"[^>]*data-turbo-permanent/)
+    end
+  end
+
   it "requires a signed-in user" do
     sign_out(user)
 

@@ -34,6 +34,8 @@
 - [x] Basic combat: attacker power vs defender strength.
 - [x] **Shipyard**: five hulls gated on Shipyard level and research, built in a timed
       queue and delivered into the planet's garrison.
+- [x] **Live updates**: a tick broadcasts a Turbo refresh, so resources, build queues
+      and research update in place without reloading.
 - [x] RSpec test suite with 100% line coverage.
 
 ## In Progress / Next Up
