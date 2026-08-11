@@ -49,12 +49,14 @@ Open `http://localhost:3000`.
 
 ### Auth
 
-- Players sign up with username, password, commander name, and empire role.
+- Devise on `User`, authenticated by `username` (no email column).
+- Sign up at `/users/sign_up` with username, password, and empire role; the
+  commander name is taken from the username.
 - Existing demo accounts: `ada`, `ben`, `cara` — password `eventide`.
-- Session stores `player_id` and `current_empire_id`.
+- Devise holds the user session; `session[:empire_id]` tracks the active empire.
 
 ## Last Known State
 
-- All 91 specs passing.
-- 100% line coverage.
-- Latest commit: username/password player signup and login.
+- All 94 specs passing, 100% line coverage (314/314).
+- `bin/ci` green: rubocop, bundler-audit, importmap audit, Brakeman, RSpec, seeds.
+- Latest commit: Devise-based auth replacing the hand-rolled sessions controller.

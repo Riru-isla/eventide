@@ -10,9 +10,9 @@ RSpec.describe "Galaxies", type: :request do
     ).generate
   end
 
-  let(:empire) { galaxy.empires.first }
+  let(:user) { galaxy.players.first.user }
 
-  before { sign_in(empire) }
+  before { sign_in(user) }
 
   describe "GET /" do
     it "renders the galaxy map" do

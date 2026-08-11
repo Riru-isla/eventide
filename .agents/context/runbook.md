@@ -37,7 +37,7 @@ After `db:seed`, three demo accounts exist:
 - Username: `ben`, Password: `eventide`
 - Username: `cara`, Password: `eventide`
 
-New players can sign up at `/users/new`.
+New players can sign up at `/users/sign_up`.
 
 ## Run tests
 
@@ -49,6 +49,11 @@ bundle exec rspec
 View coverage report:
 ```bash
 open coverage/index.html
+```
+
+Run every CI gate locally (style, audits, Brakeman, specs, seeds):
+```bash
+bin/ci
 ```
 
 ## Useful Rails commands

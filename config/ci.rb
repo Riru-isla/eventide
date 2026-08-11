@@ -8,8 +8,11 @@ CI.run do
   step "Security: Gem audit", "bin/bundler-audit"
   step "Security: Importmap vulnerability audit", "bin/importmap audit"
   step "Security: Brakeman code analysis", "bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
-  step "Tests: Rails", "bin/rails test"
+  # The suite is RSpec, not minitest; `bin/rails test` would report 0 runs.
+  step "Tests: RSpec", "bundle exec rspec"
   step "Tests: Seeds", "env RAILS_ENV=test bin/rails db:seed:replant"
+  # Seeding leaves rows behind, so hand the next run a clean test database.
+  step "Tests: Reset test database", "bin/rails db:test:prepare"
 
   # Optional: Run system tests
   # step "Tests: System", "bin/rails test:system"

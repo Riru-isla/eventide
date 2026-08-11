@@ -1,8 +1,8 @@
 FactoryBot.define do
   factory :player do
+    user
+    galaxy
     sequence(:name) { |n| "Player #{n}" }
-    sequence(:username) { |n| "player#{n}" }
-    password { "eventide" }
   end
 
   factory :galaxy do

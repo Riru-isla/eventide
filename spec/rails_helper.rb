@@ -84,17 +84,8 @@ RSpec.configure do |config|
   # Factory Bot integration
   config.include FactoryBot::Syntax::Methods
 
-  # Authentication helper for request specs
-  config.include Module.new {
-    def sign_in(empire)
-      player = empire.player
-      post session_path, params: { username: player.username, password: "eventide" }
-    end
-
-    def sign_in_player(player)
-      post session_path, params: { username: player.username, password: "eventide" }
-    end
-  }, type: :request
+  # Devise test helpers for request specs
+  config.include Devise::Test::IntegrationHelpers, type: :request
 
   # Filter lines from Rails gems in backtraces.
   config.filter_rails_from_backtrace!

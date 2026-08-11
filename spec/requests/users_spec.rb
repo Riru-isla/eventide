@@ -10,47 +10,45 @@ RSpec.describe "Users", type: :request do
     ).generate
   end
 
-  describe "GET /users/new" do
+  describe "GET /users/sign_up" do
     it "renders the signup page" do
-      get new_user_path
+      get new_user_registration_path
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Join Eventide")
     end
   end
 
   describe "POST /users" do
-    it "creates a player, empire, and logs them in" do
+    it "creates a user, player, empire, and logs them in" do
       expect {
-        post users_path, params: {
-          player: {
-            name: "Ben",
+        post user_registration_path, params: {
+          user: {
             username: "ben",
             password: "secret123",
             password_confirmation: "secret123"
           },
           empire: { role: "warden" }
         }
-      }.to change(Player, :count).by(1)
+      }.to change(User, :count).by(1)
+        .and change(Player, :count).by(1)
         .and change(Empire, :count).by(1)
 
-      player = Player.last
-      expect(session[:player_id]).to eq(player.id)
-      expect(session[:empire_id]).to eq(player.empires.first.id)
+      user = User.last
+      expect(user.players.count).to eq(1)
       expect(response).to redirect_to(galaxy_path(galaxy))
     end
 
     it "rejects mismatched passwords" do
       expect {
-        post users_path, params: {
-          player: {
-            name: "Ben",
+        post user_registration_path, params: {
+          user: {
             username: "ben",
             password: "secret123",
             password_confirmation: "wrong"
           },
           empire: { role: "warden" }
         }
-      }.not_to change(Player, :count)
+      }.not_to change(User, :count)
 
       expect(response).to have_http_status(:unprocessable_content)
     end

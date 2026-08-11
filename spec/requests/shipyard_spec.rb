@@ -11,10 +11,11 @@ RSpec.describe "Shipyard", type: :request do
   end
 
   let(:empire) { galaxy.empires.first }
+  let(:user) { empire.player.user }
   let(:sector) { empire.home_sector }
   let!(:ship_type) { create(:ship_type, name: "Fighter", metal_cost: 10, crystal_cost: 5, energy_cost: 5) }
 
-  before { sign_in(empire) }
+  before { sign_in(user) }
 
   describe "POST /galaxies/:galaxy_id/sectors/:sector_id/shipyard" do
     it "builds ships and subtracts resources" do

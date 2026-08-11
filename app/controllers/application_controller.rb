@@ -5,23 +5,33 @@ class ApplicationController < ActionController::Base
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
 
-  before_action :require_login
+  before_action :authenticate_user!
+  before_action :set_current_empire
 
   helper_method :current_player, :current_empire
 
   private
 
   def current_player
-    @current_player ||= Player.find_by(id: session[:player_id]) if session[:player_id]
+    @current_player ||= current_user&.players&.find_by(galaxy_id: Galaxy.first&.id)
   end
 
   def current_empire
     @current_empire ||= Empire.find_by(id: session[:empire_id]) if session[:empire_id]
+    @current_empire ||= current_player&.empires&.first
   end
 
-  def require_login
-    return if current_player
+  def set_current_empire
+    return unless current_user
 
-    redirect_to new_session_path, alert: "Please log in to continue."
+    session[:empire_id] ||= current_empire&.id
+  end
+
+  def after_sign_in_path_for(_resource)
+    galaxy_path(Galaxy.first)
+  end
+
+  def after_sign_out_path_for(_resource)
+    new_user_session_path
   end
 end

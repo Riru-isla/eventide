@@ -19,7 +19,8 @@ Then check `git status` and `git log --oneline -10` to see the current state.
 - **Frontend**: Hotwire / Turbo / Stimulus, Tailwind CSS, SVG map.
 - **Tests**: RSpec with FactoryBot and Shoulda Matchers. **100% line coverage is required.**
 - **Background jobs**: Solid Queue uses the `:queue` database.
-- **Auth**: session-based empire login (`session[:empire_id]`).
+- **Auth**: Devise on `User`, keyed on `username` (there is no email column). The
+  active empire is tracked separately in `session[:empire_id]`.
 
 ## Before making changes
 
@@ -52,6 +53,12 @@ Open `http://localhost:3000`. Demo empires use password `eventide`.
 ```bash
 bundle exec rspec
 open coverage/index.html
+```
+
+Or run every gate the same way CI does (style, audits, Brakeman, specs, seeds):
+
+```bash
+bin/ci
 ```
 
 ## Context maintenance

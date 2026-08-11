@@ -11,8 +11,9 @@ RSpec.describe "Sectors", type: :request do
   end
 
   let(:empire) { galaxy.empires.first }
+  let(:user) { empire.player.user }
 
-  before { sign_in(empire) }
+  before { sign_in(user) }
 
   describe "GET /galaxies/:galaxy_id/sectors/:id" do
     it "renders the sector" do

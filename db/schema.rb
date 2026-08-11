@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_03_170445) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_03_171837) do
   create_table "empires", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "crystal"
@@ -62,11 +62,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_170445) do
 
   create_table "players", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.integer "galaxy_id", null: false
     t.string "name"
-    t.string "password_digest"
     t.datetime "updated_at", null: false
-    t.string "username"
-    t.index ["username"], name: "index_players_on_username", unique: true
+    t.integer "user_id", null: false
+    t.index ["galaxy_id"], name: "index_players_on_galaxy_id"
+    t.index ["user_id"], name: "index_players_on_user_id"
   end
 
   create_table "sectors", force: :cascade do |t|
@@ -101,11 +102,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_170445) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "users", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "encrypted_password", default: "", null: false
+    t.datetime "remember_created_at"
+    t.datetime "reset_password_sent_at"
+    t.string "reset_password_token"
+    t.datetime "updated_at", null: false
+    t.string "username", default: "", null: false
+    t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
+    t.index ["username"], name: "index_users_on_username", unique: true
+  end
+
   add_foreign_key "empires", "galaxies"
   add_foreign_key "empires", "players"
   add_foreign_key "fleets", "empires"
   add_foreign_key "fleets", "galaxies"
   add_foreign_key "npc_factions", "galaxies"
+  add_foreign_key "players", "galaxies"
+  add_foreign_key "players", "users"
   add_foreign_key "sectors", "empires"
   add_foreign_key "sectors", "galaxies"
   add_foreign_key "sectors", "npc_factions"

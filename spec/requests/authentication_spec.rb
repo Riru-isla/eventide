@@ -12,7 +12,6 @@ RSpec.describe "Authentication", type: :request do
 
   it "redirects unauthenticated users to the login page" do
     get galaxy_path(galaxy)
-    expect(response).to redirect_to(new_session_path)
-    expect(flash[:alert]).to eq("Please log in to continue.")
+    expect(response).to redirect_to(new_user_session_path)
   end
 end

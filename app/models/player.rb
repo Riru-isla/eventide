@@ -1,8 +1,7 @@
 class Player < ApplicationRecord
+  belongs_to :user
+  belongs_to :galaxy
   has_many :empires, dependent: :destroy
 
-  has_secure_password
-
-  validates :name, presence: true, uniqueness: true
-  validates :username, presence: true, uniqueness: true
+  validates :name, presence: true, uniqueness: { scope: :galaxy_id }
 end

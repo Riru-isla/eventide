@@ -1,5 +1,6 @@
 class Galaxy < ApplicationRecord
   has_many :sectors, dependent: :destroy
+  has_many :players, dependent: :destroy
   has_many :empires, dependent: :destroy
   has_many :npc_factions, dependent: :destroy
   has_many :fleets, dependent: :destroy

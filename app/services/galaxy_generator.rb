@@ -168,10 +168,13 @@ class GalaxyGenerator
     home_positions = home_sector_positions(galaxy)
 
     @player_configs.each_with_index do |config, index|
-      player = Player.create!(
-        name: config[:name],
+      user = User.create!(
         username: config[:username] || config[:name].downcase,
         password: config[:password] || "eventide"
+      )
+      player = galaxy.players.create!(
+        user: user,
+        name: config[:name]
       )
       x, y = home_positions[index]
       sector = galaxy.sectors.at(x, y).first!
