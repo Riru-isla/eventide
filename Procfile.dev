@@ -1,2 +1,5 @@
-web: bin/rails server
+# Bind to 0.0.0.0 so other machines on the network can reach the game; Rails
+# otherwise binds to localhost in development. SOLID_QUEUE_IN_PUMA runs the job
+# worker inside Puma so `bin/dev` is the only command needed to host a session.
+web: SOLID_QUEUE_IN_PUMA=1 bin/rails server -b 0.0.0.0
 css: bin/rails tailwindcss:watch

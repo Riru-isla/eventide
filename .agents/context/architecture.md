@@ -23,12 +23,17 @@
 
 ## Services
 
-- `GalaxyGenerator` — procedural galaxy creation, NPC placement, player home sectors, starting fleets.
+- `GalaxyGenerator` — procedural galaxy creation, NPC placement, seeded empires.
+- `EmpireFounder` — creates a player, empire, home sector, and starting fleet. Used by
+  both galaxy seeding and signup so demo and real empires are identical.
+- `HomeSectorPlacement` — picks a starting sector from fixed ring slots around the core.
 - `TickProcessor` — runs each tick: resource collection, fleet arrival resolution, simple combat.
 
 ## Jobs
 
-- `TickJob` — wrapper around `TickProcessor`. Reschedules itself every minute.
+- `TickJob` — wrapper around `TickProcessor`. With no argument it advances every
+  active galaxy; Solid Queue runs it every minute from `config/recurring.yml`. It does
+  **not** reschedule itself, so a failed run cannot silently end the season.
 
 ## Controllers
 

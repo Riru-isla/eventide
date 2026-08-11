@@ -13,7 +13,7 @@ class Users::RegistrationsController < Devise::RegistrationsController
     sign_up(resource_name, resource)
     session[:empire_id] = resource.players.first&.empires&.first&.id
     respond_with resource, location: after_sign_up_path_for(resource)
-  rescue ActiveRecord::RecordInvalid => e
+  rescue ActiveRecord::RecordInvalid, EmpireFounder::NoHomeSectorAvailable => e
     clean_up_passwords resource
     set_minimum_password_length
     flash.now[:alert] = "Could not create empire: #{e.message}"
@@ -33,41 +33,11 @@ class Users::RegistrationsController < Devise::RegistrationsController
   private
 
   def create_player_and_empire(user)
-    galaxy = Galaxy.first
-    player = galaxy.players.create!(
+    EmpireFounder.new(
+      galaxy: Galaxy.first,
       user: user,
-      name: user.username
-    )
-
-    sector = available_home_sector(galaxy)
-    empire = galaxy.empires.create!(
-      player: player,
-      role: params[:empire][:role],
-      home_sector: sector,
-      metal: 500,
-      crystal: 500,
-      energy: 500
-    )
-
-    sector.update!(
-      kind: "home",
-      empire: empire,
-      metal_rate: 30,
-      crystal_rate: 30,
-      energy_rate: 30,
-      defense_strength: 50
-    )
-
-    galaxy.fleets.create!(
-      empire: empire,
-      origin_sector: sector,
-      arrival_tick: galaxy.current_tick,
-      status: "orbiting",
-      ships: { "Fighter" => 10 }
-    )
-  end
-
-  def available_home_sector(galaxy)
-    galaxy.sectors.where(empire_id: nil, npc_faction_id: nil).to_a.sample
+      name: user.username,
+      role: params[:empire][:role]
+    ).call
   end
 end

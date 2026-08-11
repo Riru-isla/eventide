@@ -7,27 +7,33 @@ cd /Users/disla/projects/eventide
 bin/rails db:reset db:seed
 ```
 
-## Start the game locally
+## Host a session
 
-Terminal 1 — Rails + assets:
+One command runs everything — web server, asset watcher, and the job worker
+(Solid Queue runs inside Puma via `SOLID_QUEUE_IN_PUMA`):
+
 ```bash
 cd /Users/disla/projects/eventide
 bin/dev
 ```
 
-Terminal 2 — background jobs:
+Ticks are scheduled by Solid Queue from `config/recurring.yml` (every minute) and
+start on their own. No manual first tick is needed. To force one:
+
 ```bash
-cd /Users/disla/projects/eventide
-bin/rails solid_queue:start
+bin/rails runner 'TickJob.perform_now'                  # every active galaxy
+bin/rails runner 'TickJob.perform_now(Galaxy.first.id)' # one galaxy
 ```
 
-Terminal 3 — first tick:
+### Letting other people connect
+
+`bin/dev` binds to `0.0.0.0`, so anyone on the same network can join. Give them:
+
 ```bash
-cd /Users/disla/projects/eventide
-bin/rails runner 'TickJob.perform_now(Galaxy.first.id)'
+echo "http://$(ipconfig getifaddr en0):3000"
 ```
 
-After the first tick, `TickJob` reschedules itself every minute.
+They sign up at `/users/sign_up` and get their own empire and home sector.
 
 ## Demo accounts
 

@@ -165,61 +165,18 @@ class GalaxyGenerator
   end
 
   def create_players_and_empires(galaxy)
-    home_positions = home_sector_positions(galaxy)
-
-    @player_configs.each_with_index do |config, index|
+    @player_configs.each do |config|
       user = User.create!(
         username: config[:username] || config[:name].downcase,
         password: config[:password] || "eventide"
       )
-      player = galaxy.players.create!(
+
+      EmpireFounder.new(
+        galaxy: galaxy,
         user: user,
-        name: config[:name]
-      )
-      x, y = home_positions[index]
-      sector = galaxy.sectors.at(x, y).first!
-
-      empire = galaxy.empires.create!(
-        player: player,
-        role: config[:role],
-        home_sector: sector,
-        metal: 500,
-        crystal: 500,
-        energy: 500
-      )
-
-      sector.update!(
-        kind: "home",
-        empire: empire,
-        metal_rate: 30,
-        crystal_rate: 30,
-        energy_rate: 30,
-        defense_strength: 50
-      )
-
-      galaxy.fleets.create!(
-        empire: empire,
-        origin_sector: sector,
-        target_sector: nil,
-        arrival_tick: galaxy.current_tick,
-        status: "orbiting",
-        ships: { "Fighter" => 10 }
-      )
-    end
-  end
-
-  def home_sector_positions(galaxy)
-    cx = galaxy.center[:x]
-    cy = galaxy.center[:y]
-    radius = [ cx, cy ].min - 2
-    count = @player_configs.size
-
-    count.times.map do |i|
-      angle = (2 * Math::PI * i) / count
-      [
-        (cx + radius * Math.cos(angle)).round,
-        (cy + radius * Math.sin(angle)).round
-      ]
+        name: config[:name],
+        role: config[:role]
+      ).call
     end
   end
 

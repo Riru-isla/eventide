@@ -1,6 +1,6 @@
 class ApplicationController < ActionController::Base
-  # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
-  allow_browser versions: :modern
+  # No browser gate: the game is hosted on a laptop for whoever is around, and the
+  # :modern check returns 406 to browsers that would otherwise play fine.
 
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes

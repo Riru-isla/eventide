@@ -1,15 +1,17 @@
-# examples:
-#   periodic_cleanup:
-#     class: CleanSoftDeletedRecordsJob
-#     queue: background
-#     args: [ 1000, { batch_size: 500 } ]
-#     schedule: every hour
-#   periodic_cleanup_with_command:
-#     command: "SoftDeletedRecord.due.delete_all"
-#     priority: 2
-#     schedule: at 5am every day
+# Solid Queue recurring tasks. Declaring the tick here rather than having TickJob
+# reschedule itself means the schedule survives restarts, queue resets, and failed
+# runs — which matters because the galaxy is meant to run indefinitely.
+
+shared: &shared
+  galaxy_tick:
+    class: TickJob
+    schedule: every minute
+
+development:
+  <<: *shared
 
 production:
+  <<: *shared
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12

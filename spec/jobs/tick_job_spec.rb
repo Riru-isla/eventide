@@ -18,6 +18,20 @@ RSpec.describe TickJob, type: :job do
     expect(galaxy.reload.current_tick).to eq(1)
   end
 
+  it "ticks every active galaxy when called with no id" do
+    active = galaxy # bind the lazy let before ticking, not after
+    other = GalaxyGenerator.new(name: "Second", width: 11, height: 11, player_configs: []).generate
+    paused = GalaxyGenerator.new(name: "Paused", width: 11, height: 11, player_configs: []).generate
+    paused.update!(status: :paused)
+
+    # This is how config/recurring.yml invokes the job.
+    TickJob.perform_now
+
+    expect(active.reload.current_tick).to eq(1)
+    expect(other.reload.current_tick).to eq(1)
+    expect(paused.reload.current_tick).to eq(0)
+  end
+
   it "does nothing for a non-active galaxy" do
     galaxy.update!(status: :completed)
 

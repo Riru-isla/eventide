@@ -8,8 +8,11 @@ Read the context files in this order:
 
 1. `.agents/context/project-overview.md` — goals, stack, run instructions.
 2. `.agents/context/architecture.md` — models, services, controllers.
-3. `.agents/context/features.md` — what is implemented and what is next.
-4. `.agents/context/runbook.md` — commands for running, testing, git.
+3. `.agents/context/design-decisions.md` — settled design calls; build on these.
+4. `.agents/context/features.md` — what is implemented and what is next.
+5. `.agents/context/runbook.md` — commands for running, testing, git.
+
+Speculative ideas that are explicitly **not** planned live in `ideas.md` at the repo root.
 
 Then check `git status` and `git log --oneline -10` to see the current state.
 
