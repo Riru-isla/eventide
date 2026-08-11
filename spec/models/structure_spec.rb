@@ -1,3 +1,4 @@
+require 'ostruct'
 require 'rails_helper'
 
 RSpec.describe Structure, type: :model do
@@ -57,6 +58,27 @@ RSpec.describe Structure, type: :model do
       expect(described_class.find("metal_extractor")).not_to be_energy
       expect(described_class.find("solar_array")).to be_energy
       expect(described_class.find("shipyard")).not_to be_extraction
+    end
+  end
+
+  describe ".in_groups" do
+    it "splits structures into catalogue-ordered groups" do
+      facilities = described_class.in_category("facility").map { |d| OpenStruct.new(definition: d) }
+
+      expect(described_class.in_groups(facilities).map(&:first))
+        .to eq([ "Resource processing", "Storage", "Crew support", "Infrastructure" ])
+    end
+
+    it "skips groups with no members" do
+      solar = [ OpenStruct.new(definition: described_class.find("solar_array")) ]
+
+      expect(described_class.in_groups(solar).map(&:first)).to eq([ "Energy" ])
+    end
+  end
+
+  it "gives every structure a known group" do
+    described_class.all.each do |structure|
+      expect(described_class::GROUPS).to have_key(structure.group), "#{structure.key} has group #{structure.group}"
     end
   end
 

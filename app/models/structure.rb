@@ -8,6 +8,17 @@
 class Structure
   CATEGORIES = %w[extraction energy facility].freeze
 
+  # Groups split a section into readable blocks. Categories decide *which screen* a
+  # structure appears on; groups decide where it sits within that screen.
+  GROUPS = {
+    "extraction" => "Extraction",
+    "energy" => "Energy",
+    "processing" => "Resource processing",
+    "storage" => "Storage",
+    "crew" => "Crew support",
+    "infrastructure" => "Infrastructure"
+  }.freeze
+
   # Each upgrade costs this much more than the one before it.
   COST_GROWTH = 1.6
 
@@ -25,18 +36,19 @@ class Structure
   # Construction time removed per Robotics Bay level.
   BUILD_SPEED_PER_LEVEL = 0.05
 
-  attr_reader :key, :name, :category, :summary, :resource, :effect,
+  attr_reader :key, :name, :category, :group, :summary, :resource, :effect,
               :energy_draw_per_level, :energy_output_per_level, :crew_per_level,
               :base_storage, :storage_growth,
               :base_metal_cost, :base_crystal_cost, :base_build_ticks
 
-  def initialize(key:, name:, category:, summary:, base_metal_cost:, base_crystal_cost:,
+  def initialize(key:, name:, category:, group:, summary:, base_metal_cost:, base_crystal_cost:,
                  base_build_ticks: 2, resource: nil, energy_draw_per_level: 0,
                  energy_output_per_level: 0, crew_per_level: 0, effect: nil,
                  base_storage: BASE_STORAGE, storage_growth: STORAGE_GROWTH)
     @key = key
     @name = name
     @category = category
+    @group = group
     @summary = summary
     @resource = resource
     @energy_draw_per_level = energy_draw_per_level
@@ -52,75 +64,75 @@ class Structure
 
   ALL = [
     new(
-      key: "metal_extractor", name: "Metal Extractor", category: "extraction",
+      key: "metal_extractor", name: "Metal Extractor", category: "extraction", group: "extraction",
       summary: "Pulls metal from the planet's deposits. Each level multiplies the base yield.",
       resource: :metal, energy_draw_per_level: 34, effect: :extraction,
       base_metal_cost: 60, base_crystal_cost: 15, base_build_ticks: 2
     ),
     new(
-      key: "crystal_extractor", name: "Crystal Extractor", category: "extraction",
+      key: "crystal_extractor", name: "Crystal Extractor", category: "extraction", group: "extraction",
       summary: "Cuts crystal from the planet's seams. Each level multiplies the base yield.",
       resource: :crystal, energy_draw_per_level: 35, effect: :extraction,
       base_metal_cost: 48, base_crystal_cost: 24, base_build_ticks: 2
     ),
     new(
-      key: "solar_array", name: "Solar Array", category: "energy",
+      key: "solar_array", name: "Solar Array", category: "energy", group: "energy",
       summary: "Generates the energy every other structure draws on. Never throttled.",
       energy_output_per_level: 100, effect: :energy,
       base_metal_cost: 75, base_crystal_cost: 30, base_build_ticks: 2
     ),
     new(
-      key: "refinery", name: "Metal Refinery", category: "facility",
+      key: "refinery", name: "Metal Refinery", category: "facility", group: "processing",
       summary: "Refines raw ore on site. Adds 10% to this planet's metal yield per level.",
       resource: :metal, effect: :yield_bonus, energy_draw_per_level: 12,
       base_metal_cost: 120, base_crystal_cost: 80, base_build_ticks: 4
     ),
     new(
-      key: "crystal_refinery", name: "Crystal Refinery", category: "facility",
+      key: "crystal_refinery", name: "Crystal Refinery", category: "facility", group: "processing",
       summary: "Cleans and cuts raw crystal. Adds 10% to this planet's crystal yield per level.",
       resource: :crystal, effect: :yield_bonus, energy_draw_per_level: 12,
       base_metal_cost: 100, base_crystal_cost: 110, base_build_ticks: 4
     ),
     new(
-      key: "metal_silo", name: "Metal Silo", category: "facility",
+      key: "metal_silo", name: "Metal Silo", category: "facility", group: "storage",
       summary: "Raises how much metal the empire can hold. Income stops once storage is full.",
       resource: :metal, effect: :storage,
       base_metal_cost: 100, base_crystal_cost: 40, base_build_ticks: 3
     ),
     new(
-      key: "crystal_silo", name: "Crystal Silo", category: "facility",
+      key: "crystal_silo", name: "Crystal Silo", category: "facility", group: "storage",
       summary: "Raises how much crystal the empire can hold. Income stops once storage is full.",
       resource: :crystal, effect: :storage,
       base_metal_cost: 90, base_crystal_cost: 60, base_build_ticks: 3
     ),
     new(
-      key: "pilot_academy", name: "Pilot Academy", category: "facility",
+      key: "pilot_academy", name: "Pilot Academy", category: "facility", group: "crew",
       summary: "Trains the crew every hull needs. Turns out 2 crew per tick per level.",
       resource: :crew, effect: :crew_training, crew_per_level: 2, energy_draw_per_level: 15,
       base_metal_cost: 150, base_crystal_cost: 120, base_build_ticks: 5
     ),
     new(
-      key: "crew_quarters", name: "Crew Quarters", category: "facility",
+      key: "crew_quarters", name: "Crew Quarters", category: "facility", group: "crew",
       summary: "Bunks, mess and life support. Raises how many trained crew the empire can hold.",
       resource: :crew, effect: :storage,
       base_storage: 100, storage_growth: 1.35,
       base_metal_cost: 110, base_crystal_cost: 90, base_build_ticks: 4
     ),
     new(
-      key: "robotics_bay", name: "Robotics Bay", category: "facility",
+      key: "robotics_bay", name: "Robotics Bay", category: "facility", group: "infrastructure",
       summary: "Automated crews cut 5% from construction time per level.",
       effect: :build_speed, energy_draw_per_level: 10,
       base_metal_cost: 140, base_crystal_cost: 100, base_build_ticks: 5
     ),
     new(
-      key: "research_center", name: "Research Center", category: "facility",
+      key: "research_center", name: "Research Center", category: "facility", group: "infrastructure",
       summary: "Where empire-wide research is carried out. Higher levels will unlock and " \
                "speed up technologies once the Research section exists.",
       effect: :research, energy_draw_per_level: 25,
       base_metal_cost: 200, base_crystal_cost: 180, base_build_ticks: 8
     ),
     new(
-      key: "shipyard", name: "Shipyard", category: "facility",
+      key: "shipyard", name: "Shipyard", category: "facility", group: "infrastructure",
       summary: "Required to build ships at this planet. Higher levels unlock larger hulls.",
       energy_draw_per_level: 20, effect: :shipyard,
       base_metal_cost: 90, base_crystal_cost: 60, base_build_ticks: 6
@@ -157,6 +169,14 @@ class Structure
     def find(key) = BY_KEY[key]
     def find!(key) = BY_KEY.fetch(key)
     def in_category(category) = ALL.select { |structure| structure.category == category }
+
+    # Structures split into their groups, in catalogue order, skipping empty groups.
+    def in_groups(structures)
+      GROUPS.filter_map do |key, label|
+        members = structures.select { |structure| structure.definition.group == key }
+        [ label, members ] if members.any?
+      end
+    end
 
     def extractor_for(resource) = find!(EXTRACTOR_KEYS.fetch(resource))
     def refinery_for(resource) = find!(YIELD_BONUS_KEYS.fetch(resource))

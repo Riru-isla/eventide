@@ -113,6 +113,16 @@ RSpec.describe "Planets", type: :request do
       expect(response.body).not_to include("Robotics Bay")
     end
 
+    it "groups extraction apart from energy" do
+      get planet_structures_path(section: "resources")
+
+      extraction = response.body.index("Extraction<")
+      energy = response.body.rindex("Energy<")
+
+      expect(response.body.index("Metal Extractor")).to be_between(extraction, energy)
+      expect(response.body.index("Solar Array")).to be > energy
+    end
+
     it "shows the energy bus, since extraction is managed against it" do
       get planet_structures_path(section: "resources")
 
@@ -140,6 +150,27 @@ RSpec.describe "Planets", type: :request do
   end
 
   describe "GET /planet/facilities" do
+    it "splits the facilities into named groups" do
+      get planet_structures_path(section: "facilities")
+
+      expect(response.body).to include("Resource processing")
+      expect(response.body).to include("Storage")
+      expect(response.body).to include("Crew support")
+      expect(response.body).to include("Infrastructure")
+    end
+
+    it "puts each facility under the right group" do
+      get planet_structures_path(section: "facilities")
+
+      processing = response.body.index("Resource processing")
+      storage = response.body.index("Storage")
+      crew = response.body.index("Crew support")
+
+      expect(response.body.index("Metal Refinery")).to be_between(processing, storage)
+      expect(response.body.index("Metal Silo")).to be_between(storage, crew)
+      expect(response.body.index("Pilot Academy")).to be > crew
+    end
+
     it "lists facilities, and not extractors" do
       get planet_structures_path(section: "facilities")
 
