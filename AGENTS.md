@@ -12,7 +12,7 @@ Read the context files in this order:
 4. `.agents/context/features.md` — what is implemented and what is next.
 5. `.agents/context/runbook.md` — commands for running, testing, git.
 
-Speculative ideas that are explicitly **not** planned live in `ideas.md` at the repo root.
+Speculative ideas that are explicitly **not** planned live in `.agents/ideas/ideas.md`.
 
 Then check `git status` and `git log --oneline -10` to see the current state.
 

@@ -1,7 +1,7 @@
 # Eventide — Design Decisions
 
 Decisions that are settled and that later work should build on rather than revisit.
-Speculative ideas live in `ideas.md` at the repo root.
+Speculative ideas live in `.agents/ideas/ideas.md`.
 
 ## Reference points
 
