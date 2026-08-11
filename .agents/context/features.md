@@ -20,6 +20,9 @@
       A stockpile already over capacity is kept, not confiscated.
 - [x] Facilities: Metal and Crystal Refineries, Metal and Crystal Silos, Robotics Bay,
       Research Center, Shipyard.
+- [x] **Research**: eight empire-wide technologies in a small tree, gated on Research
+      Center level and on each other. Every one has a real effect — extraction, energy,
+      storage, build speed, travel time, fleet attack, and surviving a failed attack.
 - [x] Energy as a balance: a deficit throttles extraction to 30% and exempts energy buildings.
 - [x] Fleet dispatch from owned sectors to targets.
 - [x] Basic combat: attacker power vs defender strength.
@@ -41,7 +44,7 @@
 
 - Ship construction is still instant, and does not require a Shipyard.
 - Build queues advance in ticks, so they only progress while the server is running.
-- The Research, Shipyard and Fleet nav sections are placeholders shown disabled.
+- The Shipyard and Fleet nav sections are placeholders shown disabled.
 - `ShipType#energy_cost` and `Empire#energy` are dead columns since energy became a
   balance.
 - **Fleet dispatch does not check or spend ships.** `FleetsController#create` takes

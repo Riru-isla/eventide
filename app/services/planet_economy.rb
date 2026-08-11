@@ -27,7 +27,11 @@ class PlanetEconomy
   # accumulating, so the role's identity is being able to sustain higher structure
   # levels than anyone else on the same hardware.
   def energy_production
-    @energy_production ||= (@planet.structures.sum(&:energy_output) * @empire.resource_bonus(:energy)).round
+    @energy_production ||= (
+      @planet.structures.sum(&:energy_output) *
+      @empire.resource_bonus(:energy) *
+      (1 + @empire.technology_bonus(:energy_output))
+    ).round
   end
 
   def energy_consumption
@@ -63,7 +67,8 @@ class PlanetEconomy
         kind: :structure
       ),
       role_contribution(resource, subtotal),
-      refinery_contribution(resource, subtotal)
+      refinery_contribution(resource, subtotal),
+      research_contribution(subtotal)
     ]
 
     if deficit?
@@ -81,7 +86,8 @@ class PlanetEconomy
   def storage_capacity(resource)
     silo = Structure.silo_for(resource)
 
-    silo.storage_capacity(@planet.level_of(silo.key))
+    (silo.storage_capacity(@planet.level_of(silo.key)) *
+      (1 + @empire.technology_bonus(:storage))).round
   end
 
   def stored(resource)
@@ -101,7 +107,10 @@ class PlanetEconomy
   # Multiplier applied to build times. The Robotics Bay shortens them; the floor
   # stops high levels from making construction instant.
   def build_speed
-    [ 1 - (Structure::BUILD_SPEED_PER_LEVEL * @planet.level_of("robotics_bay")), MINIMUM_BUILD_SPEED ].max
+    reduction = (Structure::BUILD_SPEED_PER_LEVEL * @planet.level_of("robotics_bay")) +
+                @empire.technology_bonus(:build_speed)
+
+    [ 1 - reduction, MINIMUM_BUILD_SPEED ].max
   end
 
   # ── Structures ────────────────────────────────────────────────────────────
@@ -143,6 +152,17 @@ class PlanetEconomy
       label: "#{@empire.role.capitalize} doctrine",
       value: subtotal * (multiplier - 1),
       kind: :role
+    )
+  end
+
+  def research_contribution(subtotal)
+    definition = Technology.find!("extraction_technology")
+    level = @empire.technology_level(definition.key)
+
+    Contribution.new(
+      label: "#{definition.name} lv #{level}",
+      value: subtotal * definition.bonus_per_level * level,
+      kind: :research
     )
   end
 

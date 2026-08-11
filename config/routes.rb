@@ -17,6 +17,10 @@ Rails.application.routes.draw do
       constraints: { section: /resources|facilities/ }
   patch "planet/structures/:id", to: "planet_structures#update", as: :planet_structure
 
+  # Research is empire-wide, so it sits outside the planet routes.
+  get "research", to: "research#show", as: :research
+  post "research/:id", to: "research#create", as: :start_research
+
   resources :galaxies, only: [ :show ] do
     resources :fleets, only: [ :create ]
     resources :sectors, only: %i[show] do

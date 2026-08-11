@@ -70,6 +70,16 @@ room should stall growth, never destroy what someone has banked.
 Silos sit on the planet but resources belong to the empire. With one planet per empire
 those are the same thing; this is the seam to revisit for multiple planets.
 
+## Research is empire-wide, and gated
+
+Technologies apply to every planet and fleet an empire holds. Each has prerequisites —
+a minimum Research Center level, and for the deeper ones, levels in other technologies —
+which is what makes the list a tree rather than a menu. An empire researches one project
+at a time.
+
+Technologies sharing an effect stack additively (Weapons and Laser both feed the attack
+multiplier), so a new technology never has to know what already exists.
+
 ## Screen structure
 
 Overview, Resources and Facilities are views onto **the current planet**; Research is

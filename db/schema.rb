@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_11_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_11_150000) do
   create_table "build_orders", force: :cascade do |t|
     t.integer "completes_at_tick"
     t.datetime "created_at", null: false
@@ -24,6 +24,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_120000) do
     t.index ["completes_at_tick"], name: "index_build_orders_on_completes_at_tick"
     t.index ["planet_id", "position"], name: "index_build_orders_on_planet_id_and_position"
     t.index ["planet_id"], name: "index_build_orders_on_planet_id"
+  end
+
+  create_table "empire_technologies", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "empire_id", null: false
+    t.string "kind", null: false
+    t.integer "level", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["empire_id", "kind"], name: "index_empire_technologies_on_empire_id_and_kind", unique: true
+    t.index ["empire_id"], name: "index_empire_technologies_on_empire_id"
   end
 
   create_table "empires", force: :cascade do |t|
@@ -105,6 +115,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_120000) do
     t.index ["user_id"], name: "index_players_on_user_id"
   end
 
+  create_table "research_orders", force: :cascade do |t|
+    t.integer "completes_at_tick"
+    t.datetime "created_at", null: false
+    t.integer "empire_id", null: false
+    t.string "kind", null: false
+    t.integer "started_at_tick"
+    t.integer "target_level", null: false
+    t.integer "ticks_required", null: false
+    t.datetime "updated_at", null: false
+    t.index ["completes_at_tick"], name: "index_research_orders_on_completes_at_tick"
+    t.index ["empire_id"], name: "index_research_orders_on_empire_id"
+  end
+
   create_table "sectors", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "crystal_rate"
@@ -150,6 +173,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_120000) do
   end
 
   add_foreign_key "build_orders", "planets"
+  add_foreign_key "empire_technologies", "empires"
   add_foreign_key "empires", "galaxies"
   add_foreign_key "empires", "players"
   add_foreign_key "fleets", "empires"
@@ -160,6 +184,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_120000) do
   add_foreign_key "planets", "sectors"
   add_foreign_key "players", "galaxies"
   add_foreign_key "players", "users"
+  add_foreign_key "research_orders", "empires"
   add_foreign_key "sectors", "empires"
   add_foreign_key "sectors", "galaxies"
   add_foreign_key "sectors", "npc_factions"

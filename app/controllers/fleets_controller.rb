@@ -1,6 +1,10 @@
 class FleetsController < ApplicationController
   class DispatchError < StandardError; end
 
+  # However much Propulsion Technology is stacked, a crossing never takes less than
+  # this fraction of its raw distance.
+  MINIMUM_TRAVEL_SPEED = 0.4
+
   def create
     @galaxy = Galaxy.find(params[:galaxy_id])
     origin = current_empire.sectors.find(params[:fleet][:origin_sector_id])
@@ -60,8 +64,12 @@ class FleetsController < ApplicationController
     remaining.empty? ? garrison.destroy! : garrison.update!(ships: remaining)
   end
 
+  # Propulsion Technology shortens the crossing; a journey never drops below one tick.
   def travel_ticks(origin, target)
-    [ origin.distance_to(target.x, target.y).ceil, 1 ].max
+    distance = origin.distance_to(target.x, target.y)
+    speed = [ 1 - current_empire.technology_bonus(:propulsion), MINIMUM_TRAVEL_SPEED ].max
+
+    [ (distance * speed).ceil, 1 ].max
   end
 
   def requested_ships

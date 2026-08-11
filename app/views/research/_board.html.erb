@@ -1,0 +1,63 @@
+<% current_tick = empire.galaxy.current_tick %>
+
+<section class="mod" aria-label="Current research">
+  <div class="mod-head">
+    <h2 class="mod-title">Research</h2>
+    <span class="mod-note">
+      Research Center <%= lab.center_level %>
+      <% if lab.center_level > 1 %>· <%= ((1 - lab.speed) * 100).round %>% faster<% end %>
+    </span>
+  </div>
+
+  <% if lab.researching? %>
+    <% order = lab.current %>
+    <div class="p-4">
+      <div class="mb-2 flex items-baseline justify-between gap-3.5">
+        <span class="text-[0.8125rem] tracking-[0.06em] text-ink">
+          <%= order.name %> → <b class="font-semibold text-amber"><%= order.target_level %></b>
+        </span>
+        <span class="num text-[0.6875rem] tracking-[0.08em] text-ink-3">
+          <%= pluralize(order.ticks_remaining(current_tick), "tick") %> left
+        </span>
+      </div>
+      <div class="h-[5px] border border-line-soft bg-ground-2">
+        <div class="h-full bg-gradient-to-r from-amber-2 to-amber"
+             style="width: <%= order.progress(current_tick).round(1) %>%"></div>
+      </div>
+    </div>
+  <% else %>
+    <div class="p-4">
+      <p class="font-sans text-[0.8125rem] text-ink-2">
+        <% if lab.center_level.zero? %>
+          No Research Center on this planet. Build one from
+          <%= link_to "Facilities", planet_structures_path(section: "facilities", structure: "research_center"),
+                      class: "text-amber hover:underline" %>
+          before anything can be researched.
+        <% else %>
+          Nothing being researched. An empire works on one project at a time.
+        <% end %>
+      </p>
+    </div>
+  <% end %>
+</section>
+
+<% Technology::CATEGORIES.each do |category| %>
+  <section class="mod" aria-label="<%= category.capitalize %> technologies">
+    <div class="mod-head">
+      <h2 class="mod-title"><%= category %></h2>
+      <span class="mod-note"><%= pluralize(Technology.in_category(category).size, "technology") %></span>
+    </div>
+
+    <div class="flex flex-col">
+      <% Technology.in_category(category).each do |definition| %>
+        <%= render "research/technology",
+                   definition: definition, empire: empire, lab: lab %>
+      <% end %>
+    </div>
+  </section>
+<% end %>
+
+<p class="font-sans text-[0.8125rem] text-ink-2">
+  Research is empire-wide: it applies to every planet and fleet you hold, not just this
+  one. Costs double each level, so a technology is a long commitment.
+</p>

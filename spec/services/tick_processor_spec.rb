@@ -121,6 +121,39 @@ RSpec.describe TickProcessor, type: :service do
       expect(fleet.reload.status).to eq("orbiting")
     end
 
+    it "completes research that has come due" do
+      empire.planet.structures.find_by(kind: "research_center").update!(level: 1)
+      empire.update!(metal: 100_000, crystal: 100_000)
+      order = empire.reload.research.start!("extraction_technology")
+      galaxy.update!(current_tick: order.completes_at_tick)
+
+      described_class.new(galaxy.reload).process
+
+      expect(empire.reload.technology_level("extraction_technology")).to eq(1)
+    end
+
+    it "lets an armoured fleet retreat instead of being destroyed" do
+      origin = empire.home_sector
+      target = galaxy.sectors.npc.first
+      target.update!(defense_strength: 10_000)
+      empire.technologies.create!(kind: "armor_technology", level: 5)
+
+      fleet = galaxy.fleets.create!(
+        empire: empire,
+        origin_sector: origin,
+        target_sector: target,
+        arrival_tick: galaxy.current_tick,
+        status: "moving",
+        ships: { "Fighter" => 10 }
+      )
+
+      expect { described_class.new(galaxy).process }.not_to change { galaxy.fleets.count }
+
+      fleet.reload
+      expect(fleet.status).to eq("orbiting")
+      expect(fleet.ships).to eq("Fighter" => 5)
+    end
+
     it "destroys fleets that lose combat" do
       origin = empire.home_sector
       target = galaxy.sectors.npc.first

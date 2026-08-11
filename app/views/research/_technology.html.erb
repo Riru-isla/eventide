@@ -1,0 +1,45 @@
+<% level = lab.level_of(definition.key) %>
+<% missing = lab.unmet_requirements(definition) %>
+<% locked = missing.any? %>
+<% cost = lab.cost_for(definition) %>
+<% affordable = lab.affordable?(definition) %>
+<% startable = !locked && affordable && !lab.researching? %>
+
+<div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 border-b border-line-soft p-4 last:border-b-0
+            <%= locked ? "opacity-55" : "" %>">
+
+  <div class="flex min-w-0 items-baseline gap-2.5">
+    <span class="tracking-[0.06em] text-ink"><%= definition.name %></span>
+    <span class="lvl-chip" data-unbuilt="<%= level.zero? %>">LV <%= level %></span>
+  </div>
+
+  <div class="row-span-2 flex flex-col items-end gap-2 text-right">
+    <span class="num text-[0.6875rem] leading-[1.7] text-ink-3">
+      <span class="<%= empire.metal >= cost[:metal] ? "text-metal" : "text-bad" %>">
+        <%= number_with_delimiter(cost[:metal]) %> M
+      </span><br>
+      <span class="<%= empire.crystal >= cost[:crystal] ? "text-crystal" : "text-bad" %>">
+        <%= number_with_delimiter(cost[:crystal]) %> C
+      </span><br>
+      <span><%= pluralize(lab.ticks_for(definition), "tick") %></span>
+    </span>
+
+    <%= button_to "Research", start_research_path(definition.key),
+                  method: :post, disabled: !startable,
+                  class: "btn", form_class: "" %>
+  </div>
+
+  <div class="col-start-1">
+    <p class="font-sans text-[0.8125rem] text-ink-2"><%= definition.summary %></p>
+
+    <% if locked %>
+      <p class="mt-1.5 text-[0.6875rem] tracking-[0.06em] text-bad">
+        Locked — needs <%= missing.to_sentence %>
+      </p>
+    <% elsif level.positive? %>
+      <p class="mt-1.5 num text-[0.6875rem] tracking-[0.06em] text-good">
+        Active: <%= technology_effect_label(definition, level) %>
+      </p>
+    <% end %>
+  </div>
+</div>

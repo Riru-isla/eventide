@@ -7,12 +7,43 @@ class Empire < ApplicationRecord
   has_many :sectors, dependent: :nullify
   has_many :fleets, dependent: :destroy
   has_one :planet, dependent: :destroy
+  has_many :technologies, class_name: "EmpireTechnology", dependent: :destroy
+  # An empire researches one project at a time; research_orders is the plural side used
+  # for querying due work, research_order the single project under way.
+  has_many :research_orders, dependent: :destroy
+  has_one :research_order, dependent: :destroy
 
   validates :role, inclusion: { in: ROLES }
   validates :metal, :crystal, :energy, numericality: { greater_than_or_equal_to: 0 }
 
   def name
     "#{player.name}'s Empire"
+  end
+
+  def research
+    @research ||= ResearchLab.new(self)
+  end
+
+  def technology_level(kind)
+    technologies.detect { |record| record.kind == kind }&.level.to_i
+  end
+
+  # Every technology with the same effect stacks additively, so Weapons and Laser both
+  # feed the attack multiplier without either needing to know about the other.
+  def technology_bonus(effect)
+    Technology.with_effect(effect).sum do |definition|
+      definition.bonus_per_level * technology_level(definition.key)
+    end
+  end
+
+  def attack_multiplier = 1 + technology_bonus(:weapons)
+
+  # Fraction of a fleet that survives a failed attack instead of being destroyed.
+  def armor_survival = [ technology_bonus(:armor), 0.9 ].min
+
+  def reload(...)
+    @research = nil
+    super
   end
 
   # Storage comes from the planet's silos. An empire without a planet falls back to the

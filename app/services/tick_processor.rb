@@ -5,9 +5,10 @@ class TickProcessor
 
   def process
     ActiveRecord::Base.transaction do
-      # Builds finish before income is collected, so a structure that completes this
-      # tick contributes to it.
+      # Builds and research finish before income is collected, so anything completing
+      # this tick contributes to it.
       complete_builds
+      complete_research
       collect_resources
       resolve_fleet_arrivals
       @galaxy.increment!(:current_tick)
@@ -19,6 +20,10 @@ class TickProcessor
   def complete_builds
     Planet.where(empire_id: @galaxy.empires.select(:id)).includes(:build_orders, :structures, :sector)
           .find_each { |planet| planet.queue.advance! }
+  end
+
+  def complete_research
+    @galaxy.empires.includes(:technologies, :research_orders).find_each { |empire| empire.research.advance! }
   end
 
   # Income comes from two places: the empire's planet, where structure levels and
@@ -93,8 +98,8 @@ class TickProcessor
           status: "orbiting",
           arrival_tick: nil
         )
-      else
-        # Attacker loses; simplistic: destroy fleet
+      elsif !fleet.retreat!
+        # Nothing survived the failed attack.
         fleet.destroy!
       end
     else

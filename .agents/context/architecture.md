@@ -13,6 +13,9 @@
 | `Planet` | The management layer: what an empire builds on. Belongs to an empire and sits in a sector. One per empire for now. |
 | `PlanetStructure` | A structure on a planet, stored as `kind` + `level`. |
 | `BuildOrder` | A queued construction job. Only the front of the queue has a `completes_at_tick`. |
+| `Technology` | **Not** an Active Record model — a static Ruby catalogue of research, including prerequisites. |
+| `EmpireTechnology` | A researched technology, stored as `kind` + `level`. Empire-wide, not per planet. |
+| `ResearchOrder` | The single project an empire is researching. |
 | `Structure` | **Not** an Active Record model — a static Ruby catalogue of every buildable structure and its balance numbers. |
 | `Fleet` | Group of ships moving between sectors or orbiting a sector. JSON `ships` stores counts by ship type name. |
 | `ShipType` | Static ship definitions with costs and stats. Some are role-locked. |
@@ -37,8 +40,11 @@
 - `BuildQueue` — adds orders, starts the next one, and applies finished ones. Resources
   are charged when an order is queued, not when it completes. A finished order chains
   the next from *its* completion tick, so downtime does not lose queue time.
-- `TickProcessor` — runs each tick: completes builds, collects resources, resolves
-  fleet arrivals and combat.
+- `ResearchLab` — starts and finishes research, and answers what an empire is allowed
+  to research. One project at a time, gated on Research Center level and other
+  technologies.
+- `TickProcessor` — runs each tick: completes builds and research, collects resources,
+  resolves fleet arrivals and combat.
 
 ## Jobs
 
@@ -54,6 +60,7 @@
   serves the Resources and Facilities sections, which are the same structure list
   filtered by catalogue category.
 - `PlanetStructuresController` — adds an upgrade to the planet's build queue.
+- `ResearchController` — the empire-wide research board.
 - `GalaxiesController` — main map view.
 - `SectorsController` — sector detail / planet management.
 - `FleetsController` — dispatch fleets from a sector to a target.

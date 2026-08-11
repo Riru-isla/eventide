@@ -56,16 +56,26 @@ RSpec.describe PlanetEconomy, type: :service do
         "Base deposit",
         "Metal Extractor lv 3",
         "Foundry doctrine",
-        "Metal Refinery lv 2"
+        "Metal Refinery lv 2",
+        "Extraction Technology lv 0"
       ])
       expect(lines.sum(&:value).round).to eq(economy.output(:metal))
+    end
+
+    it "credits researched extraction technology in the breakdown" do
+      empire.technologies.create!(kind: "extraction_technology", level: 4)
+
+      line = economy.contributions(:metal).detect { |entry| entry.kind == :research }
+
+      expect(line.label).to eq("Extraction Technology lv 4")
+      expect(line.value).to eq(90 * 0.05 * 4) # 20% of the 90 raw subtotal
     end
 
     it "computes each contribution from the sector, level, role, and refinery" do
       values = economy.contributions(:metal).map { |line| line.value.round }
 
-      # base 30, +60 from levels 2-3, +50% foundry on 90, +20% refinery on 90
-      expect(values).to eq([ 30, 60, 45, 18 ])
+      # base 30, +60 from levels 2-3, +50% foundry on 90, +20% refinery on 90, no research
+      expect(values).to eq([ 30, 60, 45, 18, 0 ])
       expect(economy.output(:metal)).to eq(153)
     end
 

@@ -30,6 +30,21 @@ module ApplicationHelper
     end
   end
 
+  # What a technology is currently worth at its level, phrased per effect.
+  def technology_effect_label(definition, level)
+    percent = (definition.bonus_per_level * level * 100).round
+
+    case definition.effect
+    when :extraction_yield then "+#{percent}% extraction"
+    when :energy_output then "+#{percent}% energy"
+    when :storage then "+#{percent}% storage"
+    when :build_speed then "−#{percent}% build time"
+    when :propulsion then "−#{percent}% travel time"
+    when :weapons then "+#{percent}% fleet attack"
+    else "#{percent}% of a fleet survives a failed attack"
+    end
+  end
+
   private
 
   def yield_bonus_percent(level)
