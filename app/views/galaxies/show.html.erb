@@ -1,117 +1,14 @@
-<div class="w-full" data-controller="galaxy-map">
-  <header class="mb-6 flex items-center justify-between">
-    <div>
-      <h1 class="text-3xl font-bold text-white"><%= @galaxy.name %></h1>
-      <p class="text-gray-400">Tick <%= @galaxy.current_tick %> · <%= @galaxy.status %></p>
+<% content_for :title, "#{@galaxy.name} — Eventide" %>
+
+<div class="mt-5 grid items-start gap-5 lg:grid-cols-[148px_minmax(0,1fr)]">
+
+  <%= render "shared/nav", current: :galaxy %>
+
+  <main class="grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+    <%= render "galaxies/map", galaxy: @galaxy, empire_colors: @empire_colors %>
+
+    <div class="flex flex-col gap-5">
+      <%= render "galaxies/roster", empires: @empires, empire_colors: @empire_colors, galaxy: @galaxy %>
     </div>
-    <div class="text-right">
-      <p class="text-white font-medium"><%= current_user.username %></p>
-      <p class="text-sm text-gray-500"><%= @empire.player.name %>'s <%= @empire.role %> empire</p>
-      <%= button_to "Log out", destroy_user_session_path, method: :delete, class: "text-sm text-blue-400 hover:text-blue-300" %>
-    </div>
-  </header>
-
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <div class="lg:col-span-2 bg-gray-900 rounded-lg p-4 overflow-auto">
-      <svg viewBox="0 0 <%= @galaxy.width * 32 + 16 %> <%= @galaxy.height * 32 + 16 %>" class="w-full h-auto">
-        <% @galaxy.sectors.each do |sector| %>
-          <% cx = sector.x * 32 + 16 %>
-          <% cy = sector.y * 32 + 16 %>
-          <% color = sector_color(sector) %>
-          <circle
-            data-galaxy-map-target="sector"
-            data-action="click->galaxy-map#select"
-            data-sector-id="<%= sector.id %>"
-            data-sector-info="<%= sector.name %> (<%= sector.coordinate %>)"
-            cx="<%= cx %>"
-            cy="<%= cy %>"
-            r="10"
-            fill="<%= color %>"
-            stroke="#1f2937"
-            stroke-width="2"
-            class="cursor-pointer hover:opacity-80 transition-opacity"
-          />
-          <% if sector.kind == "core" %>
-            <circle cx="<%= cx %>" cy="<%= cy %>" r="14" fill="none" stroke="#ef4444" stroke-width="1" opacity="0.6" />
-          <% end %>
-        <% end %>
-      </svg>
-    </div>
-
-    <aside class="space-y-6">
-      <div class="bg-gray-900 rounded-lg p-4">
-        <h2 class="text-xl font-semibold text-white mb-3">Your Empire</h2>
-        <div class="grid grid-cols-3 gap-2 text-center mb-3">
-          <div class="bg-gray-800 rounded p-2">
-            <p class="text-xs text-gray-400">Metal</p>
-            <p class="text-lg font-bold text-white"><%= @empire.metal %></p>
-          </div>
-          <div class="bg-gray-800 rounded p-2">
-            <p class="text-xs text-gray-400">Crystal</p>
-            <p class="text-lg font-bold text-white"><%= @empire.crystal %></p>
-          </div>
-          <div class="bg-gray-800 rounded p-2">
-            <p class="text-xs text-gray-400">Energy</p>
-            <p class="text-lg font-bold text-white"><%= @empire.energy %></p>
-          </div>
-        </div>
-        <p class="text-sm text-gray-400">
-          Sectors: <%= @empire.sectors.count %> ·
-          Fleets: <%= @empire.fleets.count %>
-        </p>
-      </div>
-
-      <div class="bg-gray-900 rounded-lg p-4">
-        <h2 class="text-xl font-semibold text-white mb-3">Dispatch Fleet</h2>
-        <p id="selection-info" data-galaxy-map-target="selectionInfo" class="text-sm text-gray-400 mb-4">
-          Click a sector to select origin, then a target.
-        </p>
-
-        <%= form_with url: dispatch_fleet_path, class: "space-y-3" do |f| %>
-          <%= hidden_field_tag "fleet[mission]", "attack" %>
-          <%= hidden_field_tag "fleet[origin_sector_id]", nil, data: { galaxy_map_target: "originInput" } %>
-          <%= hidden_field_tag "fleet[target_sector_id]", nil, data: { galaxy_map_target: "targetInput" } %>
-
-          <div>
-            <%= label_tag "fleet[ships][light_fighter]", "Light Fighters", class: "block text-sm text-gray-400 mb-1" %>
-            <%= number_field_tag "fleet[ships][light_fighter]", 5, min: 0, class: "w-full bg-gray-800 text-white rounded px-3 py-2" %>
-          </div>
-
-          <%= f.submit "Dispatch", class: "w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded" %>
-        <% end %>
-
-        <p class="mt-3 text-sm text-gray-400">
-          Shipments to other commanders are sent from the
-          <%= link_to "Fleet screen", fleets_path, class: "text-blue-400 hover:text-blue-300" %>.
-        </p>
-      </div>
-
-      <div class="bg-gray-900 rounded-lg p-4">
-        <h2 class="text-xl font-semibold text-white mb-3">Your Sectors</h2>
-        <ul class="space-y-1 text-sm max-h-40 overflow-y-auto">
-          <% @empire.sectors.each do |sector| %>
-            <li>
-              <%= link_to "#{sector.name} (#{sector.coordinate})", galaxy_sector_path(@galaxy, sector), class: "text-blue-400 hover:text-blue-300" %>
-            </li>
-          <% end %>
-        </ul>
-      </div>
-
-      <div class="bg-gray-900 rounded-lg p-4">
-        <h2 class="text-xl font-semibold text-white mb-3">Your Fleets</h2>
-        <ul class="space-y-2 text-sm">
-          <% @fleets.each do |fleet| %>
-            <li class="text-gray-300">
-              <%= fleet.total_ships %> ships · <%= fleet.status %>
-              <% if fleet.target_sector %>
-                → <%= fleet.target_sector.coordinate %> (arrives tick <%= fleet.arrival_tick %>)
-              <% else %>
-                at <%= fleet.origin_sector.coordinate %>
-              <% end %>
-            </li>
-          <% end %>
-        </ul>
-      </div>
-    </aside>
-  </div>
+  </main>
 </div>

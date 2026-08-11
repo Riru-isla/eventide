@@ -4,7 +4,9 @@ import { Controller } from "@hotwired/stimulus"
 // a static field reads as depth without competing with the numbers.
 export default class extends Controller {
   connect() {
-    this.context = this.element.getContext("2d")
+    // NB: not `this.context` — Stimulus resolves this.element through its own
+    // this.context, and overwriting it detaches the controller from its scope.
+    this.ctx = this.element.getContext("2d")
     this.render = this.render.bind(this)
     this.render()
     window.addEventListener("resize", this.render)
@@ -23,7 +25,7 @@ export default class extends Controller {
     this.element.style.width = `${width}px`
     this.element.style.height = `${height}px`
 
-    const ctx = this.context
+    const ctx = this.ctx
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
     ctx.clearRect(0, 0, width, height)
 

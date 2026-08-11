@@ -1,0 +1,35 @@
+<%# Who else is out there. Cooperative game, so this is a roster and a shared push
+    toward the core — never a ranking. %>
+<% closest = galaxy.sectors.where.not(empire_id: nil).min_by(&:distance_to_center) %>
+
+<section class="mod" aria-label="Commanders">
+  <div class="mod-head">
+    <h2 class="mod-title">Commanders</h2>
+    <span class="mod-note"><%= pluralize(empires.size, "empire") %></span>
+  </div>
+
+  <div class="flex flex-col">
+    <% empires.each do |empire| %>
+      <div class="flex items-center justify-between gap-3 border-b border-line-soft px-4 py-2.5 last:border-b-0">
+        <span class="flex items-center gap-2.5 text-[0.8125rem]">
+          <span class="size-2.5 flex-none rounded-full"
+                style="background: <%= empire_colors[empire.id] %>"></span>
+          <span class="text-ink"><%= empire.player.name %></span>
+          <span class="label"><%= empire.role %></span>
+        </span>
+        <span class="num text-[0.6875rem] text-ink-3">
+          <%= pluralize(empire.sectors.size, "sector") %>
+        </span>
+      </div>
+    <% end %>
+  </div>
+
+  <% if closest %>
+    <div class="border-t border-line px-4 py-3">
+      <p class="label">Closest approach to the core</p>
+      <p class="num mt-1 text-[0.8125rem] text-amber">
+        <%= closest.distance_to_center.round(1) %> from centre · <%= closest.coordinate %>
+      </p>
+    </div>
+  <% end %>
+</section>

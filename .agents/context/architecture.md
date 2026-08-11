@@ -68,7 +68,8 @@
 - `PlanetStructuresController` — adds an upgrade to the planet's build queue.
 - `ResearchController` — the empire-wide research board.
 - `FleetsController` — the Fleet screen: what is under way, and dispatching shipments.
-- `GalaxiesController` — main map view.
+- `GalaxiesController` — the galaxy view. Preloads owners and planets for every
+  sector: the map reads both per sector and each was an N+1.
 - `SectorsController` — sector detail / planet management.
 - `FleetsController` — dispatch fleets from a sector to a target.
 - `ShipyardController` — the planet's shipyard: hull roster and build queue.

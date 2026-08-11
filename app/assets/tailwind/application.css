@@ -251,3 +251,12 @@
     animation: none !important;
   }
 }
+
+@layer components {
+  /* Galaxy map sectors sit on the drawn galaxy; the thin dark stroke keeps them
+     legible where the arms are brightest. */
+  .sector {
+    stroke: rgb(10 9 18 / 0.85);
+    stroke-width: 2;
+  }
+}

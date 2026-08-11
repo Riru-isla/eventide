@@ -8,7 +8,9 @@
 - [x] Tick-based resource income.
 - [x] Player signup and login with username/password (Devise, username-keyed).
 - [x] Session-based active empire (`session[:empire_id]`).
-- [x] Galaxy map (SVG) showing sectors, owners, and core.
+- [x] **Galaxy view**: a drawn galaxy — core bulge, spiral arms, star field on canvas —
+      with sectors laid over it, plus the commander roster and the closest approach to
+      the core. Read-only; fleets are dispatched from the Fleet screen.
 - [x] Sector detail view with resource generation rates.
 - [x] **Planet Overview** (the site root): what is building, extractor levels, the energy
       balance, and the planet's vital statistics.
