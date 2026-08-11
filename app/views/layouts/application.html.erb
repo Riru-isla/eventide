@@ -11,21 +11,32 @@
 
     <%= yield :head %>
 
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <main class="container mx-auto mt-28 px-5 flex">
+  <body class="bg-ground text-ink font-mono">
+    <canvas id="starfield" class="fixed inset-0 -z-10 pointer-events-none" aria-hidden="true"
+            data-controller="starfield"></canvas>
+
+    <% if user_signed_in? && current_empire.present? %>
+      <%= render "shared/hud", empire: current_empire %>
+    <% end %>
+
+    <div class="relative mx-auto w-full max-w-[1280px] px-5 pb-16">
+      <% if flash.any? %>
+        <div class="flex flex-col gap-2 pt-4">
+          <% flash.each do |type, message| %>
+            <p class="flash flash-<%= type == "notice" ? "notice" : "alert" %>"><%= message %></p>
+          <% end %>
+        </div>
+      <% end %>
+
       <%= yield %>
-    </main>
+    </div>
   </body>
 </html>

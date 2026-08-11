@@ -33,14 +33,17 @@ While the balance is **negative**, the empire suffers:
 The point is that a deficit is survivable but painful, so managing the balance is an
 ongoing decision rather than a wall.
 
-Consequences for the current code, to handle when M2 lands:
+This is **implemented** as of the planet screen:
 
-- `Empire#energy` stops being an accumulating column.
-- `ShipType#energy_cost` needs rethinking — probably becomes consumption or is
-  replaced by a third stored resource.
-- The Warden role bonus (`resource_bonus(:energy)`) should become an energy **output**
-  bonus, which gives the role a real identity: Wardens sustain higher mine levels
-  than anyone else.
+- `Empire#energy` no longer accumulates. `TickProcessor` collects metal and crystal only.
+  The column still exists and is unused.
+- `ShipType#energy_cost` is no longer charged — hulls cost metal and crystal. The column
+  still exists, pending a decision on a third stored resource.
+- The Warden bonus applies to **energy production** in `PlanetEconomy`, so a Warden
+  sustains higher structure levels than anyone else on the same buildings.
+
+Still open: whether a third stored resource (deuterium or similar) replaces the role
+`energy_cost` used to play in ship pricing.
 
 ## Construction takes time
 

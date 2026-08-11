@@ -35,7 +35,7 @@ RSpec.describe "Users", type: :request do
 
       user = User.last
       expect(user.players.count).to eq(1)
-      expect(response).to redirect_to(galaxy_path(galaxy))
+      expect(response).to redirect_to(planet_path)
     end
 
     it "rejects mismatched passwords" do

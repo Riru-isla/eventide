@@ -10,6 +10,9 @@
 | `Empire` | Player's in-game presence. Belongs to a `Player`, has a role, resources, and a home sector. |
 | `Player` | A commander within one galaxy. Belongs to a `User` and a `Galaxy`; has many empires. |
 | `NpcFaction` | AI faction controlling sectors; stronger closer to the core. |
+| `Planet` | The management layer: what an empire builds on. Belongs to an empire and sits in a sector. One per empire for now. |
+| `PlanetStructure` | A structure on a planet, stored as `kind` + `level`. |
+| `Structure` | **Not** an Active Record model — a static Ruby catalogue of every buildable structure and its balance numbers. |
 | `Fleet` | Group of ships moving between sectors or orbiting a sector. JSON `ships` stores counts by ship type name. |
 | `ShipType` | Static ship definitions with costs and stats. Some are role-locked. |
 
@@ -27,6 +30,9 @@
 - `EmpireFounder` — creates a player, empire, home sector, and starting fleet. Used by
   both galaxy seeding and signup so demo and real empires are identical.
 - `HomeSectorPlacement` — picks a starting sector from fixed ring slots around the core.
+- `PlanetEconomy` — the planet's numbers: energy production/draw, and resource output
+  reported as named contributions that sum to the total, so the screen can show where
+  each figure comes from. Balance changes belong here.
 - `TickProcessor` — runs each tick: resource collection, fleet arrival resolution, simple combat.
 
 ## Jobs
@@ -39,6 +45,9 @@
 
 - `Devise::SessionsController` — login/logout (default Devise, custom views under `app/views/users/sessions`).
 - `Users::RegistrationsController` — signup; also creates the player, empire, home sector, and starting fleet.
+- `PlanetsController` — the planet screen, and the site root.
+- `PlanetStructuresController` — upgrades a structure. Instant for now; this is where a
+  build queue entry gets created once game time is settled.
 - `GalaxiesController` — main map view.
 - `SectorsController` — sector detail / planet management.
 - `FleetsController` — dispatch fleets from a sector to a target.

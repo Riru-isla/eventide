@@ -1,0 +1,31 @@
+<%# Sections that do not exist yet are shown disabled rather than hidden, so the
+    shape of the game is visible while we build it out one section at a time. %>
+<% sections = [
+     { key: :overview,   label: "Overview" },
+     { key: :planet,     label: "Planet",   path: planet_path },
+     { key: :facilities, label: "Facilities" },
+     { key: :research,   label: "Research" },
+     { key: :shipyard,   label: "Shipyard" },
+     { key: :fleet,      label: "Fleet" },
+     { key: :galaxy,     label: "Galaxy",   path: Galaxy.first && galaxy_path(Galaxy.first) }
+   ] %>
+
+<nav aria-label="Empire sections">
+  <ul class="flex flex-col gap-px max-lg:flex-row max-lg:flex-wrap">
+    <% sections.each do |section| %>
+      <li>
+        <% if section[:path] %>
+          <%= link_to section[:path],
+                      class: "nav-item",
+                      "aria-current": (section[:key] == current ? "page" : nil) do %>
+            <span class="nav-dot"></span><%= section[:label] %>
+          <% end %>
+        <% else %>
+          <span class="nav-item" aria-disabled="true" title="Not built yet">
+            <span class="nav-dot"></span><%= section[:label] %>
+          </span>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+</nav>

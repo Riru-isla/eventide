@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_03_171837) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_11_093000) do
   create_table "empires", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "crystal"
@@ -58,6 +58,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_171837) do
     t.integer "tech_level"
     t.datetime "updated_at", null: false
     t.index ["galaxy_id"], name: "index_npc_factions_on_galaxy_id"
+  end
+
+  create_table "planet_structures", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "kind", null: false
+    t.integer "level", default: 0, null: false
+    t.integer "planet_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["planet_id", "kind"], name: "index_planet_structures_on_planet_id_and_kind", unique: true
+    t.index ["planet_id"], name: "index_planet_structures_on_planet_id"
+  end
+
+  create_table "planets", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "empire_id", null: false
+    t.string "name", null: false
+    t.integer "sector_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["empire_id"], name: "index_planets_on_empire_id"
+    t.index ["sector_id"], name: "index_planets_on_sector_id", unique: true
   end
 
   create_table "players", force: :cascade do |t|
@@ -119,6 +139,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_171837) do
   add_foreign_key "fleets", "empires"
   add_foreign_key "fleets", "galaxies"
   add_foreign_key "npc_factions", "galaxies"
+  add_foreign_key "planet_structures", "planets"
+  add_foreign_key "planets", "empires"
+  add_foreign_key "planets", "sectors"
   add_foreign_key "players", "galaxies"
   add_foreign_key "players", "users"
   add_foreign_key "sectors", "empires"

@@ -27,7 +27,7 @@ class Users::RegistrationsController < Devise::RegistrationsController
   end
 
   def after_sign_up_path_for(_resource)
-    galaxy_path(Galaxy.first)
+    planet_path
   end
 
   private

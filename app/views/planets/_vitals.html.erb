@@ -1,0 +1,32 @@
+<section class="mod" aria-label="Planet">
+  <div class="grid place-items-center p-[22px]">
+    <%# The world itself: a lit face, a terminator, and a thin atmosphere ring. %>
+    <div class="aspect-square w-full rounded-full relative"
+         style="background: radial-gradient(circle at 34% 30%, #6e5a3a 0%, #4a3b2a 32%, #2a2340 62%, #12101f 88%);
+                box-shadow: inset -22px -14px 44px rgba(6,5,14,.92),
+                            inset 8px 6px 22px rgba(245,184,65,.10),
+                            0 0 46px rgba(245,184,65,.07);">
+      <span class="absolute -inset-[7px] rounded-full border border-line opacity-75"></span>
+    </div>
+  </div>
+
+  <div class="px-4 pb-[18px] text-center">
+    <h1 class="text-[1.75rem] font-semibold tracking-[0.14em]"><%= planet.name %></h1>
+    <p class="label mt-1">Sector <%= planet.sector.coordinate %> · <%= planet.sector.kind.humanize %></p>
+  </div>
+
+  <dl class="border-t border-line-soft">
+    <% [
+         [ "Distance to core", planet.sector.distance_to_center.round(1) ],
+         [ "Metal deposit",    planet.sector.metal_rate ],
+         [ "Crystal seams",    planet.sector.crystal_rate ],
+         [ "Defence",          planet.sector.defense_strength ],
+         [ "Structures",       "#{planet.structures.count(&:built?)} / #{Structure.all.size}" ]
+       ].each do |term, value| %>
+      <div class="flex justify-between gap-3 border-b border-line-soft px-4 py-2.5 text-[0.8125rem] last:border-b-0">
+        <dt class="tracking-[0.06em] text-ink-3"><%= term %></dt>
+        <dd class="num text-ink-2"><%= value %></dd>
+      </div>
+    <% end %>
+  </dl>
+</section>

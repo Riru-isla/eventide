@@ -1,1 +1,253 @@
 @import "tailwindcss";
+
+/* Eventide HUD.
+   The palette takes its cue from the name: eventide is twilight, so the ground is
+   a deep indigo-violet and the single accent is amber — the last light. Amber also
+   stands for energy, which is what every other number on the planet screen depends
+   on. Deliberately not cyan-on-black. */
+@theme {
+  --color-ground: #0a0912;
+  --color-ground-2: #0d0b18;
+  --color-panel: #16132a;
+  --color-panel-2: #1c1836;
+  --color-line: #2c2650;
+  --color-line-soft: #211d3c;
+
+  --color-ink: #eae6f7;
+  --color-ink-2: #a49cc4;
+  --color-ink-3: #6b6390;
+
+  --color-amber: #f5b841;
+  --color-amber-2: #c08a21;
+  --color-amber-dim: #4a360f;
+
+  --color-metal: #a9b6cc;
+  --color-crystal: #79d2e2;
+  --color-bad: #e2586b;
+  --color-bad-dim: #4a1a25;
+  --color-good: #57be8e;
+
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --font-sans: "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-ground);
+    color: var(--color-ink);
+    font-family: var(--font-mono);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-amber);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Notched console module — the base surface for every panel. Not a rounded card. */
+  .mod {
+    background-color: var(--color-panel);
+    border: 1px solid var(--color-line);
+    clip-path: polygon(
+      0 10px, 10px 0, 100% 0,
+      100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%
+    );
+  }
+
+  .mod-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--color-line-soft);
+  }
+
+  .mod-title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--color-ink-2);
+  }
+
+  .mod-note {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-ink-3);
+  }
+
+  .label {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--color-ink-3);
+  }
+
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Left navigation rail */
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    width: 100%;
+    padding: 0.5625rem 0.75rem;
+    border-left: 2px solid transparent;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--color-ink-3);
+    transition: color 0.15s, background-color 0.15s, border-color 0.15s;
+  }
+  .nav-item:hover {
+    color: var(--color-ink-2);
+    background-color: var(--color-panel);
+  }
+  .nav-item[aria-current="page"] {
+    color: var(--color-amber);
+    border-left-color: var(--color-amber);
+    background-color: var(--color-panel);
+  }
+  .nav-item[aria-disabled="true"] {
+    color: var(--color-ink-3);
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .nav-item[aria-disabled="true"]:hover {
+    background-color: transparent;
+    color: var(--color-ink-3);
+  }
+
+  .nav-dot {
+    width: 5px;
+    height: 5px;
+    flex: none;
+    background-color: currentColor;
+  }
+
+  /* Structure rows */
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    width: 100%;
+    padding: 0.8125rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--color-line-soft);
+    border-left: 2px solid transparent;
+    transition: background-color 0.15s, border-color 0.15s;
+  }
+  .row:hover {
+    background-color: var(--color-panel-2);
+  }
+  .row[aria-current="true"] {
+    background-color: var(--color-panel-2);
+    border-left-color: var(--color-amber);
+  }
+
+  .lvl-chip {
+    font-size: 0.6875rem;
+    letter-spacing: 0.1em;
+    color: var(--color-amber);
+    border: 1px solid var(--color-amber-dim);
+    padding: 1px 6px;
+    flex: none;
+  }
+  .lvl-chip[data-unbuilt="true"] {
+    color: var(--color-ink-3);
+    border-color: var(--color-line);
+  }
+
+  /* Energy bus */
+  .bar {
+    position: relative;
+    height: 30px;
+    background-color: var(--color-ground-2);
+    border: 1px solid var(--color-line);
+    overflow: hidden;
+  }
+  .bar-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    background: linear-gradient(90deg, var(--color-amber-dim), var(--color-amber-2));
+  }
+  .bar-draw {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: var(--color-ink);
+    box-shadow: 0 0 8px rgb(234 230 247 / 0.7);
+  }
+  .bar-over {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+      -45deg,
+      rgb(226 88 107 / 0.55) 0 5px,
+      rgb(226 88 107 / 0.18) 5px 10px
+    );
+  }
+
+  /* Primary action */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.4375rem 0.875rem;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--color-amber);
+    background-color: transparent;
+    border: 1px solid var(--color-amber-dim);
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+    cursor: pointer;
+  }
+  .btn:hover:not(:disabled) {
+    background-color: var(--color-amber-dim);
+    color: var(--color-ink);
+    border-color: var(--color-amber-2);
+  }
+  .btn:disabled {
+    color: var(--color-ink-3);
+    border-color: var(--color-line);
+    cursor: not-allowed;
+  }
+
+  .flash {
+    padding: 0.6875rem 1rem;
+    font-size: 0.8125rem;
+    border: 1px solid;
+    clip-path: polygon(
+      0 8px, 8px 0, 100% 0,
+      100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%
+    );
+  }
+  .flash-notice {
+    color: var(--color-good);
+    border-color: var(--color-good);
+    background-color: rgb(87 190 142 / 0.08);
+  }
+  .flash-alert {
+    color: var(--color-bad);
+    border-color: var(--color-bad);
+    background-color: var(--color-bad-dim);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

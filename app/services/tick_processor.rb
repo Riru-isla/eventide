@@ -13,21 +13,36 @@ class TickProcessor
 
   private
 
+  # Income comes from two places: the empire's planet, where structure levels and
+  # the energy balance decide the yield, and any other sector it holds, which still
+  # contributes its flat rate. Energy is not collected — it is a balance on the
+  # planet, not a stored resource.
   def collect_resources
-    @galaxy.empires.find_each do |empire|
-      income = { metal: 0, crystal: 0, energy: 0 }
-
-      empire.sectors.find_each do |sector|
-        income[:metal] += (sector.metal_rate * empire.resource_bonus(:metal)).to_i
-        income[:crystal] += (sector.crystal_rate * empire.resource_bonus(:crystal)).to_i
-        income[:energy] += (sector.energy_rate * empire.resource_bonus(:energy)).to_i
-      end
+    @galaxy.empires.includes(planet: [ :structures, :sector ]).find_each do |empire|
+      income = planet_income(empire)
+      add_sector_income(empire, income)
 
       empire.update!(
         metal: empire.metal + income[:metal],
-        crystal: empire.crystal + income[:crystal],
-        energy: empire.energy + income[:energy]
+        crystal: empire.crystal + income[:crystal]
       )
+    end
+  end
+
+  def planet_income(empire)
+    return { metal: 0, crystal: 0 } unless empire.planet
+
+    economy = empire.planet.economy
+
+    { metal: economy.output(:metal), crystal: economy.output(:crystal) }
+  end
+
+  def add_sector_income(empire, income)
+    planet_sector_id = empire.planet&.sector_id
+
+    empire.sectors.where.not(id: planet_sector_id).find_each do |sector|
+      income[:metal] += (sector.metal_rate * empire.resource_bonus(:metal)).to_i
+      income[:crystal] += (sector.crystal_rate * empire.resource_bonus(:crystal)).to_i
     end
   end
 

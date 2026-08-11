@@ -1,0 +1,34 @@
+<% definition = structure.definition %>
+<% cost = structure.upgrade_cost %>
+
+<%= link_to planet_path(structure: structure.kind),
+            class: "row", "aria-current": selected.to_s do %>
+  <span class="flex min-w-0 items-baseline gap-2.5">
+    <span class="tracking-[0.06em] text-ink"><%= definition.name %></span>
+    <span class="lvl-chip" data-unbuilt="<%= (!structure.built?).to_s %>">
+      LV <%= structure.level %>
+    </span>
+  </span>
+
+  <span class="num col-start-1 text-[0.6875rem] tracking-[0.04em] text-ink-3">
+    <% if definition.extraction? %>
+      <b class="font-semibold <%= structure_glyph_tone(definition) %>">
+        <%= number_with_sign(economy.output(definition.resource)) %>
+      </b>
+      <%= definition.resource %> / tick · <span class="text-amber-2"><%= definition.energy_draw(structure.level) %> ⚡</span>
+    <% elsif definition.energy? %>
+      <b class="font-semibold text-amber"><%= number_with_sign(definition.energy_output(structure.level)) %></b>
+      energy · <span class="text-good">exempt from throttle</span>
+    <% else %>
+      <b class="font-semibold text-ink-2"><%= definition.summary.split(".").first %></b>
+      <% if definition.energy_draw(structure.level).positive? %>
+        · <span class="text-amber-2"><%= definition.energy_draw(structure.level) %> ⚡</span>
+      <% end %>
+    <% end %>
+  </span>
+
+  <span class="num row-span-2 text-right text-[0.6875rem] leading-[1.7] text-ink-3">
+    <span class="text-metal"><%= number_with_delimiter(cost[:metal]) %> M</span><br>
+    <span class="text-crystal"><%= number_with_delimiter(cost[:crystal]) %> C</span>
+  </span>
+<% end %>

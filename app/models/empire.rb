@@ -6,6 +6,7 @@ class Empire < ApplicationRecord
   belongs_to :home_sector, class_name: "Sector", optional: true
   has_many :sectors, dependent: :nullify
   has_many :fleets, dependent: :destroy
+  has_one :planet, dependent: :destroy
 
   validates :role, inclusion: { in: ROLES }
   validates :metal, :crystal, :energy, numericality: { greater_than_or_equal_to: 0 }

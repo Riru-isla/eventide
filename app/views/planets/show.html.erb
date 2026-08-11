@@ -1,0 +1,53 @@
+<% content_for :title, "#{@planet.name} — Eventide" %>
+
+<div class="mt-5 grid items-start gap-5 lg:grid-cols-[148px_minmax(0,1fr)]">
+
+  <%= render "shared/nav", current: :planet %>
+
+  <main class="flex min-w-0 flex-col gap-5">
+
+    <% if @economy.deficit? %>
+      <div class="flex items-center gap-3.5 border border-bad bg-bad-dim px-4 py-2.5"
+           style="clip-path: polygon(0 8px, 8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%)"
+           role="status">
+        <span class="flex-none text-[0.6875rem] font-bold uppercase tracking-[0.18em] text-bad">Deficit</span>
+        <p class="font-sans text-[0.8125rem] text-ink">
+          <%= @planet.name %> draws more energy than it produces. Extraction is throttled to
+          <%= (PlanetEconomy::THROTTLE * 100).round %>% until the balance is restored — the Solar
+          Array is exempt, so raise it first.
+        </p>
+      </div>
+    <% end %>
+
+    <div class="grid items-start gap-5 md:grid-cols-[minmax(0,300px)_minmax(0,1fr)]">
+
+      <%= render "planets/vitals", planet: @planet, economy: @economy %>
+      <%= render "planets/energy_bus", economy: @economy %>
+
+    </div>
+
+    <section class="mod" aria-label="Structures">
+      <div class="mod-head">
+        <h2 class="mod-title">Structures</h2>
+        <span class="mod-note">Select to inspect</span>
+      </div>
+
+      <div class="flex flex-col">
+        <% @economy.structures.each do |structure| %>
+          <%= render "planets/structure_row",
+                     structure: structure, economy: @economy, selected: structure.kind == @selected.kind %>
+        <% end %>
+      </div>
+    </section>
+
+    <div class="grid items-start gap-5 md:grid-cols-2">
+      <%= render "planets/breakdown", economy: @economy, structure: @selected %>
+      <%= render "planets/upgrade", economy: @economy, structure: @selected, empire: @empire %>
+    </div>
+
+    <p class="font-sans text-[0.8125rem] text-ink-2">
+      Upgrades are instant while game time is still being settled. Once it is, these become
+      queued builds and the Robotics Bay starts mattering.
+    </p>
+  </main>
+</div>

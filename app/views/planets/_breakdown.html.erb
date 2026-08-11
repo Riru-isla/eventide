@@ -1,0 +1,45 @@
+<% definition = structure.definition %>
+<% resource = definition.extraction? ? definition.resource : nil %>
+
+<section class="mod" aria-label="Output breakdown">
+  <div class="mod-head">
+    <h2 class="mod-title">
+      <%= resource ? "#{resource.to_s.capitalize} output" : definition.name %>
+    </h2>
+    <span class="mod-note">Where the number comes from</span>
+  </div>
+
+  <div class="p-4">
+    <% if resource %>
+      <div class="flex flex-col">
+        <% economy.contributions(resource).each do |line| %>
+          <div class="flex justify-between gap-3.5 border-b border-dotted border-line-soft py-[7px] text-[0.8125rem]">
+            <span class="text-ink-2"><%= line.label %></span>
+            <span class="num <%= line.value.negative? ? "text-bad" : (line.value.positive? ? "text-good" : "text-ink-3") %>">
+              <%= line.value.zero? ? "—" : number_with_sign(line.value) %>
+            </span>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="mt-1 flex justify-between gap-3.5 border-t border-line pt-3">
+        <span class="label self-center font-semibold">Per tick</span>
+        <span class="num text-xl font-bold"><%= number_with_sign(economy.output(resource)) %></span>
+      </div>
+    <% else %>
+      <p class="font-sans text-[0.8125rem] text-ink-2"><%= definition.summary %></p>
+
+      <div class="mt-4 flex flex-col">
+        <% [
+             [ "Energy produced", definition.energy_output(structure.level) ],
+             [ "Energy drawn", definition.energy_draw(structure.level) ]
+           ].reject { |_, value| value.zero? }.each do |label, value| %>
+          <div class="flex justify-between gap-3.5 border-b border-dotted border-line-soft py-[7px] text-[0.8125rem]">
+            <span class="text-ink-2"><%= label %></span>
+            <span class="num text-ink"><%= number_with_delimiter(value) %></span>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</section>

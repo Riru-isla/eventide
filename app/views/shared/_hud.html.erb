@@ -1,0 +1,44 @@
+<% economy = empire.planet&.economy %>
+<% balance = economy&.energy_balance %>
+
+<header class="sticky top-0 z-20 border-b border-line bg-ground-2/95 backdrop-blur">
+  <div class="mx-auto flex w-full max-w-[1280px] flex-wrap items-center gap-x-7 gap-y-3 px-5 py-2.5">
+
+    <div class="mr-auto flex items-baseline gap-2.5">
+      <%= link_to planet_path, class: "text-xl font-bold tracking-[0.28em] text-amber" do %>EVENTIDE<% end %>
+      <span class="label"><%= empire.player.name %> · <%= empire.role %> doctrine</span>
+    </div>
+
+    <%= render "shared/resource",
+               glyph: :metal, tone: "text-metal", amount: empire.metal,
+               rate: economy&.output(:metal), unit: "/ tick" %>
+
+    <%= render "shared/resource",
+               glyph: :crystal, tone: "text-crystal", amount: empire.crystal,
+               rate: economy&.output(:crystal), unit: "/ tick" %>
+
+    <% if balance %>
+      <div class="flex items-center gap-2.5">
+        <svg class="size-[22px] flex-none" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M13.5 2 5.5 13.5H11L10.5 22l8-11.5H13z" stroke="#f5b841" stroke-width="1.4" stroke-linejoin="round"/>
+        </svg>
+        <span class="flex flex-col leading-tight">
+          <span class="num text-[0.9375rem] font-semibold <%= balance.negative? ? "text-bad" : "text-good" %>">
+            <%= number_with_sign(balance) %>
+          </span>
+          <span class="text-[0.6875rem] text-ink-3">energy balance</span>
+        </span>
+      </div>
+    <% end %>
+
+    <div class="text-right">
+      <span class="num block text-[0.9375rem] tracking-[0.06em] text-ink-2">
+        TICK <%= number_with_delimiter(empire.galaxy.current_tick) %>
+      </span>
+      <span class="label">
+        <%= link_to "Log out", destroy_user_session_path, data: { turbo_method: :delete },
+                    class: "hover:text-ink-2" %>
+      </span>
+    </div>
+  </div>
+</header>

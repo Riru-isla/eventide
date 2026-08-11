@@ -32,6 +32,42 @@ RSpec.describe TickProcessor, type: :service do
       expect(empire.reload.metal).to eq(500 + 150)
     end
 
+    it "takes planet income from structure levels" do
+      empire.home_sector.update!(metal_rate: 100, crystal_rate: 0)
+      empire.planet.structures.find_by(kind: "metal_extractor").update!(level: 3)
+      empire.planet.structures.find_by(kind: "solar_array").update!(level: 20)
+
+      described_class.new(galaxy).process
+
+      # base 100 x level 3 = 300, plus 50% foundry doctrine
+      expect(empire.reload.metal).to eq(500 + 450)
+    end
+
+    it "throttles planet income while the planet is in energy deficit" do
+      empire.home_sector.update!(metal_rate: 100, crystal_rate: 0)
+      empire.planet.structures.find_by(kind: "metal_extractor").update!(level: 3)
+      empire.planet.structures.find_by(kind: "solar_array").update!(level: 0)
+
+      described_class.new(galaxy).process
+
+      expect(empire.reload.metal).to eq(500 + (450 * PlanetEconomy::THROTTLE).round)
+    end
+
+    it "still collects flat rates from sectors without a planet" do
+      empire.home_sector.update!(metal_rate: 0, crystal_rate: 0)
+      empire.planet.structures.find_by(kind: "solar_array").update!(level: 20)
+      captured = galaxy.sectors.find_by(kind: "empty")
+      captured.update!(empire: empire, metal_rate: 40, crystal_rate: 0)
+
+      described_class.new(galaxy).process
+
+      expect(empire.reload.metal).to eq(500 + 60) # 40 with the foundry bonus
+    end
+
+    it "does not accumulate energy" do
+      expect { described_class.new(galaxy).process }.not_to change { empire.reload.energy }
+    end
+
     it "resolves fleet arrivals and captures NPC sectors" do
       origin = empire.home_sector
       target = galaxy.sectors.npc.first

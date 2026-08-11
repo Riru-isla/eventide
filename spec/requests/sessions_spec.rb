@@ -21,9 +21,9 @@ RSpec.describe "Sessions", type: :request do
   end
 
   describe "POST /users/sign_in" do
-    it "logs in with valid credentials" do
+    it "logs in with valid credentials and lands on the planet" do
       post user_session_path, params: { user: { username: user.username, password: "eventide" } }
-      expect(response).to redirect_to(galaxy_path(galaxy))
+      expect(response).to redirect_to(planet_path)
     end
 
     it "rejects invalid credentials" do

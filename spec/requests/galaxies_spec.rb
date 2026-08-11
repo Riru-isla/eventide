@@ -14,18 +14,11 @@ RSpec.describe "Galaxies", type: :request do
 
   before { sign_in(user) }
 
-  describe "GET /" do
-    it "renders the galaxy map" do
-      get root_path
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include(galaxy.name)
-    end
-  end
-
   describe "GET /galaxies/:id" do
-    it "renders the galaxy" do
+    it "renders the galaxy map" do
       get galaxy_path(galaxy)
       expect(response).to have_http_status(:ok)
+      expect(response.body).to include(galaxy.name)
       expect(response.body).to include("Ada")
     end
   end

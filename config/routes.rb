@@ -9,8 +9,12 @@ Rails.application.routes.draw do
   # get "manifest" => "pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "pwa#service_worker", as: :pwa_service_worker
 
-  # Defines the root path route ("/")
-  root "galaxies#show"
+  # The planet is the main management screen, so it is also the landing page.
+  root "planets#show"
+
+  resource :planet, only: [ :show ] do
+    resources :structures, only: [ :update ], controller: "planet_structures"
+  end
 
   resources :galaxies, only: [ :show ] do
     resources :fleets, only: [ :create ]

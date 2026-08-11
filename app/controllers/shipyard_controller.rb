@@ -11,13 +11,14 @@ class ShipyardController < ApplicationController
       return
     end
 
+    # Energy is a planet-side balance rather than a stored resource, so hulls are
+    # paid for in metal and crystal only.
     cost = {
       metal: ship_type.metal_cost * quantity,
-      crystal: ship_type.crystal_cost * quantity,
-      energy: ship_type.energy_cost * quantity
+      crystal: ship_type.crystal_cost * quantity
     }
 
-    if current_empire.metal < cost[:metal] || current_empire.crystal < cost[:crystal] || current_empire.energy < cost[:energy]
+    if current_empire.metal < cost[:metal] || current_empire.crystal < cost[:crystal]
       redirect_to galaxy_sector_path(@galaxy, @sector), alert: "Not enough resources."
       return
     end
@@ -27,8 +28,7 @@ class ShipyardController < ApplicationController
     ActiveRecord::Base.transaction do
       current_empire.update!(
         metal: current_empire.metal - cost[:metal],
-        crystal: current_empire.crystal - cost[:crystal],
-        energy: current_empire.energy - cost[:energy]
+        crystal: current_empire.crystal - cost[:crystal]
       )
 
       fleet = @galaxy.fleets.find_by(empire: current_empire, origin_sector: @sector, status: "orbiting")

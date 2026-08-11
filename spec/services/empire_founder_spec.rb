@@ -28,6 +28,21 @@ RSpec.describe EmpireFounder, type: :service do
     expect(fleet.ships).to eq("Fighter" => 10)
   end
 
+  it "creates a planet on the home sector with starting structures" do
+    empire = found
+
+    planet = empire.planet
+    expect(planet).to be_present
+    expect(planet.sector).to eq(empire.home_sector)
+    expect(planet.name).to include("Ada")
+
+    expect(planet.structures.pluck(:kind, :level).to_h).to eq(Structure::STARTING_LEVELS)
+  end
+
+  it "starts the planet with a positive energy balance" do
+    expect(found.planet.economy.energy_balance).to be_positive
+  end
+
   it "clears any NPC faction from the claimed home sector" do
     faction = galaxy.npc_factions.first
     galaxy.sectors.where(empire_id: nil).find_each { |sector| sector.update!(npc_faction: faction) }

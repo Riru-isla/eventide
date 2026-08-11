@@ -9,7 +9,11 @@
 - [x] Player signup and login with username/password (Devise, username-keyed).
 - [x] Session-based active empire (`session[:empire_id]`).
 - [x] Galaxy map (SVG) showing sectors, owners, and core.
-- [x] Sector / planet detail view with resource generation rates.
+- [x] Sector detail view with resource generation rates.
+- [x] **Planet screen** (the site root): structures with levels, an energy bus showing
+      production vs draw, and an output breakdown showing every contributing modifier.
+- [x] Structure upgrades that cost resources and change income (instant, no queue yet).
+- [x] Energy as a balance: a deficit throttles extraction to 30% and exempts energy buildings.
 - [x] Fleet dispatch from owned sectors to targets.
 - [x] Basic combat: attacker power vs defender strength.
 - [x] Ship construction at owned sectors (instant build).
@@ -28,7 +32,12 @@
 
 ## Known Rough Edges
 
-- Ship construction is instant; no build queue yet.
+- Ship construction and structure upgrades are instant; no build queue yet. The Robotics
+  Bay's build-speed effect therefore does nothing.
+- The Overview, Facilities, Research, Shipyard and Fleet nav sections are placeholders
+  shown disabled.
+- `ShipType#energy_cost` and `Empire#energy` are dead columns since energy became a
+  balance.
 - **Fleet dispatch does not check or spend ships.** `FleetsController#create` takes
   ship counts straight from `params[:fleet][:ships]`, so any player can dispatch an
   arbitrarily large fleet for free and take the core on the first tick. Until this is
