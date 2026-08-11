@@ -1,5 +1,9 @@
 <% current_tick = planet.sector.galaxy.current_tick %>
 
+<% if inbound.any? %>
+  <%= render "planets/inbound", inbound: inbound, empire: empire, current_tick: current_tick %>
+<% end %>
+
 <div class="grid items-start gap-5 md:grid-cols-[minmax(0,300px)_minmax(0,1fr)]">
 
   <div class="flex flex-col gap-5">

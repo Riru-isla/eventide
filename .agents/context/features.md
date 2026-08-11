@@ -35,6 +35,9 @@
       dispatch, delivered on arrival within the recipient's storage cap, and the fleet
       turns around and comes home by itself.
 - [x] **Fleet screen**: what is under way, with holds and time out.
+- [x] **Inbound card** on the Overview: appears only when something is on its way,
+      showing shipments and their holds, your own fleets returning, and hostile fleets
+      flagged separately.
 - [x] Basic combat: attacker power vs defender strength.
 - [x] **Shipyard**: five hulls gated on Shipyard level and research, built in a timed
       queue and delivered into the planet's garrison.

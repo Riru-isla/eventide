@@ -10,9 +10,13 @@ class PlanetsController < ApplicationController
 
   before_action :require_planet
 
-  # The planet's overview: what is building, what it produces, and its vital statistics.
+  # The planet's overview: what is building, what it produces, its vital statistics,
+  # and anything about to arrive.
   def show
     @economy = @planet.economy
+    @inbound = Fleet.bound_for(@planet.sector)
+                    .includes(:origin_sector, :target_sector, empire: :player)
+                    .order(:arrival_tick)
   end
 
   def structures

@@ -102,6 +102,68 @@ RSpec.describe "Planets", type: :request do
     end
   end
 
+  describe "the inbound card" do
+    let(:other) do
+      EmpireFounder.new(galaxy: galaxy, user: create(:user), name: "Ben", role: "warden").call
+    end
+
+    def incoming(mission: "transport", cargo: {}, from: other, ticks: 4)
+      galaxy.fleets.create!(
+        empire: from, origin_sector: from.planet.sector, target_sector: planet.sector,
+        arrival_tick: galaxy.current_tick + ticks, status: "moving", mission: mission,
+        ships: { "transport" => 2 }, cargo: cargo
+      )
+    end
+
+    it "stays hidden when nothing is on its way" do
+      get planet_path
+
+      expect(response.body).not_to include("Inbound")
+    end
+
+    it "announces a shipment from another commander, with its hold" do
+      incoming(cargo: { "metal" => 750 })
+
+      get planet_path
+
+      expect(response.body).to include("Inbound")
+      expect(response.body).to include("Shipment")
+      expect(response.body).to include("Ben")
+      expect(response.body).to include("750")
+      expect(response.body).to include("4 ticks out")
+    end
+
+    it "flags a hostile fleet differently from a shipment" do
+      incoming(mission: "attack", from: other)
+
+      get planet_path
+
+      expect(response.body).to include("Hostile fleet")
+      expect(response.body).to include("text-bad")
+    end
+
+    it "counts the player's own fleet on its way home" do
+      galaxy.fleets.create!(
+        empire: empire, origin_sector: planet.sector, target_sector: other.planet.sector,
+        arrival_tick: galaxy.current_tick + 2, status: "returning", mission: "transport",
+        ships: { "transport" => 1 }, cargo: { "metal" => 40 }
+      )
+
+      get planet_path
+
+      expect(response.body).to include("Your fleet returning")
+      expect(response.body).to include("40")
+    end
+
+    it "says a fleet is arriving now once its tick has come" do
+      incoming(ticks: 0)
+
+      get planet_path
+
+      expect(response.body).to include("arriving now")
+    end
+  end
+
   describe "GET /planet/resources" do
     it "lists extraction and energy structures, and not facilities" do
       get planet_structures_path(section: "resources")

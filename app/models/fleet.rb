@@ -16,7 +16,14 @@ class Fleet < ApplicationRecord
   scope :moving, -> { where(status: "moving") }
   scope :returning, -> { where(status: "returning") }
   scope :under_way, -> { where(status: %w[moving returning]) }
-  scope :inbound_to, ->(sector) { moving.where(target_sector: sector) }
+  # Everything whose next landfall is this sector: fleets heading here, and this
+  # sector's own fleets on their way back.
+  scope :bound_for, ->(sector) {
+    under_way.where(
+      "(status = 'moving' AND target_sector_id = :id) OR (status = 'returning' AND origin_sector_id = :id)",
+      id: sector.id
+    )
+  }
 
   validates :status, inclusion: { in: STATUSES }
   validates :mission, inclusion: { in: MISSIONS }

@@ -6,7 +6,8 @@
 
   <main class="min-w-0">
     <%= turbo_frame_tag "planet-main", class: "flex flex-col gap-5" do %>
-      <%= render "planets/overview", planet: @planet, economy: @economy, empire: @empire %>
+      <%= render "planets/overview", planet: @planet, economy: @economy,
+                 empire: @empire, inbound: @inbound %>
     <% end %>
   </main>
 </div>

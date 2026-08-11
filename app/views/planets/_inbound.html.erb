@@ -1,0 +1,51 @@
+<%# Only rendered when something is actually on its way, so the overview stays quiet
+    when nothing needs attention. %>
+<% hostile = inbound.any? { |fleet| fleet.mission == "attack" && fleet.empire_id != empire.id } %>
+
+<section class="mod <%= "border-bad" if hostile %>" aria-label="Inbound">
+  <div class="mod-head">
+    <h2 class="mod-title <%= "text-bad" if hostile %>">Inbound</h2>
+    <span class="mod-note"><%= pluralize(inbound.size, "fleet") %> arriving</span>
+  </div>
+
+  <div class="flex flex-col">
+    <% inbound.each do |fleet| %>
+      <% own = fleet.empire_id == empire.id %>
+      <% returning = fleet.status == "returning" %>
+      <% threat = fleet.mission == "attack" && !own %>
+      <% remaining = [ fleet.arrival_tick.to_i - current_tick, 0 ].max %>
+
+      <div class="flex flex-wrap items-baseline justify-between gap-x-3.5 gap-y-1
+                  border-b border-line-soft px-4 py-3 last:border-b-0
+                  <%= "bg-bad-dim" if threat %>">
+        <span class="text-[0.8125rem] tracking-[0.06em]">
+          <% if threat %>
+            <b class="font-semibold text-bad">Hostile fleet</b>
+            <span class="text-ink-2">from <%= fleet.empire.player.name %></span>
+          <% elsif returning && own %>
+            <b class="font-semibold text-ink-2">Your fleet returning</b>
+            <span class="text-ink-3">· <%= pluralize(fleet.total_ships, "ship") %></span>
+          <% elsif own %>
+            <b class="font-semibold text-ink-2">Your fleet</b>
+            <span class="text-ink-3">· <%= pluralize(fleet.total_ships, "ship") %></span>
+          <% else %>
+            <b class="font-semibold text-crystal">Shipment</b>
+            <span class="text-ink-2">from <%= fleet.empire.player.name %></span>
+          <% end %>
+
+          <% if fleet.carrying? %>
+            <span class="num text-ink-3">
+              ·
+              <% fleet.manifest.each_with_index do |(resource, amount), index| %><%= ", " if index.positive? %><span
+                class="<%= resource_tone(resource) %>"><%= number_with_delimiter(amount) %> <%= resource %></span><% end %>
+            </span>
+          <% end %>
+        </span>
+
+        <span class="num text-[0.6875rem] tracking-[0.08em] <%= threat ? "text-bad" : "text-ink-3" %>">
+          <%= remaining.zero? ? "arriving now" : "#{pluralize(remaining, 'tick')} out" %>
+        </span>
+      </div>
+    <% end %>
+  </div>
+</section>
