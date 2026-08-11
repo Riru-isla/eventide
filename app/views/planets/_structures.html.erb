@@ -25,7 +25,7 @@
     <% structures.each do |structure| %>
       <%= render "planets/structure_row",
                  structure: structure, economy: economy, section: section,
-                 selected: structure.kind == selected.kind %>
+                 planet_queue: planet.queue, selected: structure.kind == selected.kind %>
     <% end %>
   </div>
 </section>

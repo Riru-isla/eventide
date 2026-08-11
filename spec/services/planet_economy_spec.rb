@@ -56,7 +56,7 @@ RSpec.describe PlanetEconomy, type: :service do
         "Base deposit",
         "Metal Extractor lv 3",
         "Foundry doctrine",
-        "Refinery lv 2"
+        "Metal Refinery lv 2"
       ])
       expect(lines.sum(&:value).round).to eq(economy.output(:metal))
     end
@@ -69,10 +69,21 @@ RSpec.describe PlanetEconomy, type: :service do
       expect(economy.output(:metal)).to eq(153)
     end
 
-    it "omits the refinery line for crystal" do
-      labels = economy.contributions(:crystal).map(&:label)
+    it "credits each resource to its own refinery" do
+      expect(economy.contributions(:metal).map(&:label)).to include("Metal Refinery lv 2")
+      expect(economy.contributions(:crystal).map(&:label)).to include("Crystal Refinery lv 0")
+    end
 
-      expect(labels).not_to include(a_string_matching(/Refinery/))
+    it "adds a crystal refinery bonus to crystal only" do
+      build_structure("crystal_extractor", 3)
+      build_structure("crystal_refinery", 4)
+
+      crystal = economy.contributions(:crystal).detect { |line| line.label.start_with?("Crystal Refinery") }
+      metal = economy.contributions(:metal).detect { |line| line.label.start_with?("Metal Refinery") }
+
+      expect(crystal.label).to eq("Crystal Refinery lv 4")
+      expect(crystal.value).to be_positive
+      expect(metal.label).to eq("Metal Refinery lv 2")
     end
   end
 
@@ -93,6 +104,33 @@ RSpec.describe PlanetEconomy, type: :service do
       undeflected = economy.contributions(:metal).reject { |line| line.kind == :throttle }.sum(&:value)
 
       expect(economy.output(:metal)).to eq((undeflected * described_class::THROTTLE).round)
+    end
+  end
+
+  describe "storage" do
+    it "gives a planet with no silo the base capacity" do
+      expect(economy.storage_capacity(:metal)).to eq(Structure::BASE_STORAGE)
+    end
+
+    it "raises capacity with silo level, per resource" do
+      build_structure("metal_silo", 3)
+
+      expect(economy.storage_capacity(:metal)).to be > Structure::BASE_STORAGE
+      expect(economy.storage_capacity(:crystal)).to eq(Structure::BASE_STORAGE)
+    end
+
+    it "reports how full a store is" do
+      empire.update!(metal: Structure::BASE_STORAGE / 4)
+
+      expect(economy.storage_fraction(:metal)).to eq(0.25)
+      expect(economy).not_to be_storage_full(:metal)
+    end
+
+    it "clamps the fraction when a store is over capacity" do
+      empire.update!(metal: Structure::BASE_STORAGE * 10)
+
+      expect(economy.storage_fraction(:metal)).to eq(1.0)
+      expect(economy).to be_storage_full(:metal)
     end
   end
 

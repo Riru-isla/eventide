@@ -2,10 +2,14 @@
 
 <div class="grid items-start gap-5 md:grid-cols-[minmax(0,300px)_minmax(0,1fr)]">
 
-  <%= render "planets/vitals", planet: planet, economy: economy %>
+  <div class="flex flex-col gap-5">
+    <%= render "planets/vitals", planet: planet, economy: economy %>
+    <%= render "planets/storage", economy: economy %>
+  </div>
 
   <div class="flex flex-col gap-5">
     <%= render "planets/construction", planet: planet, current_tick: current_tick %>
+    <%= render "planets/energy_bus", economy: economy %>
     <%= render "planets/extraction_summary", planet: planet, economy: economy %>
   </div>
 </div>

@@ -58,6 +58,18 @@ Durations are counted in **ticks**, so a queue only advances while the server is
 That is the same limitation as the game-time model below, and `completes_at_tick` is
 the field that changes if game time moves to wall-clock timestamps.
 
+## Resources are capped
+
+Each resource has a storage capacity, set by that resource's silo. Income stops once a
+store is full, so a player cannot bank indefinitely while logged out — the same
+pressure OGame uses to make people come back and spend.
+
+A stockpile already above capacity is left alone rather than trimmed. Running out of
+room should stall growth, never destroy what someone has banked.
+
+Silos sit on the planet but resources belong to the empire. With one planet per empire
+those are the same thing; this is the seam to revisit for multiple planets.
+
 ## Screen structure
 
 Overview, Resources and Facilities are views onto **the current planet**; Research is

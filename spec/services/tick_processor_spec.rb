@@ -64,6 +64,36 @@ RSpec.describe TickProcessor, type: :service do
       expect(empire.reload.metal).to eq(500 + 60) # 40 with the foundry bonus
     end
 
+    it "stops collecting once storage is full" do
+      empire.home_sector.update!(metal_rate: 100, crystal_rate: 0)
+      empire.planet.structures.find_by(kind: "solar_array").update!(level: 20)
+      empire.update!(metal: empire.storage_capacity(:metal) - 10)
+
+      described_class.new(galaxy).process
+
+      expect(empire.reload.metal).to eq(empire.storage_capacity(:metal))
+    end
+
+    it "leaves a stockpile that is already over capacity alone" do
+      over = empire.storage_capacity(:metal) * 2
+      empire.update!(metal: over)
+
+      described_class.new(galaxy).process
+
+      expect(empire.reload.metal).to eq(over)
+    end
+
+    it "collects more once a silo raises the cap" do
+      empire.home_sector.update!(metal_rate: 100, crystal_rate: 0)
+      empire.planet.structures.find_by(kind: "solar_array").update!(level: 20)
+      empire.planet.structures.find_by(kind: "metal_silo").update!(level: 4)
+      empire.update!(metal: Structure::BASE_STORAGE)
+
+      described_class.new(galaxy).process
+
+      expect(empire.reload.metal).to be > Structure::BASE_STORAGE
+    end
+
     it "does not accumulate energy" do
       expect { described_class.new(galaxy).process }.not_to change { empire.reload.energy }
     end

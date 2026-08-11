@@ -1,5 +1,6 @@
 <% definition = structure.definition %>
-<% cost = structure.upgrade_cost %>
+<% cost = definition.upgrade_cost(planet_queue.queued_level_for(structure.kind) || structure.level) %>
+<% draw = definition.energy_draw(structure.level) %>
 
 <%= link_to planet_structures_path(section: section, structure: structure.kind),
             class: "row", "aria-current": selected.to_s do %>
@@ -11,19 +12,13 @@
   </span>
 
   <span class="num col-start-1 text-[0.6875rem] tracking-[0.04em] text-ink-3">
-    <% if definition.extraction? %>
-      <b class="font-semibold <%= structure_glyph_tone(definition) %>">
-        <%= number_with_sign(economy.output(definition.resource)) %>
-      </b>
-      <%= definition.resource %> / tick · <span class="text-amber-2"><%= definition.energy_draw(structure.level) %> ⚡</span>
+    <b class="font-semibold <%= structure_glyph_tone(definition) %>">
+      <%= structure_effect_summary(definition, structure.level, economy) %>
+    </b>
+    <% if draw.positive? %>
+      · <span class="text-amber-2"><%= draw %> ⚡</span>
     <% elsif definition.energy? %>
-      <b class="font-semibold text-amber"><%= number_with_sign(definition.energy_output(structure.level)) %></b>
-      energy · <span class="text-good">exempt from throttle</span>
-    <% else %>
-      <b class="font-semibold text-ink-2"><%= definition.summary.split(".").first %></b>
-      <% if definition.energy_draw(structure.level).positive? %>
-        · <span class="text-amber-2"><%= definition.energy_draw(structure.level) %> ⚡</span>
-      <% end %>
+      · <span class="text-good">exempt from throttle</span>
     <% end %>
   </span>
 

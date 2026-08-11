@@ -15,6 +15,16 @@ class Empire < ApplicationRecord
     "#{player.name}'s Empire"
   end
 
+  # Storage comes from the planet's silos. An empire without a planet falls back to the
+  # base capacity so uncapped income is never possible.
+  def storage_capacity(resource)
+    planet&.economy&.storage_capacity(resource) || Structure::BASE_STORAGE
+  end
+
+  def storage_full?(resource)
+    public_send(resource) >= storage_capacity(resource)
+  end
+
   def resource_bonus(resource)
     case [ role, resource ]
     when [ "cultivator", :crystal ] then 1.5

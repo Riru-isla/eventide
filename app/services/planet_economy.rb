@@ -4,6 +4,8 @@
 # UI can show *where* a number comes from rather than just the number. Balance work
 # should change the numbers here, not the shape.
 class PlanetEconomy
+  RESOURCES = %i[metal crystal].freeze
+
   # A planet drawing more energy than it produces keeps this fraction of its output.
   THROTTLE = 0.30
 
@@ -50,20 +52,19 @@ class PlanetEconomy
   # last entry so the UI can render it as a deduction.
   def contributions(resource)
     base = base_yield(resource)
-    level = @planet.level_of(extractor_key(resource))
+    level = @planet.level_of(Structure.extractor_for(resource).key)
     subtotal = base * level
 
     lines = [
       Contribution.new(label: "Base deposit", value: base.to_f, kind: :base),
       Contribution.new(
-        label: "#{Structure.find!(extractor_key(resource)).name} lv #{level}",
+        label: "#{Structure.extractor_for(resource).name} lv #{level}",
         value: (subtotal - base).to_f,
         kind: :structure
-      )
+      ),
+      role_contribution(resource, subtotal),
+      refinery_contribution(resource, subtotal)
     ]
-
-    lines << role_contribution(resource, subtotal)
-    lines << refinery_contribution(subtotal) if resource == :metal
 
     if deficit?
       throttled = lines.sum(&:value) * (1 - THROTTLE)
@@ -71,6 +72,28 @@ class PlanetEconomy
     end
 
     lines
+  end
+
+  # ── Storage ───────────────────────────────────────────────────────────────
+
+  # Silos sit on the planet but resources are held by the empire. With one planet per
+  # empire those are the same thing; this is the seam to revisit for multiple planets.
+  def storage_capacity(resource)
+    silo = Structure.silo_for(resource)
+
+    silo.storage_capacity(@planet.level_of(silo.key))
+  end
+
+  def stored(resource)
+    @empire.public_send(resource)
+  end
+
+  def storage_fraction(resource)
+    (stored(resource).to_f / storage_capacity(resource)).clamp(0.0, 1.0)
+  end
+
+  def storage_full?(resource)
+    stored(resource) >= storage_capacity(resource)
   end
 
   # ── Construction ──────────────────────────────────────────────────────────
@@ -109,10 +132,6 @@ class PlanetEconomy
 
   private
 
-  def extractor_key(resource)
-    resource == :metal ? "metal_extractor" : "crystal_extractor"
-  end
-
   def base_yield(resource)
     resource == :metal ? @sector.metal_rate.to_i : @sector.crystal_rate.to_i
   end
@@ -127,12 +146,13 @@ class PlanetEconomy
     )
   end
 
-  def refinery_contribution(subtotal)
-    levels = @planet.level_of("refinery")
+  def refinery_contribution(resource, subtotal)
+    refinery = Structure.refinery_for(resource)
+    levels = @planet.level_of(refinery.key)
 
     Contribution.new(
-      label: "Refinery lv #{levels}",
-      value: subtotal * Structure::METAL_BONUS_PER_LEVEL * levels,
+      label: "#{refinery.name} lv #{levels}",
+      value: subtotal * Structure::YIELD_BONUS_PER_LEVEL * levels,
       kind: :facility
     )
   end

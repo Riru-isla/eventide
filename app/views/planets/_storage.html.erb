@@ -1,0 +1,41 @@
+<section class="mod" aria-label="Storage">
+  <div class="mod-head">
+    <h2 class="mod-title">Storage</h2>
+    <%= link_to "Silos", planet_structures_path(section: "facilities", structure: "metal_silo"),
+                class: "mod-note hover:text-amber" %>
+  </div>
+
+  <div class="flex flex-col gap-4 p-4">
+<%# Class names are written out in full rather than interpolated: Tailwind scans the
+    source for literal strings, so a class built at runtime is never generated. %>
+<% PlanetEconomy::RESOURCES.each do |resource| %>
+      <% capacity = economy.storage_capacity(resource) %>
+      <% fraction = economy.storage_fraction(resource) %>
+      <% full = economy.storage_full?(resource) %>
+      <% metal = resource == :metal %>
+      <% text_tone = metal ? "text-metal" : "text-crystal" %>
+      <% bar_tone = if full then "bg-bad" elsif fraction > 0.9 then "bg-amber" else (metal ? "bg-metal" : "bg-crystal") end %>
+
+      <div>
+        <div class="mb-1.5 flex items-baseline justify-between gap-3">
+          <span class="text-[0.8125rem] tracking-[0.06em] <%= text_tone %>">
+            <%= resource.to_s.capitalize %>
+          </span>
+          <span class="num text-[0.6875rem] <%= full ? "text-bad" : "text-ink-3" %>">
+            <%= number_with_delimiter(economy.stored(resource)) %> / <%= number_with_delimiter(capacity) %>
+          </span>
+        </div>
+
+        <div class="h-[5px] border border-line-soft bg-ground-2">
+          <div class="h-full <%= bar_tone %>" style="width: <%= (fraction * 100).round(1) %>%"></div>
+        </div>
+
+        <% if full %>
+          <p class="mt-1.5 font-sans text-[0.6875rem] text-bad">
+            Full — <%= resource %> income is being lost. Raise the silo.
+          </p>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</section>

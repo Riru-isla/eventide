@@ -40,12 +40,30 @@ RSpec.describe "Planets", type: :request do
       expect(response.body).to include("Metal deposit")
     end
 
-    it "shows extractor levels and the energy balance" do
+    it "shows extractor levels and the energy bus" do
       get planet_path
 
       expect(response.body).to include("Metal Extractor")
       expect(response.body).to include("Solar Array")
-      expect(response.body).to include("produced")
+      expect(response.body).to include("Energy bus")
+      expect(response.body).to include("Produced")
+    end
+
+    it "shows storage against capacity" do
+      get planet_path
+
+      expect(response.body).to include("Storage")
+      expect(response.body).to include(
+        ActiveSupport::NumberHelper.number_to_delimited(empire.storage_capacity(:metal))
+      )
+    end
+
+    it "warns when a store is full" do
+      empire.update!(metal: empire.storage_capacity(:metal) + 1)
+
+      get planet_path
+
+      expect(response.body).to include("income is being lost")
     end
 
     it "says the queue is idle when nothing is building" do

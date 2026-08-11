@@ -31,10 +31,21 @@ class TickProcessor
       add_sector_income(empire, income)
 
       empire.update!(
-        metal: empire.metal + income[:metal],
-        crystal: empire.crystal + income[:crystal]
+        metal: store(empire, :metal, income[:metal]),
+        crystal: store(empire, :crystal, income[:crystal])
       )
     end
+  end
+
+  # Income stops at the empire's storage capacity. A stockpile already over capacity
+  # is left alone rather than confiscated — running out of room should stall growth,
+  # not destroy what a player has banked.
+  def store(empire, resource, income)
+    current = empire.public_send(resource)
+    capacity = empire.storage_capacity(resource)
+    return current if current >= capacity
+
+    [ current + income, capacity ].min
   end
 
   def planet_income(empire)

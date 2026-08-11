@@ -1,7 +1,7 @@
 <% definition = structure.definition %>
 <% resource = definition.extraction? ? definition.resource : nil %>
 
-<section class="mod" aria-label="Output breakdown">
+<section class="mod" aria-label="Breakdown">
   <div class="mod-head">
     <h2 class="mod-title">
       <%= resource ? "#{resource.to_s.capitalize} output" : definition.name %>
@@ -30,13 +30,15 @@
       <p class="font-sans text-[0.8125rem] text-ink-2"><%= definition.summary %></p>
 
       <div class="mt-4 flex flex-col">
-        <% [
-             [ "Energy produced", definition.energy_output(structure.level) ],
-             [ "Energy drawn", definition.energy_draw(structure.level) ]
-           ].reject { |_, value| value.zero? }.each do |label, value| %>
+        <% rows = [ [ "Now", structure_effect_summary(definition, structure.level, economy) ],
+                    [ "Next level", structure_effect_summary(definition, structure.level + 1, economy) ] ]
+           rows << [ "Energy drawn", number_with_delimiter(definition.energy_draw(structure.level)) ] if definition.energy_draw(structure.level).positive?
+           rows << [ "Energy produced", number_with_delimiter(economy.energy_production) ] if definition.energy? %>
+
+        <% rows.each do |label, value| %>
           <div class="flex justify-between gap-3.5 border-b border-dotted border-line-soft py-[7px] text-[0.8125rem]">
             <span class="text-ink-2"><%= label %></span>
-            <span class="num text-ink"><%= number_with_delimiter(value) %></span>
+            <span class="num text-ink"><%= value %></span>
           </div>
         <% end %>
       </div>

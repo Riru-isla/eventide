@@ -16,6 +16,10 @@
       output breakdown showing every contributing modifier.
 - [x] **Build queue**: upgrades are charged up front, take ticks to complete, and the
       Robotics Bay shortens them.
+- [x] **Storage caps**: silos set how much the empire can hold; income stops when full.
+      A stockpile already over capacity is kept, not confiscated.
+- [x] Facilities: Metal and Crystal Refineries, Metal and Crystal Silos, Robotics Bay,
+      Research Center, Shipyard.
 - [x] Energy as a balance: a deficit throttles extraction to 30% and exempts energy buildings.
 - [x] Fleet dispatch from owned sectors to targets.
 - [x] Basic combat: attacker power vs defender strength.

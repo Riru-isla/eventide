@@ -11,11 +11,13 @@
 
     <%= render "shared/resource",
                glyph: :metal, tone: "text-metal", amount: empire.metal,
-               rate: economy&.output(:metal), unit: "/ tick" %>
+               rate: economy&.output(:metal), unit: "/ tick",
+               capacity: empire.storage_capacity(:metal), full: empire.storage_full?(:metal) %>
 
     <%= render "shared/resource",
                glyph: :crystal, tone: "text-crystal", amount: empire.crystal,
-               rate: economy&.output(:crystal), unit: "/ tick" %>
+               rate: economy&.output(:crystal), unit: "/ tick",
+               capacity: empire.storage_capacity(:crystal), full: empire.storage_full?(:crystal) %>
 
     <% if balance %>
       <div class="flex items-center gap-2.5">
