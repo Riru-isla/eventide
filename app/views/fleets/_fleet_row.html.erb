@@ -1,0 +1,35 @@
+<% heading = fleet.status == "returning" ? fleet.origin_sector : fleet.target_sector %>
+<% remaining = [ fleet.arrival_tick.to_i - current_tick, 0 ].max %>
+
+<div class="border-b border-line-soft p-4 last:border-b-0">
+  <div class="mb-2 flex flex-wrap items-baseline justify-between gap-x-3.5 gap-y-1">
+    <span class="text-[0.8125rem] tracking-[0.06em] text-ink">
+      <b class="font-semibold <%= fleet.transport? ? "text-crystal" : "text-bad" %>">
+        <%= fleet.transport? ? "Shipment" : "Attack" %>
+      </b>
+      · <%= pluralize(fleet.total_ships, "ship") %>
+      <%= fleet.status == "returning" ? "returning to" : "→" %>
+      <%= heading&.coordinate %>
+      <% if fleet.status != "returning" && heading&.empire %>
+        <span class="text-ink-3">(<%= heading.empire.player.name %>)</span>
+      <% end %>
+    </span>
+
+    <span class="num text-[0.6875rem] tracking-[0.08em] text-ink-3">
+      <%= pluralize(remaining, "tick") %> out
+    </span>
+  </div>
+
+  <% if fleet.carrying? %>
+    <p class="num text-[0.6875rem] tracking-[0.06em] text-ink-3">
+      Hold:
+      <% fleet.manifest.each_with_index do |(resource, amount), index| %><%= ", " if index.positive? %><span
+        class="<%= resource_tone(resource) %>"><%= number_with_delimiter(amount) %> <%= resource %></span><% end %>
+    </p>
+  <% end %>
+
+  <div class="mt-2 h-[5px] border border-line-soft bg-ground-2">
+    <div class="h-full <%= fleet.transport? ? "bg-crystal" : "bg-bad" %>"
+         style="width: <%= remaining.zero? ? 100 : 0 %>%"></div>
+  </div>
+</div>

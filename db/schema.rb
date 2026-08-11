@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_11_210000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_12_090000) do
   create_table "build_orders", force: :cascade do |t|
     t.integer "completes_at_tick"
     t.datetime "created_at", null: false
@@ -53,9 +53,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_210000) do
 
   create_table "fleets", force: :cascade do |t|
     t.integer "arrival_tick"
+    t.json "cargo", default: {}
     t.datetime "created_at", null: false
     t.integer "empire_id", null: false
     t.integer "galaxy_id", null: false
+    t.string "mission", default: "attack", null: false
     t.integer "origin_sector_id"
     t.json "ships"
     t.string "status"
@@ -63,6 +65,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_210000) do
     t.datetime "updated_at", null: false
     t.index ["empire_id"], name: "index_fleets_on_empire_id"
     t.index ["galaxy_id"], name: "index_fleets_on_galaxy_id"
+    t.index ["status"], name: "index_fleets_on_status"
   end
 
   create_table "galaxies", force: :cascade do |t|

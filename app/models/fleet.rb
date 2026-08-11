@@ -1,18 +1,48 @@
 class Fleet < ApplicationRecord
   STATUSES = %w[orbiting moving returning].freeze
+  MISSIONS = %w[attack transport].freeze
+
+  # However much Propulsion Technology is stacked, a crossing never takes less than
+  # this fraction of its raw distance.
+  MINIMUM_TRAVEL_SPEED = 0.4
 
   belongs_to :empire
   belongs_to :galaxy
+  # origin_sector is the fleet's home: where it sits while orbiting and where it comes
+  # back to. target_sector is only set while it is away.
   belongs_to :origin_sector, class_name: "Sector"
   belongs_to :target_sector, class_name: "Sector", optional: true
 
   scope :moving, -> { where(status: "moving") }
+  scope :returning, -> { where(status: "returning") }
+  scope :under_way, -> { where(status: %w[moving returning]) }
+  scope :inbound_to, ->(sector) { moving.where(target_sector: sector) }
 
   validates :status, inclusion: { in: STATUSES }
+  validates :mission, inclusion: { in: MISSIONS }
   validates :ships, presence: true
+  validate :cargo_fits_in_the_hold
+
+  def transport? = mission == "transport"
+
+  def under_way? = status != "orbiting"
 
   def total_ships
     ships.values.sum
+  end
+
+  def cargo_load
+    cargo.to_h.values.sum(&:to_i)
+  end
+
+  def carrying? = cargo_load.positive?
+
+  # Cargo as resource symbols, ignoring anything that is not a stored resource.
+  def manifest
+    cargo.to_h.filter_map do |resource, amount|
+      key = resource.to_sym
+      [ key, amount.to_i ] if PlanetEconomy::STORED.include?(key) && amount.to_i.positive?
+    end.to_h
   end
 
   def base_power
@@ -31,6 +61,15 @@ class Fleet < ApplicationRecord
     [ factors.max || 1.0, ShipType::MINIMUM_SPEED_FACTOR ].max
   end
 
+  # Ticks to cross between two sectors: raw distance, slowed by the heaviest hull
+  # aboard and quickened by Propulsion Technology. Never less than a single tick.
+  def travel_ticks_between(from, to)
+    distance = from.distance_to(to.x, to.y)
+    drive = [ 1 - empire.technology_bonus(:propulsion), MINIMUM_TRAVEL_SPEED ].max
+
+    [ (distance * speed_factor * drive).ceil, 1 ].max
+  end
+
   # Weapons and Laser Technology both feed the empire's attack multiplier.
   def power
     (base_power * empire.attack_multiplier).round
@@ -46,5 +85,37 @@ class Fleet < ApplicationRecord
 
     update!(ships: survivors, target_sector: nil, status: "orbiting", arrival_tick: nil)
     true
+  end
+
+  # Sends the fleet back the way it came. origin_sector is untouched, so arriving home
+  # is simply a matter of clearing the target.
+  def turn_for_home!(current_tick, travel_ticks)
+    update!(status: "returning", arrival_tick: current_tick + travel_ticks)
+  end
+
+  def dock!
+    update!(status: "orbiting", target_sector: nil, arrival_tick: nil, cargo: {})
+  end
+
+  # Ships settling somewhere join the fleet already in orbit there rather than forming
+  # a second one. A second orbiting fleet at the same sector would strand its ships:
+  # the dispatch form, the shipyard and the garrison count all look at the first only.
+  def join_garrison!(sector = origin_sector)
+    self.origin_sector = sector
+    existing = empire.fleets.where(origin_sector: sector, status: "orbiting").where.not(id: id).first
+    return dock! if existing.nil?
+
+    merged = existing.ships.dup
+    ships.each { |key, count| merged[key] = merged[key].to_i + count.to_i }
+    existing.update!(ships: merged)
+    destroy!
+  end
+
+  private
+
+  def cargo_fits_in_the_hold
+    return if cargo_load <= cargo_capacity
+
+    errors.add(:cargo, "of #{cargo_load} exceeds the fleet's hold of #{cargo_capacity}")
   end
 end

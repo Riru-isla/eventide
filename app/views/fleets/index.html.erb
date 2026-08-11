@@ -1,0 +1,13 @@
+<% content_for :title, "Fleet — Eventide" %>
+
+<div class="mt-5 grid items-start gap-5 lg:grid-cols-[148px_minmax(0,1fr)]">
+
+  <%= render "shared/nav", current: :fleets %>
+
+  <main class="min-w-0">
+    <%= turbo_frame_tag "planet-main", class: "flex flex-col gap-5" do %>
+      <%= render "fleets/board",
+                 empire: @empire, fleets: @fleets, garrison: @garrison, destinations: @destinations %>
+    <% end %>
+  </main>
+</div>

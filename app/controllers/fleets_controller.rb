@@ -1,47 +1,92 @@
 class FleetsController < ApplicationController
   class DispatchError < StandardError; end
 
-  # However much Propulsion Technology is stacked, a crossing never takes less than
-  # this fraction of its raw distance.
-  MINIMUM_TRAVEL_SPEED = 0.4
+  before_action :load_empire
+
+  def index
+    @fleets = fleets_for_display
+    @garrison = garrison_at_home
+    @destinations = destination_planets
+  end
 
   def create
-    @galaxy = Galaxy.find(params[:galaxy_id])
-    origin = current_empire.sectors.find(params[:fleet][:origin_sector_id])
-    target = @galaxy.sectors.find(params[:fleet][:target_sector_id])
+    fleet = dispatch_fleet
 
-    fleet = dispatch_fleet(origin, target)
+    flash.now[:notice] = if fleet.transport?
+      "#{fleet.total_ships} ships away to #{fleet.target_sector.coordinate}, " \
+      "carrying #{manifest_summary(fleet)}. Back in #{fleet.arrival_tick - @galaxy.current_tick} ticks."
+    else
+      "#{fleet.total_ships} ships dispatched to #{fleet.target_sector.coordinate}."
+    end
 
-    redirect_to galaxy_path(@galaxy),
-                notice: "Dispatched #{fleet.total_ships} ships to #{target.coordinate}."
-  rescue DispatchError, ActiveRecord::RecordInvalid, ActiveRecord::RecordNotFound => e
-    redirect_to galaxy_path(@galaxy), alert: "Could not dispatch fleet: #{e.message}"
+    respond_with_fleets
+  rescue DispatchError, Shipment::Error, ActiveRecord::RecordInvalid, ActiveRecord::RecordNotFound => e
+    flash.now[:alert] = "Could not dispatch: #{e.message}"
+    respond_with_fleets
   end
 
   private
 
-  # Ships come out of the garrison orbiting the origin sector. Without this the
-  # dispatch form would conjure ships out of nothing, and any player could take the
-  # core on the first tick.
-  #
-  # Named dispatch_fleet, not dispatch: ActionController defines a public #dispatch
-  # and redefining it privately breaks request handling.
-  def dispatch_fleet(origin, target)
+  def load_empire
+    @empire = current_empire
+    @galaxy = @empire&.galaxy
+
+    redirect_to galaxy_path(Galaxy.first), alert: "Your empire has no planet yet." if @empire&.planet.nil?
+  end
+
+  def fleets_for_display
+    @empire.fleets.includes(:origin_sector, target_sector: { empire: :player }).order(:arrival_tick, :id)
+  end
+
+  # Ships can only be sent from the planet, which is where the shipyard delivers them.
+  def garrison_at_home
+    @empire.fleets.find_by(origin_sector: @empire.planet.sector, status: "orbiting")
+  end
+
+  # Every planet in the galaxy is a valid destination — this is a cooperative game, so
+  # shipping to another commander is the point rather than an exploit.
+  def destination_planets
+    Planet.includes(:sector, empire: :player)
+          .where(empire: @galaxy.empires)
+          .reject { |planet| planet.id == @empire.planet.id }
+  end
+
+  def dispatch_fleet
     ships = requested_ships
     raise DispatchError, "select at least one ship" if ships.empty?
 
+    target = @galaxy.sectors.find(params[:fleet][:target_sector_id])
+    origin = requested_origin
+
     ActiveRecord::Base.transaction do
-      garrison = current_empire.fleets.find_by(origin_sector: origin, status: "orbiting")
+      garrison = @empire.fleets.find_by(origin_sector: origin, status: "orbiting")
       raise DispatchError, "no ships are stationed at #{origin.coordinate}" if garrison.nil?
 
       detach!(garrison, ships)
 
-      fleet = @galaxy.fleets.new(empire: current_empire, origin_sector: origin,
-                                 target_sector: target, status: "moving", ships: ships)
-      fleet.arrival_tick = @galaxy.current_tick + travel_ticks(origin, target, fleet)
+      fleet = @galaxy.fleets.new(
+        empire: @empire, origin_sector: origin, target_sector: target,
+        status: "moving", mission: mission, ships: ships, cargo: {}
+      )
+      fleet.cargo = load_cargo(fleet) if fleet.transport?
+      fleet.arrival_tick = @galaxy.current_tick + fleet.travel_ticks_between(origin, target)
       fleet.save!
       fleet
     end
+  end
+
+  # Cargo leaves the sender's stores now, not on arrival, so nothing can be spent twice
+  # while it is in transit.
+  def load_cargo(fleet)
+    manifest = requested_cargo
+    raise DispatchError, "a transport needs something to carry" if manifest.empty?
+
+    hold = fleet.cargo_capacity
+    total = manifest.values.sum
+    raise DispatchError, "#{total} exceeds the fleet's hold of #{hold}" if total > hold
+
+    Shipment.load!(@empire, manifest)
+    manifest.transform_keys(&:to_s)
   end
 
   # Subtracts the requested ships from the garrison, or raises if it cannot cover
@@ -66,13 +111,17 @@ class FleetsController < ApplicationController
     remaining.empty? ? garrison.destroy! : garrison.update!(ships: remaining)
   end
 
-  # Distance, slowed by the fleet's heaviest hull and quickened by Propulsion
-  # Technology. A journey never drops below one tick.
-  def travel_ticks(origin, target, fleet)
-    distance = origin.distance_to(target.x, target.y)
-    drive = [ 1 - current_empire.technology_bonus(:propulsion), MINIMUM_TRAVEL_SPEED ].max
+  # Fleets usually leave from the planet, but one that captured a sector sits there and
+  # can push on from it.
+  def requested_origin
+    given = params[:fleet][:origin_sector_id]
+    return @empire.planet.sector if given.blank?
 
-    [ (distance * fleet.speed_factor * drive).ceil, 1 ].max
+    @empire.sectors.find(given)
+  end
+
+  def mission
+    Fleet::MISSIONS.include?(params[:fleet][:mission]) ? params[:fleet][:mission] : "attack"
   end
 
   def requested_ships
@@ -80,5 +129,45 @@ class FleetsController < ApplicationController
     return {} if raw.blank?
 
     raw.to_unsafe_h.transform_values(&:to_i).reject { |_, count| count <= 0 }
+  end
+
+  def requested_cargo
+    raw = params.require(:fleet)[:cargo]
+    return {} if raw.blank?
+
+    raw.to_unsafe_h.symbolize_keys
+       .slice(*PlanetEconomy::STORED)
+       .transform_values(&:to_i)
+       .reject { |_, amount| amount <= 0 }
+  end
+
+  def manifest_summary(fleet)
+    fleet.manifest.map { |resource, amount| "#{number_with_delimiter(amount)} #{resource}" }.to_sentence
+  end
+
+  def number_with_delimiter(value) = ActiveSupport::NumberHelper.number_to_delimited(value)
+
+  def respond_with_fleets
+    @empire = current_empire.reload
+    @fleets = fleets_for_display
+    @garrison = garrison_at_home
+    @destinations = destination_planets
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: [
+          turbo_stream.replace("flash", partial: "shared/flash"),
+          turbo_stream.replace("hud", partial: "shared/hud", locals: { empire: @empire }),
+          turbo_stream.update("planet-main", partial: "fleets/board",
+                              locals: { empire: @empire, fleets: @fleets,
+                                        garrison: @garrison, destinations: @destinations })
+        ]
+      end
+
+      format.html do
+        flash.keep
+        redirect_to fleets_path
+      end
+    end
   end
 end

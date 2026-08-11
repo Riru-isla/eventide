@@ -24,8 +24,11 @@ Rails.application.routes.draw do
   get "shipyard", to: "shipyard#show", as: :shipyard
   post "shipyard/:id", to: "shipyard#create", as: :build_ships
 
+  # Fleets belong to the empire, not a planet, so they sit alongside research.
+  get "fleets", to: "fleets#index", as: :fleets
+  post "fleets", to: "fleets#create", as: :dispatch_fleet
+
   resources :galaxies, only: [ :show ] do
-    resources :fleets, only: [ :create ]
     resources :sectors, only: %i[show]
   end
 end

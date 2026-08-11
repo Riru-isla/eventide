@@ -7,7 +7,7 @@ class EmpireFounder
   class NoHomeSectorAvailable < StandardError; end
 
   STARTING_RESOURCES = { metal: 500, crystal: 500, energy: 500 }.freeze
-  STARTING_FLEET = { "light_fighter" => 10 }.freeze
+  STARTING_FLEET = { "light_fighter" => 10, "transport" => 3 }.freeze
   HOME_SECTOR = { kind: "home", metal_rate: 30, crystal_rate: 30, energy_rate: 30, defense_strength: 50 }.freeze
 
   def initialize(galaxy:, user:, name:, role:)

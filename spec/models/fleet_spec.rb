@@ -47,6 +47,28 @@ RSpec.describe Fleet, type: :model do
     end
   end
 
+  describe "cargo" do
+    it "refuses a load bigger than the hold" do
+      # A last line of defence: the dispatch form checks this too, but nothing should
+      # be able to create a fleet carrying more than its hulls can hold.
+      fleet = build(:fleet, ships: { "light_fighter" => 1 }, cargo: { "metal" => 5_000 })
+
+      expect(fleet).not_to be_valid
+      expect(fleet.errors[:cargo].first).to match(/exceeds the fleet's hold of 20/)
+    end
+
+    it "accepts a load that fits" do
+      expect(build(:fleet, ships: { "transport" => 1 }, cargo: { "metal" => 500 })).to be_valid
+    end
+
+    it "reads a manifest of stored resources only" do
+      fleet = build(:fleet, ships: { "transport" => 1 },
+                    cargo: { "metal" => 10, "unobtainium" => 99, "crystal" => 0 })
+
+      expect(fleet.manifest).to eq(metal: 10)
+    end
+  end
+
   describe "#cargo_capacity" do
     it "sums the hold of every hull" do
       fleet = build(:fleet, ships: { "light_fighter" => 2, "transport" => 1 })

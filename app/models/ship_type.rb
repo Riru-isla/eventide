@@ -85,7 +85,9 @@ class ShipType
     def each_in(ships)
       return to_enum(:each_in, ships) unless block_given?
 
-      ships.each do |key, count|
+      # to_h so an unsaved fleet, whose ships are still nil, reads as empty rather
+      # than raising.
+      ships.to_h.each do |key, count|
         definition = find(key)
         yield definition, count.to_i if definition
       end

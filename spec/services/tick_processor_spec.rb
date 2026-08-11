@@ -245,6 +245,114 @@ RSpec.describe TickProcessor, type: :service do
       expect { described_class.new(galaxy).process }.to change { galaxy.fleets.count }.by(-1)
     end
 
+    describe "shipments" do
+      let!(:recipient) do
+        other = create(:empire, galaxy: galaxy, player: create(:player, galaxy: galaxy),
+                       metal: 0, crystal: 0)
+        sector = galaxy.sectors.find_by(kind: "empty")
+        sector.update!(empire: other)
+        Planet.create!(empire: other, sector: sector, name: "Far World")
+        other
+      end
+
+      def send_shipment(cargo: { "metal" => 300 }, ticks_out: 0)
+        galaxy.fleets.create!(
+          empire: empire, origin_sector: empire.home_sector,
+          target_sector: recipient.planet.sector,
+          arrival_tick: galaxy.current_tick + ticks_out,
+          status: "moving", mission: "transport",
+          ships: { "transport" => 2 }, cargo: cargo
+        )
+      end
+
+      it "delivers into the recipient's stores on arrival" do
+        send_shipment
+
+        expect { described_class.new(galaxy).process }.to change { recipient.reload.metal }.by(300)
+      end
+
+      it "turns the fleet around rather than parking it there" do
+        fleet = send_shipment
+
+        described_class.new(galaxy).process
+
+        expect(fleet.reload.status).to eq("returning")
+        expect(fleet.arrival_tick).to be > galaxy.reload.current_tick
+        expect(fleet.origin_sector).to eq(empire.home_sector)
+      end
+
+      it "leaves a shipment alone before it arrives" do
+        send_shipment(ticks_out: 5)
+
+        expect { described_class.new(galaxy).process }.not_to change { recipient.reload.metal }
+      end
+
+      it "folds the returning ships back into the home garrison" do
+        # A second orbiting fleet at the same sector would strand its ships: the
+        # dispatch form and shipyard only ever look at the first one.
+        garrison = empire.fleets.find_by(origin_sector: empire.home_sector, status: "orbiting")
+        before = garrison.ships["transport"]
+        fleet = send_shipment
+        described_class.new(galaxy).process
+        galaxy.update!(current_tick: fleet.reload.arrival_tick)
+
+        described_class.new(galaxy.reload).process
+
+        expect(Fleet.exists?(fleet.id)).to be false
+        expect(garrison.reload.ships["transport"]).to eq(before + 2)
+        expect(empire.fleets.where(origin_sector: empire.home_sector, status: "orbiting").count).to eq(1)
+      end
+
+      it "becomes the garrison when nothing is orbiting at home" do
+        empire.fleets.where(status: "orbiting").destroy_all
+        fleet = send_shipment
+        described_class.new(galaxy).process
+        galaxy.update!(current_tick: fleet.reload.arrival_tick)
+
+        described_class.new(galaxy.reload).process
+
+        expect(fleet.reload.status).to eq("orbiting")
+        expect(fleet.target_sector).to be_nil
+        expect(fleet.cargo).to eq({})
+      end
+
+      it "carries an undeliverable load home instead of losing it" do
+        recipient.update!(metal: recipient.storage_capacity(:metal))
+        fleet = send_shipment
+        described_class.new(galaxy).process
+        galaxy.update!(current_tick: fleet.reload.arrival_tick)
+
+        expect { described_class.new(galaxy.reload).process }
+          .to change { empire.reload.metal }.by_at_least(300)
+      end
+
+      it "returns a load sent to a sector nobody holds" do
+        empty = galaxy.sectors.where(kind: "empty", empire_id: nil).first
+        fleet = galaxy.fleets.create!(
+          empire: empire, origin_sector: empire.home_sector, target_sector: empty,
+          arrival_tick: galaxy.current_tick, status: "moving", mission: "transport",
+          ships: { "transport" => 1 }, cargo: { "metal" => 100 }
+        )
+
+        described_class.new(galaxy).process
+
+        expect(fleet.reload.status).to eq("returning")
+        expect(fleet.manifest).to eq(metal: 100)
+      end
+    end
+
+    it "skips a fleet under way with no destination left" do
+      fleet = galaxy.fleets.create!(
+        empire: empire, origin_sector: empire.home_sector,
+        target_sector: galaxy.sectors.npc.first,
+        arrival_tick: galaxy.current_tick, status: "moving", ships: { "light_fighter" => 1 }
+      )
+      fleet.update_column(:target_sector_id, nil)
+
+      expect { described_class.new(galaxy).process }.not_to change { galaxy.fleets.count }
+      expect(fleet.reload.status).to eq("moving")
+    end
+
     it "moves fleets to empty sectors without combat" do
       origin = empire.home_sector
       target = galaxy.sectors.find_by(kind: "empty")

@@ -89,11 +89,40 @@ class TickProcessor
   end
 
   def resolve_fleet_arrivals
-    @galaxy.fleets.moving.where("arrival_tick <= ?", @galaxy.current_tick).find_each do |fleet|
-      next unless fleet.target_sector
+    due = @galaxy.fleets.under_way.where("arrival_tick <= ?", @galaxy.current_tick)
 
-      resolve_combat(fleet)
+    due.find_each do |fleet|
+      if fleet.status == "returning"
+        arrive_home(fleet)
+      elsif fleet.target_sector.nil?
+        next
+      elsif fleet.transport?
+        deliver_shipment(fleet)
+      else
+        resolve_combat(fleet)
+      end
     end
+  end
+
+  # A transport hands its cargo to whoever holds the destination, then turns around.
+  # Delivering to an unowned sector is a wasted trip rather than a loss: the hold stays
+  # full and comes home.
+  def deliver_shipment(fleet)
+    recipient = fleet.target_sector.empire
+    Shipment.new(fleet).deliver!(recipient) if recipient
+
+    fleet.turn_for_home!(@galaxy.current_tick, return_ticks(fleet))
+  end
+
+  def arrive_home(fleet)
+    # Anything undelivered — no recipient, or their stores were full — goes back to the
+    # sender rather than vanishing.
+    Shipment.new(fleet).unload_home! if fleet.carrying?
+    fleet.join_garrison!
+  end
+
+  def return_ticks(fleet)
+    fleet.travel_ticks_between(fleet.target_sector, fleet.origin_sector)
   end
 
   # A captured sector is stripped of what the fleet can carry. Transports exist for
@@ -126,23 +155,13 @@ class TickProcessor
           kind: "resource",
           defense_strength: [ attacker_power / 2, 1 ].max
         )
-        fleet.update!(
-          origin_sector: target,
-          target_sector: nil,
-          status: "orbiting",
-          arrival_tick: nil
-        )
+        fleet.join_garrison!(target)
       elsif !fleet.retreat!
         # Nothing survived the failed attack.
         fleet.destroy!
       end
     else
-      fleet.update!(
-        origin_sector: target,
-        target_sector: nil,
-        status: "orbiting",
-        arrival_tick: nil
-      )
+      fleet.join_garrison!(target)
     end
   end
 end

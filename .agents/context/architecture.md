@@ -17,7 +17,7 @@
 | `EmpireTechnology` | A researched technology, stored as `kind` + `level`. Empire-wide, not per planet. |
 | `ResearchOrder` | The single project an empire is researching. |
 | `Structure` | **Not** an Active Record model — a static Ruby catalogue of every buildable structure and its balance numbers. |
-| `Fleet` | Group of ships moving between sectors or orbiting a sector. JSON `ships` stores counts by ship type name. |
+| `Fleet` | Ships orbiting a sector or under way. `ships` and `cargo` are JSON, keyed by catalogue key. `mission` is attack or transport; `origin_sector` is home, `target_sector` only set while away. |
 | `ShipType` | **Not** an Active Record model — a static Ruby catalogue of hulls and their prerequisites. |
 | `ShipOrder` | A batch of hulls queued at a planet's shipyard. |
 
@@ -43,6 +43,9 @@
   the next from *its* completion tick, so downtime does not lose queue time.
 - `Shipyard` — what a planet may build and the queue of hulls it is building. Same
   gating shape as research: a Shipyard level plus technologies.
+- `Shipment` — moves resources between empires. Cargo leaves the sender's stores at
+  dispatch and lands in the recipient's on arrival, capped by their storage; whatever
+  does not fit stays in the hold and comes home.
 - `ResearchLab` — starts and finishes research, and answers what an empire is allowed
   to research. One project at a time, gated on Research Center level and other
   technologies.
@@ -64,6 +67,7 @@
   filtered by catalogue category.
 - `PlanetStructuresController` — adds an upgrade to the planet's build queue.
 - `ResearchController` — the empire-wide research board.
+- `FleetsController` — the Fleet screen: what is under way, and dispatching shipments.
 - `GalaxiesController` — main map view.
 - `SectorsController` — sector detail / planet management.
 - `FleetsController` — dispatch fleets from a sector to a target.

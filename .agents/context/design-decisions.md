@@ -131,6 +131,24 @@ can be renamed without orphaning every fleet holding one. Every hull stat is use
 attack feeds combat, cargo decides how much plunder a victory brings home, and
 speed_factor sets travel time from the fleet's slowest hull.
 
+## Shipments are a fleet mission
+
+A fleet carries a `mission` — attack or transport — and a `cargo` hold. A transport
+unloads into whoever holds the destination and turns straight around; `origin_sector`
+is untouched throughout, so coming home is a matter of clearing the target.
+
+Cargo leaves the sender's stores **at dispatch**, so nothing in transit can be spent
+twice. It lands capped by the recipient's storage, and anything that will not fit —
+their silos were full, or nobody holds the destination — stays in the hold and comes
+back rather than evaporating.
+
+Ships settling anywhere **join the fleet already in orbit** rather than forming a
+second one. Two orbiting fleets at the same sector would strand the ships in the
+second: the dispatch form, the shipyard and the garrison count all read the first only.
+
+Any player's planet is a valid destination. This is a cooperative game — shipping to
+another commander is the point, not an exploit.
+
 ## Screen structure
 
 Overview, Resources and Facilities are views onto **the current planet**; Research is

@@ -1,0 +1,30 @@
+<% current_tick = empire.galaxy.current_tick %>
+<% away = fleets.select(&:under_way?) %>
+
+<section class="mod" aria-label="Fleets under way">
+  <div class="mod-head">
+    <h2 class="mod-title">Under way</h2>
+    <span class="mod-note"><%= away.any? ? pluralize(away.size, "fleet") : "None" %></span>
+  </div>
+
+  <% if away.empty? %>
+    <div class="p-4">
+      <p class="font-sans text-[0.8125rem] text-ink-2">Every ship you have is in orbit.</p>
+    </div>
+  <% else %>
+    <div class="flex flex-col">
+      <% away.each do |fleet| %>
+        <%= render "fleets/fleet_row", fleet: fleet, current_tick: current_tick %>
+      <% end %>
+    </div>
+  <% end %>
+</section>
+
+<%= render "fleets/dispatch",
+           empire: empire, garrison: garrison, destinations: destinations %>
+
+<p class="font-sans text-[0.8125rem] text-ink-2">
+  A transport unloads into the recipient's stores and turns straight around. Anything
+  that will not fit — their silos were full, or nobody holds the destination — stays in
+  the hold and comes back to you.
+</p>

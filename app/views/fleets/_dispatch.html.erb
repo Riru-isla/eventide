@@ -1,0 +1,72 @@
+<% held = garrison&.ships.to_h.select { |key, count| ShipType.find(key) && count.to_i.positive? } %>
+
+<section class="mod" aria-label="Dispatch">
+  <div class="mod-head">
+    <h2 class="mod-title">Dispatch</h2>
+    <span class="mod-note">
+      <%= held.any? ? "#{pluralize(held.values.sum, "ship")} in orbit" : "Nothing in orbit" %>
+    </span>
+  </div>
+
+  <% if held.empty? %>
+    <div class="p-4">
+      <p class="font-sans text-[0.8125rem] text-ink-2">
+        No ships orbiting your planet. Build some at the
+        <%= link_to "Shipyard", shipyard_path, class: "text-amber hover:underline" %>.
+      </p>
+    </div>
+  <% elsif destinations.empty? %>
+    <div class="p-4">
+      <p class="font-sans text-[0.8125rem] text-ink-2">
+        There is nowhere to ship to yet — you are the only commander in this galaxy.
+      </p>
+    </div>
+  <% else %>
+    <%= form_with url: dispatch_fleet_path, class: "flex flex-col gap-4 p-4" do |f| %>
+      <%= hidden_field_tag "fleet[mission]", "transport" %>
+
+      <div class="flex flex-col gap-1.5">
+        <%= label_tag "fleet[target_sector_id]", "Destination", class: "label" %>
+        <%= select_tag "fleet[target_sector_id]",
+                       options_for_select(destinations.map { |planet|
+                         [ "#{planet.name} — #{planet.empire.player.name} (#{planet.sector.coordinate})",
+                           planet.sector_id ]
+                       }),
+                       class: "w-full border border-line bg-ground-2 px-3 py-2 text-[0.8125rem] text-ink" %>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <span class="label">Ships</span>
+        <% held.each do |key, count| %>
+          <% hull = ShipType.find(key) %>
+          <div class="flex items-center justify-between gap-3">
+            <span class="text-[0.8125rem] text-ink-2">
+              <%= hull.name %>
+              <span class="num text-ink-3">· <%= count %> held · <%= number_with_delimiter(hull.cargo) %> hold each</span>
+            </span>
+            <%= number_field_tag "fleet[ships][#{key}]", 0, min: 0, max: count,
+                                 class: "num w-20 border border-line bg-ground-2 px-2 py-1 text-right text-[0.8125rem] text-ink",
+                                 "aria-label": "#{hull.name} to send" %>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <span class="label">Cargo</span>
+        <% PlanetEconomy::STORED.each do |resource| %>
+          <div class="flex items-center justify-between gap-3">
+            <span class="text-[0.8125rem] <%= resource_tone(resource) %>">
+              <%= resource.to_s.capitalize %>
+              <span class="num text-ink-3">· <%= number_with_delimiter(empire.public_send(resource)) %> held</span>
+            </span>
+            <%= number_field_tag "fleet[cargo][#{resource}]", 0, min: 0, max: empire.public_send(resource),
+                                 class: "num w-24 border border-line bg-ground-2 px-2 py-1 text-right text-[0.8125rem] text-ink",
+                                 "aria-label": "#{resource} to send" %>
+          </div>
+        <% end %>
+      </div>
+
+      <%= f.submit "Send shipment", class: "btn w-full" %>
+    <% end %>
+  <% end %>
+</section>

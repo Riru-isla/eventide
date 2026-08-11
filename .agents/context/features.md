@@ -31,6 +31,10 @@
       storage, build speed, travel time, fleet attack, and surviving a failed attack.
 - [x] Energy as a balance: a deficit throttles extraction to 30% and exempts energy buildings.
 - [x] Fleet dispatch from owned sectors to targets.
+- [x] **Shipments**: send resources to another commander's planet. Cargo is charged at
+      dispatch, delivered on arrival within the recipient's storage cap, and the fleet
+      turns around and comes home by itself.
+- [x] **Fleet screen**: what is under way, with holds and time out.
 - [x] Basic combat: attacker power vs defender strength.
 - [x] **Shipyard**: five hulls gated on Shipyard level and research, built in a timed
       queue and delivered into the planet's garrison.

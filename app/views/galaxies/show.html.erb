@@ -67,17 +67,23 @@
           Click a sector to select origin, then a target.
         </p>
 
-        <%= form_with model: [ @galaxy, Fleet.new ], class: "space-y-3" do |f| %>
-          <%= f.hidden_field :origin_sector_id, data: { galaxy_map_target: "originInput" } %>
-          <%= f.hidden_field :target_sector_id, data: { galaxy_map_target: "targetInput" } %>
+        <%= form_with url: dispatch_fleet_path, class: "space-y-3" do |f| %>
+          <%= hidden_field_tag "fleet[mission]", "attack" %>
+          <%= hidden_field_tag "fleet[origin_sector_id]", nil, data: { galaxy_map_target: "originInput" } %>
+          <%= hidden_field_tag "fleet[target_sector_id]", nil, data: { galaxy_map_target: "targetInput" } %>
 
           <div>
-            <%= f.label :ships, "Fighters", class: "block text-sm text-gray-400 mb-1" %>
-            <%= number_field_tag "fleet[ships][Fighter]", 5, min: 0, class: "w-full bg-gray-800 text-white rounded px-3 py-2" %>
+            <%= label_tag "fleet[ships][light_fighter]", "Light Fighters", class: "block text-sm text-gray-400 mb-1" %>
+            <%= number_field_tag "fleet[ships][light_fighter]", 5, min: 0, class: "w-full bg-gray-800 text-white rounded px-3 py-2" %>
           </div>
 
           <%= f.submit "Dispatch", class: "w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded" %>
         <% end %>
+
+        <p class="mt-3 text-sm text-gray-400">
+          Shipments to other commanders are sent from the
+          <%= link_to "Fleet screen", fleets_path, class: "text-blue-400 hover:text-blue-300" %>.
+        </p>
       </div>
 
       <div class="bg-gray-900 rounded-lg p-4">
