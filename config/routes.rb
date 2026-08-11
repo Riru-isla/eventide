@@ -21,10 +21,11 @@ Rails.application.routes.draw do
   get "research", to: "research#show", as: :research
   post "research/:id", to: "research#create", as: :start_research
 
+  get "shipyard", to: "shipyard#show", as: :shipyard
+  post "shipyard/:id", to: "shipyard#create", as: :build_ships
+
   resources :galaxies, only: [ :show ] do
     resources :fleets, only: [ :create ]
-    resources :sectors, only: %i[show] do
-      resources :shipyard, only: %i[create]
-    end
+    resources :sectors, only: %i[show]
   end
 end

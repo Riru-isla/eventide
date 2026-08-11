@@ -36,14 +36,11 @@ class FleetsController < ApplicationController
 
       detach!(garrison, ships)
 
-      @galaxy.fleets.create!(
-        empire: current_empire,
-        origin_sector: origin,
-        target_sector: target,
-        arrival_tick: @galaxy.current_tick + travel_ticks(origin, target),
-        status: "moving",
-        ships: ships
-      )
+      fleet = @galaxy.fleets.new(empire: current_empire, origin_sector: origin,
+                                 target_sector: target, status: "moving", ships: ships)
+      fleet.arrival_tick = @galaxy.current_tick + travel_ticks(origin, target, fleet)
+      fleet.save!
+      fleet
     end
   end
 
@@ -53,23 +50,29 @@ class FleetsController < ApplicationController
   def detach!(garrison, ships)
     remaining = garrison.ships.dup
 
-    ships.each do |name, count|
-      available = remaining[name].to_i
-      raise DispatchError, "only #{available} #{name} stationed at #{garrison.origin_sector.coordinate}" if available < count
+    ships.each do |key, count|
+      available = remaining[key].to_i
 
-      remaining[name] = available - count
+      if available < count
+        # Players see hull names, never catalogue keys.
+        label = ShipType.find(key)&.name || key
+        raise DispatchError, "only #{available} #{label} stationed at #{garrison.origin_sector.coordinate}"
+      end
+
+      remaining[key] = available - count
     end
 
     remaining.reject! { |_, count| count.zero? }
     remaining.empty? ? garrison.destroy! : garrison.update!(ships: remaining)
   end
 
-  # Propulsion Technology shortens the crossing; a journey never drops below one tick.
-  def travel_ticks(origin, target)
+  # Distance, slowed by the fleet's heaviest hull and quickened by Propulsion
+  # Technology. A journey never drops below one tick.
+  def travel_ticks(origin, target, fleet)
     distance = origin.distance_to(target.x, target.y)
-    speed = [ 1 - current_empire.technology_bonus(:propulsion), MINIMUM_TRAVEL_SPEED ].max
+    drive = [ 1 - current_empire.technology_bonus(:propulsion), MINIMUM_TRAVEL_SPEED ].max
 
-    [ (distance * speed).ceil, 1 ].max
+    [ (distance * fleet.speed_factor * drive).ceil, 1 ].max
   end
 
   def requested_ships

@@ -25,7 +25,7 @@ RSpec.describe EmpireFounder, type: :service do
     fleet = empire.fleets.first
     expect(fleet.origin_sector).to eq(home)
     expect(fleet.status).to eq("orbiting")
-    expect(fleet.ships).to eq("Fighter" => 10)
+    expect(fleet.ships).to eq("light_fighter" => 10)
   end
 
   it "creates a planet on the home sector with starting structures" do

@@ -19,7 +19,10 @@ class TickProcessor
 
   def complete_builds
     Planet.where(empire_id: @galaxy.empires.select(:id)).includes(:build_orders, :structures, :sector)
-          .find_each { |planet| planet.queue.advance! }
+          .find_each do |planet|
+      planet.queue.advance!
+      planet.shipyard.advance!
+    end
   end
 
   def complete_research
@@ -78,6 +81,21 @@ class TickProcessor
     end
   end
 
+  # A captured sector is stripped of what the fleet can carry. Transports exist for
+  # this: without cargo space a victory takes the ground but none of the spoils.
+  def plunder!(fleet, target)
+    capacity = fleet.cargo_capacity
+    return if capacity.zero?
+
+    haul = [ (target.metal_rate.to_i + target.crystal_rate.to_i) * 10, capacity ].min
+    empire = fleet.empire
+
+    empire.update!(
+      metal: [ empire.metal + (haul / 2), empire.storage_capacity(:metal) ].min,
+      crystal: [ empire.crystal + (haul / 2), empire.storage_capacity(:crystal) ].min
+    )
+  end
+
   def resolve_combat(fleet)
     target = fleet.target_sector
 
@@ -86,6 +104,7 @@ class TickProcessor
       attacker_power = fleet.power
 
       if attacker_power >= defender_power
+        plunder!(fleet, target)
         target.update!(
           npc_faction: nil,
           empire: fleet.empire,

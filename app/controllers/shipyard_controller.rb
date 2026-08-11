@@ -1,52 +1,47 @@
 class ShipyardController < ApplicationController
+  before_action :load_planet
+
+  def show
+    @shipyard = @planet.shipyard
+  end
+
   def create
-    @galaxy = Galaxy.find(params[:galaxy_id])
-    @sector = current_empire.sectors.find(params[:sector_id])
+    @planet.shipyard.enqueue!(params[:id], params[:quantity].to_i)
+    flash.now[:notice] = "#{params[:quantity]} #{ShipType.find!(params[:id]).name} added to the yard."
+    respond_with_shipyard
+  rescue Shipyard::Error, ActiveRecord::RecordInvalid => e
+    flash.now[:alert] = "Could not build: #{e.message}"
+    respond_with_shipyard
+  end
 
-    ship_type = ShipType.find(params[:ship_type_id])
-    quantity = params[:quantity].to_i
+  private
 
-    if quantity <= 0
-      redirect_to galaxy_sector_path(@galaxy, @sector), alert: "Quantity must be greater than zero."
-      return
-    end
+  def load_planet
+    @empire = current_empire
+    @planet = @empire&.planet
 
-    # Energy is a planet-side balance rather than a stored resource, so hulls are
-    # paid for in metal and crystal only.
-    cost = {
-      metal: ship_type.metal_cost * quantity,
-      crystal: ship_type.crystal_cost * quantity
-    }
+    redirect_to galaxy_path(Galaxy.first), alert: "Your empire has no planet yet." if @planet.nil?
+  end
 
-    if current_empire.metal < cost[:metal] || current_empire.crystal < cost[:crystal]
-      redirect_to galaxy_sector_path(@galaxy, @sector), alert: "Not enough resources."
-      return
-    end
+  def respond_with_shipyard
+    @empire = current_empire.reload
+    @planet = @empire.planet.reload
+    @shipyard = @planet.shipyard
 
-    new_ships = { ship_type.name => quantity }
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: [
+          turbo_stream.replace("flash", partial: "shared/flash"),
+          turbo_stream.replace("hud", partial: "shared/hud", locals: { empire: @empire }),
+          turbo_stream.update("planet-main", partial: "shipyard/yard",
+                              locals: { planet: @planet, shipyard: @shipyard, empire: @empire })
+        ]
+      end
 
-    ActiveRecord::Base.transaction do
-      current_empire.update!(
-        metal: current_empire.metal - cost[:metal],
-        crystal: current_empire.crystal - cost[:crystal]
-      )
-
-      fleet = @galaxy.fleets.find_by(empire: current_empire, origin_sector: @sector, status: "orbiting")
-
-      if fleet
-        fleet.ships[ship_type.name] ||= 0
-        fleet.ships[ship_type.name] += quantity
-        fleet.save!
-      else
-        @galaxy.fleets.create!(
-          empire: current_empire,
-          origin_sector: @sector,
-          status: "orbiting",
-          ships: new_ships
-        )
+      format.html do
+        flash.keep
+        redirect_to shipyard_path
       end
     end
-
-    redirect_to galaxy_sector_path(@galaxy, @sector), notice: "Built #{quantity} #{ship_type.name}."
   end
 end

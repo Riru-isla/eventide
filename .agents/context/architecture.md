@@ -18,7 +18,8 @@
 | `ResearchOrder` | The single project an empire is researching. |
 | `Structure` | **Not** an Active Record model — a static Ruby catalogue of every buildable structure and its balance numbers. |
 | `Fleet` | Group of ships moving between sectors or orbiting a sector. JSON `ships` stores counts by ship type name. |
-| `ShipType` | Static ship definitions with costs and stats. Some are role-locked. |
+| `ShipType` | **Not** an Active Record model — a static Ruby catalogue of hulls and their prerequisites. |
+| `ShipOrder` | A batch of hulls queued at a planet's shipyard. |
 
 ## Key Associations
 
@@ -40,6 +41,8 @@
 - `BuildQueue` — adds orders, starts the next one, and applies finished ones. Resources
   are charged when an order is queued, not when it completes. A finished order chains
   the next from *its* completion tick, so downtime does not lose queue time.
+- `Shipyard` — what a planet may build and the queue of hulls it is building. Same
+  gating shape as research: a Shipyard level plus technologies.
 - `ResearchLab` — starts and finishes research, and answers what an empire is allowed
   to research. One project at a time, gated on Research Center level and other
   technologies.
@@ -64,7 +67,7 @@
 - `GalaxiesController` — main map view.
 - `SectorsController` — sector detail / planet management.
 - `FleetsController` — dispatch fleets from a sector to a target.
-- `ShipyardController` — build ships at owned sectors.
+- `ShipyardController` — the planet's shipyard: hull roster and build queue.
 
 ## Authentication
 

@@ -16,10 +16,19 @@ class Fleet < ApplicationRecord
   end
 
   def base_power
-    ships.sum do |ship_type_name, count|
-      ship_type = ShipType.find_by(name: ship_type_name)
-      ship_type ? ship_type.attack * count : 0
-    end
+    ShipType.each_in(ships).sum { |definition, count| definition.attack * count }
+  end
+
+  # How much plunder this fleet can haul out of a captured sector.
+  def cargo_capacity
+    ShipType.each_in(ships).sum { |definition, count| definition.cargo * count }
+  end
+
+  # A fleet crosses at the pace of its slowest hull.
+  def speed_factor
+    factors = ShipType.each_in(ships).map { |definition, _| definition.speed_factor }
+
+    [ factors.max || 1.0, ShipType::MINIMUM_SPEED_FACTOR ].max
   end
 
   # Weapons and Laser Technology both feed the empire's attack multiplier.

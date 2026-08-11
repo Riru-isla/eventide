@@ -26,7 +26,8 @@
 - [x] Energy as a balance: a deficit throttles extraction to 30% and exempts energy buildings.
 - [x] Fleet dispatch from owned sectors to targets.
 - [x] Basic combat: attacker power vs defender strength.
-- [x] Ship construction at owned sectors (instant build).
+- [x] **Shipyard**: five hulls gated on Shipyard level and research, built in a timed
+      queue and delivered into the planet's garrison.
 - [x] RSpec test suite with 100% line coverage.
 
 ## In Progress / Next Up
@@ -42,9 +43,9 @@
 
 ## Known Rough Edges
 
-- Ship construction is still instant, and does not require a Shipyard.
 - Build queues advance in ticks, so they only progress while the server is running.
-- The Shipyard and Fleet nav sections are placeholders shown disabled.
+- The Fleet nav section is still a placeholder shown disabled, and needs a design
+  decision first: garrison, ground defences, or something else.
 - `ShipType#energy_cost` and `Empire#energy` are dead columns since energy became a
   balance.
 - **Fleet dispatch does not check or spend ships.** `FleetsController#create` takes

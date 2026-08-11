@@ -1,0 +1,54 @@
+<% missing = shipyard.unmet_requirements(definition) %>
+<% locked = missing.any? %>
+<% held = planet.garrison_count(definition.key) %>
+
+<div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 border-b border-line-soft p-4 last:border-b-0
+            <%= locked ? "opacity-55" : "" %>">
+
+  <div class="flex min-w-0 items-baseline gap-2.5">
+    <span class="tracking-[0.06em] text-ink"><%= definition.name %></span>
+    <span class="lvl-chip" data-unbuilt="<%= held.zero? %>"><%= number_with_delimiter(held) %> held</span>
+  </div>
+
+  <div class="row-span-2 flex flex-col items-end gap-2 text-right">
+    <span class="num text-[0.6875rem] leading-[1.7] text-ink-3">
+      <span class="<%= empire.metal >= definition.metal_cost ? "text-metal" : "text-bad" %>">
+        <%= number_with_delimiter(definition.metal_cost) %> M
+      </span><br>
+      <span class="<%= empire.crystal >= definition.crystal_cost ? "text-crystal" : "text-bad" %>">
+        <%= number_with_delimiter(definition.crystal_cost) %> C
+      </span><br>
+      <span>each</span>
+    </span>
+
+    <% if locked %>
+      <span class="btn" aria-disabled="true">Locked</span>
+    <% else %>
+      <%= form_with url: build_ships_path(definition.key), class: "flex items-center gap-2" do |f| %>
+        <%= f.number_field :quantity, value: 1, min: 1, max: 9999,
+                           class: "num w-16 border border-line bg-ground-2 px-2 py-1 text-right text-[0.8125rem] text-ink",
+                           "aria-label": "Quantity of #{definition.name}" %>
+        <%= f.submit "Build", class: "btn" %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <div class="col-start-1">
+    <p class="font-sans text-[0.8125rem] text-ink-2"><%= definition.summary %></p>
+
+    <p class="num mt-1.5 text-[0.6875rem] tracking-[0.06em] text-ink-3">
+      <span class="text-bad"><%= definition.attack %> atk</span> ·
+      <span class="text-metal"><%= number_with_delimiter(definition.cargo) %> cargo</span> ·
+      <span class="<%= definition.speed_factor <= 1.0 ? "text-good" : "text-amber-2" %>">
+        <%= definition.speed_factor <= 1.0 ? "fast" : "slow" %> (×<%= definition.speed_factor %>)
+      </span> ·
+      <%= pluralize(definition.build_ticks, "tick") %> each
+    </p>
+
+    <% if locked %>
+      <p class="mt-1.5 text-[0.6875rem] tracking-[0.06em] text-bad">
+        Locked — needs <%= missing.to_sentence %>
+      </p>
+    <% end %>
+  </div>
+</div>

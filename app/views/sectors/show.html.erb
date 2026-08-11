@@ -70,27 +70,10 @@
 
       <div class="bg-gray-900 rounded-lg p-6">
         <h2 class="text-xl font-semibold text-white mb-4">Build Ships</h2>
-
-        <% if ShipType.none? || @empire.metal < (ShipType.minimum(:metal_cost) || 0) %>
-          <p class="text-gray-500 text-sm">No ships available to build.</p>
-        <% else %>
-          <%= form_with url: galaxy_sector_shipyard_index_path(@galaxy, @sector), class: "space-y-3" do |f| %>
-            <div>
-              <%= f.label :ship_type_id, "Ship Type", class: "block text-sm text-gray-400 mb-1" %>
-              <%= f.select :ship_type_id,
-                           ShipType.order(:metal_cost).map { |st| [ "#{st.name} — M#{st.metal_cost} C#{st.crystal_cost} E#{st.energy_cost}", st.id ] },
-                           {},
-                           class: "w-full bg-gray-800 text-white rounded px-3 py-2" %>
-            </div>
-
-            <div>
-              <%= f.label :quantity, "Quantity", class: "block text-sm text-gray-400 mb-1" %>
-              <%= f.number_field :quantity, value: 1, min: 1, class: "w-full bg-gray-800 text-white rounded px-3 py-2" %>
-            </div>
-
-            <%= f.submit "Build", class: "w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded" %>
-          <% end %>
-        <% end %>
+        <p class="text-gray-500 text-sm">
+          Hulls are laid down at your planet's
+          <%= link_to "Shipyard", shipyard_path, class: "text-blue-400 hover:text-blue-300" %>.
+        </p>
       </div>
     <% end %>
   </div>

@@ -1,0 +1,69 @@
+<% current_tick = planet.sector.galaxy.current_tick %>
+<% orders = shipyard.orders.to_a %>
+
+<section class="mod" aria-label="Yard">
+  <div class="mod-head">
+    <h2 class="mod-title">Shipyard</h2>
+    <span class="mod-note">
+      <%= shipyard.operational? ? "Level #{shipyard.level}" : "Not built" %>
+    </span>
+  </div>
+
+  <% if !shipyard.operational? %>
+    <div class="p-4">
+      <p class="font-sans text-[0.8125rem] text-ink-2">
+        No Shipyard on <%= planet.name %>. Build one from
+        <%= link_to "Facilities", planet_structures_path(section: "facilities", structure: "shipyard"),
+                    class: "text-amber hover:underline" %>
+        before any hull can be laid down.
+      </p>
+    </div>
+  <% elsif orders.empty? %>
+    <div class="p-4">
+      <p class="font-sans text-[0.8125rem] text-ink-2">The yard is idle.</p>
+    </div>
+  <% else %>
+    <div class="flex flex-col">
+      <% orders.each do |order| %>
+        <div class="border-b border-line-soft p-4 last:border-b-0">
+          <div class="mb-2 flex items-baseline justify-between gap-3.5">
+            <span class="text-[0.8125rem] tracking-[0.06em] <%= order.building? ? "text-ink" : "text-ink-3" %>">
+              <b class="font-semibold <%= order.building? ? "text-amber" : "text-ink-2" %>"><%= order.quantity %></b>
+              <%= order.name %>
+            </span>
+            <span class="num text-[0.6875rem] tracking-[0.08em] text-ink-3">
+              <% if order.building? %>
+                <%= pluralize(order.ticks_remaining(current_tick), "tick") %> left
+              <% else %>
+                queued · <%= pluralize(order.ticks_required, "tick") %>
+              <% end %>
+            </span>
+          </div>
+          <div class="h-[5px] border border-line-soft bg-ground-2">
+            <div class="h-full bg-gradient-to-r from-amber-2 to-amber"
+                 style="width: <%= order.progress(current_tick).round(1) %>%"></div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</section>
+
+<section class="mod" aria-label="Hulls">
+  <div class="mod-head">
+    <h2 class="mod-title">Hulls</h2>
+    <span class="mod-note">Attack · cargo · speed</span>
+  </div>
+
+  <div class="flex flex-col">
+    <% ShipType.all.each do |definition| %>
+      <%= render "shipyard/hull",
+                 definition: definition, shipyard: shipyard, empire: empire, planet: planet %>
+    <% end %>
+  </div>
+</section>
+
+<p class="font-sans text-[0.8125rem] text-ink-2">
+  Finished hulls join the fleet orbiting <%= planet.name %>. A fleet crosses at the pace of
+  its slowest hull, and only cargo space brings plunder home from a captured sector.
+</p>

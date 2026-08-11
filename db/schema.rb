@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_11_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_11_180000) do
   create_table "build_orders", force: :cascade do |t|
     t.integer "completes_at_tick"
     t.datetime "created_at", null: false
@@ -147,17 +147,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_150000) do
     t.index ["npc_faction_id"], name: "index_sectors_on_npc_faction_id"
   end
 
-  create_table "ship_types", force: :cascade do |t|
-    t.integer "attack"
+  create_table "ship_orders", force: :cascade do |t|
+    t.integer "completes_at_tick"
     t.datetime "created_at", null: false
-    t.integer "crystal_cost"
-    t.integer "defense"
-    t.integer "energy_cost"
-    t.integer "metal_cost"
-    t.string "name"
-    t.string "role"
-    t.integer "speed"
+    t.string "kind", null: false
+    t.integer "planet_id", null: false
+    t.integer "position", default: 0, null: false
+    t.integer "quantity", null: false
+    t.integer "started_at_tick"
+    t.integer "ticks_required", null: false
     t.datetime "updated_at", null: false
+    t.index ["completes_at_tick"], name: "index_ship_orders_on_completes_at_tick"
+    t.index ["planet_id", "position"], name: "index_ship_orders_on_planet_id_and_position"
+    t.index ["planet_id"], name: "index_ship_orders_on_planet_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -188,4 +190,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_150000) do
   add_foreign_key "sectors", "empires"
   add_foreign_key "sectors", "galaxies"
   add_foreign_key "sectors", "npc_factions"
+  add_foreign_key "ship_orders", "planets"
 end

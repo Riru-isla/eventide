@@ -47,17 +47,6 @@ FactoryBot.define do
     galaxy { empire.galaxy }
     origin_sector factory: :sector
     status { "orbiting" }
-    ships { { "Fighter" => 10 } }
-  end
-
-  factory :ship_type do
-    sequence(:name) { |n| "Ship Type #{n}" }
-    role { nil }
-    metal_cost { 10 }
-    crystal_cost { 10 }
-    energy_cost { 10 }
-    attack { 10 }
-    defense { 10 }
-    speed { 2 }
+    ships { { "light_fighter" => 10 } }
   end
 end

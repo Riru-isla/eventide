@@ -51,8 +51,8 @@ Buildings complete after N ticks, queued per planet. Instant construction remove
 reason to log in again, which is the core rhythm for a game played by colleagues
 checking in a couple of times a day.
 
-**Implemented** for structures. Durations grow with level and are shortened by the
-Robotics Bay. Ship construction is still instant.
+**Implemented** for structures and ships. Durations grow with level (or quantity) and
+are shortened by the Robotics Bay and Construction Technology.
 
 Durations are counted in **ticks**, so a queue only advances while the server is up.
 That is the same limitation as the game-time model below, and `completes_at_tick` is
@@ -79,6 +79,16 @@ at a time.
 
 Technologies sharing an effect stack additively (Weapons and Laser both feed the attack
 multiplier), so a new technology never has to know what already exists.
+
+## Ships are gated like research
+
+Hulls need a Shipyard of a given level plus, for the heavier ones, technologies — the
+same gating shape as research so both screens read alike.
+
+Fleets store counts keyed by the catalogue **key**, never the display name, so a hull
+can be renamed without orphaning every fleet holding one. Every hull stat is used:
+attack feeds combat, cargo decides how much plunder a victory brings home, and
+speed_factor sets travel time from the fleet's slowest hull.
 
 ## Screen structure
 

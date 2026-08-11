@@ -12,52 +12,152 @@ RSpec.describe "Shipyard", type: :request do
 
   let(:empire) { galaxy.empires.first }
   let(:user) { empire.player.user }
-  let(:sector) { empire.home_sector }
-  let!(:ship_type) { create(:ship_type, name: "Fighter", metal_cost: 10, crystal_cost: 5, energy_cost: 5) }
+  let(:planet) { empire.planet }
 
-  before { sign_in(user) }
+  def set_shipyard(level)
+    planet.structures.find_by(kind: "shipyard").update!(level: level)
+  end
 
-  describe "POST /galaxies/:galaxy_id/sectors/:sector_id/shipyard" do
-    it "builds ships and subtracts resources" do
-      expect {
-        post galaxy_sector_shipyard_index_path(galaxy, sector), params: { ship_type_id: ship_type.id, quantity: 5 }
-      }.to change { empire.reload.metal }.by(-50)
-        .and change { empire.fleets.count }.by(0)
+  before do
+    sign_in(user)
+    empire.update!(metal: 500_000, crystal: 500_000)
+  end
 
-      fleet = empire.fleets.first
-      expect(fleet.ships["Fighter"]).to eq(15) # 10 starting + 5 built
-      expect(response).to redirect_to(galaxy_sector_path(galaxy, sector))
+  describe "GET /shipyard" do
+    it "lists every hull with its stats" do
+      get shipyard_path
+
+      expect(response).to have_http_status(:ok)
+      ShipType.all.each { |hull| expect(response.body).to include(hull.name) }
+      expect(response.body).to include("atk")
+      expect(response.body).to include("cargo")
     end
 
-    it "creates a new fleet if none exists" do
-      empire.fleets.destroy_all
-      empire.fleets.reload
+    it "says the yard is idle when nothing is building" do
+      get shipyard_path
 
-      expect {
-        post galaxy_sector_shipyard_index_path(galaxy, sector), params: { ship_type_id: ship_type.id, quantity: 2 }
-      }.to change { Fleet.count }.by(1)
-
-      fleet = empire.fleets.reload.first
-      expect(fleet.ships["Fighter"]).to eq(2)
+      expect(response.body).to include("The yard is idle")
     end
 
-    it "rejects insufficient resources" do
-      empire.update!(metal: 0, crystal: 0, energy: 0)
+    it "tells the player to build a Shipyard when there is none" do
+      set_shipyard(0)
 
-      expect {
-        post galaxy_sector_shipyard_index_path(galaxy, sector), params: { ship_type_id: ship_type.id, quantity: 1 }
-      }.not_to change { empire.fleets.sum(&:total_ships) }
+      get shipyard_path
 
-      expect(response).to redirect_to(galaxy_sector_path(galaxy, sector))
-      expect(flash[:alert]).to include("Not enough resources")
+      expect(response.body).to include("No Shipyard on")
     end
 
-    it "rejects non-positive quantity" do
-      expect {
-        post galaxy_sector_shipyard_index_path(galaxy, sector), params: { ship_type_id: ship_type.id, quantity: 0 }
-      }.not_to change { empire.fleets.sum(&:total_ships) }
+    it "shows what a locked hull is missing" do
+      get shipyard_path
 
-      expect(response).to redirect_to(galaxy_sector_path(galaxy, sector))
+      expect(response.body).to include("Locked")
+      expect(response.body).to include("Shipyard 6")
+    end
+
+    it "shows how many of a hull the garrison already holds" do
+      get shipyard_path
+
+      expect(response.body).to include("10 held")
+    end
+
+    it "shows batches under construction" do
+      planet.shipyard.enqueue!("light_fighter", 3)
+
+      get shipyard_path
+
+      expect(response.body).to include("Light Fighter")
+      expect(response.body).to include("left")
+      expect(response.body).not_to include("The yard is idle")
+    end
+
+    it "redirects when the empire has no planet" do
+      planet.destroy!
+
+      get shipyard_path
+
+      expect(response).to redirect_to(galaxy_path(Galaxy.first))
+    end
+
+    it "requires a signed-in user" do
+      sign_out(user)
+
+      get shipyard_path
+
+      expect(response).to redirect_to(new_user_session_path)
+    end
+  end
+
+  describe "POST /shipyard/:id" do
+    it "queues the batch and charges the empire" do
+      cost = ShipType.find("light_fighter").cost(4)
+
+      expect { post build_ships_path("light_fighter"), params: { quantity: 4 } }
+        .to change(ShipOrder, :count).by(1)
+        .and change { empire.reload.metal }.by(-cost[:metal])
+
+      expect(flash[:notice]).to match(/4 Light Fighter added to the yard/)
+      expect(response).to redirect_to(shipyard_path)
+    end
+
+    it "refuses a locked hull and says why" do
+      expect { post build_ships_path("battle_cruiser"), params: { quantity: 1 } }
+        .not_to change(ShipOrder, :count)
+
+      expect(flash[:alert]).to match(/Shipyard 6/)
+    end
+
+    it "refuses a hull whose research is missing" do
+      set_shipyard(6)
+
+      post build_ships_path("battle_cruiser"), params: { quantity: 1 }
+
+      expect(flash[:alert]).to match(/Laser Technology 1/)
+    end
+
+    it "refuses an unknown hull" do
+      post build_ships_path("rowboat"), params: { quantity: 1 }
+
+      expect(flash[:alert]).to match(/unknown ship/)
+    end
+
+    it "refuses a quantity below one" do
+      post build_ships_path("light_fighter"), params: { quantity: 0 }
+
+      expect(flash[:alert]).to match(/at least one/)
+    end
+
+    it "refuses when the empire cannot pay" do
+      empire.update!(metal: 0, crystal: 0)
+
+      expect { post build_ships_path("light_fighter"), params: { quantity: 1 } }
+        .not_to change(ShipOrder, :count)
+
+      expect(flash[:alert]).to match(/needs/)
+    end
+
+    it "redirects when the empire has no planet" do
+      planet.destroy!
+
+      post build_ships_path("light_fighter"), params: { quantity: 1 }
+
+      expect(response).to redirect_to(galaxy_path(Galaxy.first))
+    end
+
+    it "answers a Turbo request with streams instead of a redirect" do
+      post build_ships_path("light_fighter"), params: { quantity: 2 }, as: :turbo_stream
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("text/vnd.turbo-stream.html")
+      expect(response.body).to include('target="flash"')
+      expect(response.body).to include('target="hud"')
+      expect(response.body).to include('action="update" target="planet-main"')
+    end
+
+    it "reports a failure through the Turbo stream too" do
+      post build_ships_path("battle_cruiser"), params: { quantity: 1 }, as: :turbo_stream
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Could not build")
     end
   end
 end
