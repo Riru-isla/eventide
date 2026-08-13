@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_12_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_13_090000) do
   create_table "build_orders", force: :cascade do |t|
     t.integer "completes_at_tick"
     t.datetime "created_at", null: false
@@ -73,19 +73,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_090000) do
     t.integer "current_tick"
     t.integer "height"
     t.string "name"
+    t.string "size", default: "small", null: false
     t.string "status"
     t.datetime "updated_at", null: false
     t.integer "width"
   end
 
   create_table "npc_factions", force: :cascade do |t|
+    t.string "aggression", default: "unaware", null: false
+    t.integer "capital_sector_id"
     t.string "color"
     t.datetime "created_at", null: false
+    t.integer "fallen_at_tick"
     t.integer "galaxy_id", null: false
     t.string "name"
     t.integer "strength_level"
     t.integer "tech_level"
+    t.integer "tier", default: 1, null: false
     t.datetime "updated_at", null: false
+    t.index ["capital_sector_id"], name: "index_npc_factions_on_capital_sector_id"
+    t.index ["galaxy_id", "tier"], name: "index_npc_factions_on_galaxy_id_and_tier"
     t.index ["galaxy_id"], name: "index_npc_factions_on_galaxy_id"
   end
 
@@ -185,6 +192,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_12_090000) do
   add_foreign_key "fleets", "empires"
   add_foreign_key "fleets", "galaxies"
   add_foreign_key "npc_factions", "galaxies"
+  add_foreign_key "npc_factions", "sectors", column: "capital_sector_id"
   add_foreign_key "planet_structures", "planets"
   add_foreign_key "planets", "empires"
   add_foreign_key "planets", "sectors"

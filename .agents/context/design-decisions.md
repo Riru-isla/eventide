@@ -170,6 +170,37 @@ second: the dispatch form, the shipyard and the garrison count all read the firs
 Any player's planet is a valid destination. This is a cooperative game — shipping to
 another commander is the point, not an exploit.
 
+## The galaxy is big because engagements, not travel, make a season
+
+A four-week season needs several hundred fights, not slower ticks. Travel is cheap at any
+size — a researched fast fleet crosses a 150x150 map in about half an hour — so map size
+buys **exploration and room**, while the count of NPC-held sectors buys **duration**. The
+two are separate dials and live in `Galaxy::SIZES`.
+
+Size is fixed when a session is created and never changes: growing a galaxy under players
+who have already explored it would mean seeding new space into somewhere already scouted.
+
+Bands are measured from the **rim inward**, so the faction a player meets first is the
+weakest. Each tier inward holds more sectors *and* defends them harder, so difficulty
+compounds on both axes. Density rises from about 1% of a band held at the frontier to
+40% at the core.
+
+Normalising by the **inscribed** radius, not the corner distance: bands measured against
+the corner would only exist diagonally, since on a 150x150 the corners are 106 from the
+centre but the edge midpoints only 75.
+
+## Factions are a ladder, and escalation is shared
+
+Each faction holds one **capital**. Taking it ends the faction — not clearing every
+sector it owns, so a tier finishes with a battle worth organising rather than a mop-up.
+
+When a faction falls the next tier wakes **for the whole galaxy**, not just for whoever
+struck the blow. Shared fate: helping the commanders who are behind becomes self-interest,
+because the tier you just unlocked will hunt them too.
+
+Aggression runs `unaware` -> `dormant` -> `aware` -> `hunting` -> `total_war`. Only the
+frontier faction starts awake. Nothing reads these yet; faction behaviour is a later step.
+
 ## Screen structure
 
 Overview, Resources and Facilities are views onto **the current planet**; Research is

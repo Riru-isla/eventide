@@ -2,8 +2,11 @@
 
 ## Implemented
 
-- [x] Procedural galaxy generation (15×15 demo, scalable).
-- [x] Escalating NPC factions toward the galaxy core.
+- [x] **Galaxy generation at scale**: small/medium/large (150x150 to 400x400), bulk
+      inserted — a 160,000-sector galaxy builds in about six seconds.
+- [x] **Five faction tiers in concentric bands**, weakest on the rim and strongest at the
+      core, each with a capital and an aggression state. Players spawn in an outer band
+      kept clear of NPCs.
 - [x] Empire roles: `cultivator`, `foundry`, `warden` with resource bonuses.
 - [x] Tick-based resource income.
 - [x] Player signup and login with username/password (Devise, username-keyed).

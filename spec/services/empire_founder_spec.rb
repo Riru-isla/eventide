@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe EmpireFounder, type: :service do
   let(:galaxy) do
-    GalaxyGenerator.new(name: "Founder Test", width: 15, height: 15, player_configs: []).generate
+    GalaxyGenerator.new(name: "Founder Test", size: "tiny", player_configs: []).generate
   end
   let(:user) { create(:user) }
 

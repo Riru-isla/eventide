@@ -1,23 +1,35 @@
 # Chooses where a new empire starts.
 #
-# Home sectors sit on a ring around the core, far from the strongest NPC factions.
-# Slots are fixed and claimed in a spread order, so players who join one at a time
-# still end up spaced around the ring instead of clustered on one arc, and two
-# simultaneous signups cannot land on the same coordinate.
+# Home sectors sit out on the rim, inside the player band that generation deliberately
+# leaves clear of NPCs — so the first hostile sector is a push inward rather than a
+# neighbour. Slots are fixed and claimed in a spread order, so players joining one at a
+# time still end up spaced around the ring, and two simultaneous signups cannot land on
+# the same coordinate.
+#
+# Team-based clustering replaces this ordering in the next step; for now the job is to
+# keep spawns out of the faction bands.
 class HomeSectorPlacement
-  SLOTS = 12
+  SLOTS = 24
 
-  # Slot claim order: opposite first, then quarters, then the gaps between them.
-  SLOT_ORDER = [ 0, 6, 3, 9, 1, 7, 4, 10, 2, 8, 5, 11 ].freeze
+  # Claim order: opposite first, then quarters, then the gaps between, so the first few
+  # commanders are as far apart as the ring allows.
+  SLOT_ORDER = [
+    0, 12, 6, 18, 3, 15, 9, 21, 1, 13, 7, 19,
+    4, 16, 10, 22, 2, 14, 8, 20, 5, 17, 11, 23
+  ].freeze
+
+  # Where in the player band the ring sits. Far enough out to stay clear of tier 1,
+  # far enough in to leave somewhere to retreat to.
+  RING_POSITION = 0.93
 
   def initialize(galaxy)
     @galaxy = galaxy
   end
 
-  # The first unclaimed ring slot, or the free sector furthest from the core when
-  # every slot is taken or blocked (small galaxies can have NPCs sitting on the ring).
+  # The first unclaimed ring slot, or the nearest free sector to the ring when every
+  # slot is taken.
   def next_free_sector
-    ring_sectors.find { |sector| free?(sector) } || furthest_free_sector
+    ring_sectors.find { |sector| free?(sector) } || nearest_free_to_ring
   end
 
   private
@@ -27,13 +39,16 @@ class HomeSectorPlacement
   end
 
   def ring_coordinates
-    center_x = @galaxy.center[:x]
-    center_y = @galaxy.center[:y]
-    radius = [ center_x, center_y ].min - 2
+    centre_x = @galaxy.center[:x]
+    centre_y = @galaxy.center[:y]
+    radius = @galaxy.radius * RING_POSITION
 
     SLOT_ORDER.map do |slot|
       angle = (2 * Math::PI * slot) / SLOTS
-      [ (center_x + radius * Math.cos(angle)).round, (center_y + radius * Math.sin(angle)).round ]
+      [
+        (centre_x + (radius * Math.cos(angle))).round.clamp(0, @galaxy.width - 1),
+        (centre_y + (radius * Math.sin(angle))).round.clamp(0, @galaxy.height - 1)
+      ]
     end
   end
 
@@ -41,7 +56,12 @@ class HomeSectorPlacement
     sector.empire_id.nil? && sector.npc_faction_id.nil?
   end
 
-  def furthest_free_sector
-    @galaxy.sectors.where(empire_id: nil, npc_faction_id: nil).max_by(&:distance_to_center)
+  # Falls back toward the ring rather than out to a corner: a latecomer should start
+  # beside everyone else, not half a galaxy further from the core.
+  def nearest_free_to_ring
+    target = @galaxy.radius * RING_POSITION
+
+    @galaxy.sectors.where(empire_id: nil, npc_faction_id: nil)
+           .min_by { |sector| (sector.distance_to_center - target).abs }
   end
 end

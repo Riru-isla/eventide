@@ -1,7 +1,10 @@
 <section class="mod" aria-label="Galaxy map">
   <div class="mod-head">
     <h2 class="mod-title"><%= galaxy.name %></h2>
-    <span class="mod-note">Tick <%= number_with_delimiter(galaxy.current_tick) %> · <%= galaxy.status %></span>
+    <span class="mod-note">
+      <%= number_with_delimiter(galaxy.width) %>&times;<%= number_with_delimiter(galaxy.height) %> ·
+      Tick <%= number_with_delimiter(galaxy.current_tick) %>
+    </span>
   </div>
 
   <div class="relative aspect-square w-full">
@@ -15,8 +18,8 @@
     <svg viewBox="0 0 <%= GalaxiesHelper::MAP_VIEWBOX %> <%= GalaxiesHelper::MAP_VIEWBOX %>"
          class="absolute inset-0 h-full w-full"
          role="img"
-         aria-label="Sectors of <%= galaxy.name %>">
-      <% galaxy.sectors.each do |sector| %>
+         aria-label="Held sectors of <%= galaxy.name %>">
+      <% sectors.each do |sector| %>
         <% x, y = sector_position(sector, galaxy) %>
         <% colour = sector_color(sector, empire_colors) %>
 
@@ -33,4 +36,9 @@
       <% end %>
     </svg>
   </div>
+
+  <p class="border-t border-line-soft px-4 py-3 font-sans text-[0.8125rem] text-ink-2">
+    Showing the <%= number_with_delimiter(sectors.size) %> sectors somebody holds, out of
+    <%= number_with_delimiter(galaxy.width * galaxy.height) %>. Empty space is not drawn.
+  </p>
 </section>

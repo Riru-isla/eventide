@@ -4,8 +4,7 @@ RSpec.describe TickJob, type: :job do
   let(:galaxy) do
     GalaxyGenerator.new(
       name: "Job Test",
-      width: 11,
-      height: 11,
+      size: "tiny",
       player_configs: [ { name: "Ada", role: "foundry" } ]
     ).generate
   end
@@ -20,8 +19,8 @@ RSpec.describe TickJob, type: :job do
 
   it "ticks every active galaxy when called with no id" do
     active = galaxy # bind the lazy let before ticking, not after
-    other = GalaxyGenerator.new(name: "Second", width: 11, height: 11, player_configs: []).generate
-    paused = GalaxyGenerator.new(name: "Paused", width: 11, height: 11, player_configs: []).generate
+    other = GalaxyGenerator.new(name: "Second", size: "tiny", player_configs: []).generate
+    paused = GalaxyGenerator.new(name: "Paused", size: "tiny", player_configs: []).generate
     paused.update!(status: :paused)
 
     # This is how config/recurring.yml invokes the job.

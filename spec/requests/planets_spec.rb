@@ -4,8 +4,7 @@ RSpec.describe "Planets", type: :request do
   let!(:galaxy) do
     GalaxyGenerator.new(
       name: "Planet Request Test",
-      width: 11,
-      height: 11,
+      size: "tiny",
       player_configs: [ { name: "Ada", role: "foundry" } ]
     ).generate
   end

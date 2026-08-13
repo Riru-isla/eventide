@@ -4,8 +4,7 @@ RSpec.describe "Galaxies", type: :request do
   let!(:galaxy) do
     GalaxyGenerator.new(
       name: "Request Test",
-      width: 11,
-      height: 11,
+      size: "tiny",
       player_configs: [ { name: "Ada", role: "foundry" } ]
     ).generate
   end
@@ -23,18 +22,30 @@ RSpec.describe "Galaxies", type: :request do
       expect(response.body).to include("Ada")
     end
 
-    it "draws every sector on the disc" do
+    it "draws only the sectors somebody holds" do
+      # A galaxy is 22,500 sectors at its smallest. Drawing empty space would lock the
+      # browser and show nothing; a viewport arrives with fog of war.
+      held = galaxy.sectors.where.not(empire_id: nil).or(galaxy.sectors.where.not(npc_faction_id: nil)).count
+
       get galaxy_path(galaxy)
 
-      expect(response.body.scan(/class="sector"/).size).to eq(galaxy.sectors.count)
+      expect(response.body.scan(/class="sector"/).size).to eq(held)
+      expect(held).to be < galaxy.sectors.count
       expect(response.body).to include("galaxy-render")
+    end
+
+    it "says how much of the galaxy is being shown" do
+      get galaxy_path(galaxy)
+
+      expect(response.body).to include("sectors somebody holds")
+      expect(response.body).to include(ActiveSupport::NumberHelper.number_to_delimited(galaxy.sectors.count))
     end
 
     it "names each sector in a tooltip" do
       get galaxy_path(galaxy)
 
       expect(response.body).to include("<title>")
-      expect(response.body).to include("Unclaimed")
+      expect(response.body).to include(galaxy.npc_factions.first.name)
     end
 
     it "no longer carries the prototype's attack form or sector picker" do
