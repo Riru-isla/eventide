@@ -42,10 +42,11 @@ class Shipment
 
   private
 
-  # Adds what fits under the empire's storage ceiling and returns how much landed. A
-  # store already over capacity accepts nothing rather than being topped up further.
+  # Adds what fits under the empire's overflow ceiling and returns how much landed.
+  # Deliveries may overfill a store past the cap that mining respects — a gift should
+  # not bounce just because the recipient is topped up.
   def deposit(empire, resource, amount)
-    capacity = empire.storage_capacity(resource)
+    capacity = empire.overflow_capacity(resource)
     held = empire.public_send(resource)
     room = [ capacity - held, 0 ].max
     delivered = [ amount, room ].min

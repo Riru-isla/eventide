@@ -111,6 +111,17 @@ RSpec.describe TickProcessor, type: :service do
       expect(empire.reload.crew).to eq(empire.storage_capacity(:crew))
     end
 
+    it "still stops mining at the cap, not the overflow ceiling" do
+      empire.home_sector.update!(metal_rate: 100, crystal_rate: 0)
+      empire.planet.structures.find_by(kind: "solar_array").update!(level: 20)
+      empire.update!(metal: empire.storage_capacity(:metal) - 10)
+
+      described_class.new(galaxy).process
+
+      expect(empire.reload.metal).to eq(empire.storage_capacity(:metal))
+      expect(empire.metal).to be < empire.overflow_capacity(:metal)
+    end
+
     it "does not accumulate energy" do
       expect { described_class.new(galaxy).process }.not_to change { empire.reload.energy }
     end
@@ -316,8 +327,15 @@ RSpec.describe TickProcessor, type: :service do
         expect(fleet.cargo).to eq({})
       end
 
-      it "carries an undeliverable load home instead of losing it" do
+      it "lands a shipment even when the recipient is already at their mining cap" do
         recipient.update!(metal: recipient.storage_capacity(:metal))
+        send_shipment
+
+        expect { described_class.new(galaxy).process }.to change { recipient.reload.metal }.by(300)
+      end
+
+      it "carries an undeliverable load home instead of losing it" do
+        recipient.update!(metal: recipient.overflow_capacity(:metal))
         fleet = send_shipment
         described_class.new(galaxy).process
         galaxy.update!(current_tick: fleet.reload.arrival_tick)

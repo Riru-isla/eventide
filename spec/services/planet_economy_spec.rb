@@ -136,6 +136,37 @@ RSpec.describe PlanetEconomy, type: :service do
       expect(economy).not_to be_storage_full(:metal)
     end
 
+    it "lets deliveries overfill a store by half again" do
+      expect(economy.overflow_capacity(:metal)).to eq((Structure::BASE_STORAGE * 1.5).round)
+    end
+
+    it "knows when a store is past the mining cap" do
+      empire.update!(metal: Structure::BASE_STORAGE + 1)
+
+      expect(economy).to be_overflowing(:metal)
+      expect(economy).to be_storage_full(:metal)
+    end
+
+    it "is not overflowing when exactly at the cap" do
+      empire.update!(metal: Structure::BASE_STORAGE)
+
+      expect(economy).not_to be_overflowing(:metal)
+    end
+
+    it "measures how far into the overflow band a store sits" do
+      capacity = economy.storage_capacity(:metal)
+      room = economy.overflow_capacity(:metal) - capacity
+      empire.update!(metal: capacity + (room / 2))
+
+      expect(economy.overflow_fraction(:metal)).to be_within(0.01).of(0.5)
+    end
+
+    it "reports no overflow while under the cap" do
+      empire.update!(metal: 100)
+
+      expect(economy.overflow_fraction(:metal)).to eq(0.0)
+    end
+
     it "clamps the fraction when a store is over capacity" do
       empire.update!(metal: Structure::BASE_STORAGE * 10)
 

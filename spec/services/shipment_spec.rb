@@ -54,19 +54,31 @@ RSpec.describe Shipment, type: :service do
       expect(fleet).not_to be_carrying
     end
 
-    it "delivers only what fits under the recipient's storage cap" do
+    it "lands in full even when the recipient is already at their mining cap" do
+      # A gift should not bounce because the recipient happens to be topped up.
       capacity = recipient.storage_capacity(:metal)
-      recipient.update!(metal: capacity - 50)
+      recipient.update!(metal: capacity)
       fleet = fleet_with({ "metal" => 400 })
 
       described_class.new(fleet).deliver!(recipient)
 
-      expect(recipient.reload.metal).to eq(capacity)
+      expect(recipient.reload.metal).to eq(capacity + 400)
+      expect(fleet.reload.cargo).to eq({})
+    end
+
+    it "delivers only what fits under the overflow ceiling" do
+      ceiling = recipient.overflow_capacity(:metal)
+      recipient.update!(metal: ceiling - 50)
+      fleet = fleet_with({ "metal" => 400 })
+
+      described_class.new(fleet).deliver!(recipient)
+
+      expect(recipient.reload.metal).to eq(ceiling)
       expect(fleet.reload.manifest).to eq(metal: 350)
     end
 
-    it "keeps the whole load aboard when the recipient has no room at all" do
-      recipient.update!(metal: recipient.storage_capacity(:metal))
+    it "keeps the whole load aboard when the recipient is at the overflow ceiling" do
+      recipient.update!(metal: recipient.overflow_capacity(:metal))
       fleet = fleet_with({ "metal" => 400 })
 
       described_class.new(fleet).deliver!(recipient)

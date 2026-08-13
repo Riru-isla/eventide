@@ -6,32 +6,50 @@
   </div>
 
   <div class="flex flex-col gap-4 p-4">
-<%# Class names are written out in full rather than interpolated: Tailwind scans the
-    source for literal strings, so a class built at runtime is never generated. %>
-<% PlanetEconomy::STORED.each do |resource| %>
+    <%# Class names are written out in full rather than interpolated: Tailwind scans the
+        source for literal strings, so a class built at runtime is never generated.
+
+        The bar runs to the overflow ceiling, with the mining cap marked part-way along.
+        Everything past that marker arrived from somewhere else — a shipment or loot. %>
+    <% PlanetEconomy::STORED.each do |resource| %>
       <% capacity = economy.storage_capacity(resource) %>
-      <% fraction = economy.storage_fraction(resource) %>
+      <% ceiling = economy.overflow_capacity(resource) %>
+      <% stored = economy.stored(resource) %>
       <% full = economy.storage_full?(resource) %>
-      <% text_tone = resource_tone(resource) %>
-      <% bar_tone = if full then "bg-bad" elsif fraction > 0.9 then "bg-amber" else resource_bar_tone(resource) end %>
+      <% over = economy.overflowing?(resource) %>
+      <% cap_mark = ceiling.positive? ? (capacity.to_f / ceiling * 100).round(1) : 100 %>
 
       <div>
         <div class="mb-1.5 flex items-baseline justify-between gap-3">
-          <span class="text-[0.8125rem] tracking-[0.06em] <%= text_tone %>">
+          <span class="text-[0.8125rem] tracking-[0.06em] <%= resource_tone(resource) %>">
             <%= resource.to_s.capitalize %>
           </span>
-          <span class="num text-[0.6875rem] <%= full ? "text-bad" : "text-ink-3" %>">
-            <%= number_with_delimiter(economy.stored(resource)) %> / <%= number_with_delimiter(capacity) %>
+          <span class="num text-[0.6875rem] <%= over ? "text-amber" : (full ? "text-bad" : "text-ink-3") %>">
+            <%= number_with_delimiter(stored) %> / <%= number_with_delimiter(capacity) %>
           </span>
         </div>
 
-        <div class="h-[5px] border border-line-soft bg-ground-2">
-          <div class="h-full <%= bar_tone %>" style="width: <%= (fraction * 100).round(1) %>%"></div>
+        <div class="relative h-[5px] border border-line-soft bg-ground-2">
+          <div class="h-full <%= resource_bar_tone(resource) %>"
+               style="width: <%= (economy.storage_fraction(resource) * cap_mark).round(1) %>%"></div>
+
+          <% if over %>
+            <div class="absolute inset-y-0 bg-amber"
+                 style="left: <%= cap_mark %>%; width: <%= (economy.overflow_fraction(resource) * (100 - cap_mark)).round(1) %>%"></div>
+          <% end %>
+
+          <%# Where mining stops. %>
+          <div class="absolute inset-y-0 w-px bg-ink-3" style="left: <%= cap_mark %>%"></div>
         </div>
 
-        <% if full %>
+        <% if over %>
+          <p class="mt-1.5 font-sans text-[0.6875rem] text-amber">
+            <%= number_with_delimiter(stored - capacity) %> over capacity from deliveries.
+            Mining is paused until it is spent down.
+          </p>
+        <% elsif full %>
           <p class="mt-1.5 font-sans text-[0.6875rem] text-bad">
-            Full — <%= resource %> income is being lost. Raise the silo.
+            Full — <%= resource %> mining has stopped. Raise the silo, or spend some.
           </p>
         <% end %>
       </div>

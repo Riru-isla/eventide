@@ -67,6 +67,27 @@ pressure OGame uses to make people come back and spend.
 A stockpile already above capacity is left alone rather than trimmed. Running out of
 room should stall growth, never destroy what someone has banked.
 
+**Deliveries may overfill, mining may not.** There are two ceilings:
+
+- `storage_capacity` — where an empire's own extraction stops. Unchanged, and what
+  keeps silos worth building.
+- `overflow_capacity` — 1.5x that, and the ceiling for anything arriving from outside:
+  shipments and battle loot.
+
+Without this, gifting is unreliable rather than merely capped: a shipment to someone
+who happens to be topped up makes a pointless round trip and comes home, and the sender
+cannot see the recipient's storage to know in advance. In a cooperative game that is the
+wrong failure mode. Generosity and spoils get past the ceiling; your own mining does not.
+
+Nothing decays. A store sitting above the cap waits there until it is spent — a drain
+would be exactly the "log in or lose it" pressure this project avoids elsewhere.
+
+Deliberately **not** added yet: protected resources that cannot be raided. Nothing in
+Eventide steals from anyone today — `plunder!` mints loot from the captured sector's
+rates rather than debiting a victim — so protection would guard against a mechanic that
+does not exist, and its shape depends entirely on how raiding ends up working. It
+belongs with that design, likely as a field on a Vault structure.
+
 Silos sit on the planet but resources belong to the empire. With one planet per empire
 those are the same thing; this is the seam to revisit for multiple planets.
 

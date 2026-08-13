@@ -56,6 +56,12 @@ class Empire < ApplicationRecord
     public_send(resource) >= storage_capacity(resource)
   end
 
+  # Ceiling for shipments and loot, above the ceiling their own mining respects.
+  def overflow_capacity(resource)
+    planet&.economy&.overflow_capacity(resource) ||
+      (Structure::BASE_STORAGE * PlanetEconomy::OVERFLOW_MULTIPLIER).round
+  end
+
   def resource_bonus(resource)
     case [ role, resource ]
     when [ "cultivator", :crystal ] then 1.5

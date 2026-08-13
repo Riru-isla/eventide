@@ -58,12 +58,21 @@ RSpec.describe "Planets", type: :request do
       )
     end
 
-    it "warns when a store is full" do
-      empire.update!(metal: empire.storage_capacity(:metal) + 1)
+    it "warns when mining has stopped at the cap" do
+      empire.update!(metal: empire.storage_capacity(:metal))
 
       get planet_path
 
-      expect(response.body).to include("income is being lost")
+      expect(response.body).to include("mining has stopped")
+    end
+
+    it "explains an overfilled store rather than calling it full" do
+      empire.update!(metal: empire.storage_capacity(:metal) + 250)
+
+      get planet_path
+
+      expect(response.body).to include("over capacity from deliveries")
+      expect(response.body).to include("250")
     end
 
     it "says the queue is idle when nothing is building" do

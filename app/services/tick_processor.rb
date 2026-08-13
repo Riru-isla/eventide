@@ -135,8 +135,8 @@ class TickProcessor
     empire = fleet.empire
 
     empire.update!(
-      metal: [ empire.metal + (haul / 2), empire.storage_capacity(:metal) ].min,
-      crystal: [ empire.crystal + (haul / 2), empire.storage_capacity(:crystal) ].min
+      metal: [ empire.metal + (haul / 2), empire.overflow_capacity(:metal) ].min,
+      crystal: [ empire.crystal + (haul / 2), empire.overflow_capacity(:crystal) ].min
     )
   end
 

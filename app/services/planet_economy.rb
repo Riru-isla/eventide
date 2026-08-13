@@ -16,6 +16,11 @@ class PlanetEconomy
   # fraction of its base duration.
   MINIMUM_BUILD_SPEED = 0.25
 
+  # Resources arriving from outside — a shipment or battle loot — may overfill a store
+  # by this much. Mining may not: an empire's own extraction always stops at capacity,
+  # so silos still matter. Generosity and spoils are what get past the ceiling.
+  OVERFLOW_MULTIPLIER = 1.5
+
   Contribution = Struct.new(:label, :value, :kind, keyword_init: true)
 
   def initialize(planet)
@@ -104,6 +109,11 @@ class PlanetEconomy
       (1 + @empire.technology_bonus(:storage))).round
   end
 
+  # The ceiling for anything delivered from elsewhere.
+  def overflow_capacity(resource)
+    (storage_capacity(resource) * OVERFLOW_MULTIPLIER).round
+  end
+
   def stored(resource)
     @empire.public_send(resource)
   end
@@ -112,8 +122,22 @@ class PlanetEconomy
     (stored(resource).to_f / storage_capacity(resource)).clamp(0.0, 1.0)
   end
 
+  # "Full" means mining has stopped, which is what a player needs to know. Deliveries
+  # can still land until overflow_capacity is reached.
   def storage_full?(resource)
     stored(resource) >= storage_capacity(resource)
+  end
+
+  def overflowing?(resource)
+    stored(resource) > storage_capacity(resource)
+  end
+
+  # How far into the overflow band a store sits, for the part of the bar past the cap.
+  def overflow_fraction(resource)
+    room = overflow_capacity(resource) - storage_capacity(resource)
+    return 0.0 if room <= 0
+
+    ((stored(resource) - storage_capacity(resource)).to_f / room).clamp(0.0, 1.0)
   end
 
   # ── Defence ───────────────────────────────────────────────────────────────
