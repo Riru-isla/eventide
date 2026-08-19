@@ -102,6 +102,20 @@ class GalaxyGenerator
 
   CAPITAL_DEFENCE_MULTIPLIER = 6
 
+  # How many worlds a faction runs, by power level. Spread through its territory and never
+  # on the capital: infrastructure there would be worthless as a target, because taking the
+  # capital already ends the faction. Elsewhere it means a commander can cripple a
+  # faction's ability to answer without finishing it.
+  WORLDS_PER_LEVEL = [ 1, 2, 2, 3, 4 ].freeze
+
+  # Structure levels on a faction world, as a multiple of its power level.
+  WORLD_STRUCTURES = {
+    "metal_extractor" => 2,
+    "crystal_extractor" => 2,
+    "shipyard" => 1,
+    "robotics_bay" => 1
+  }.freeze
+
   # Base spread of how readily a faction reacts to what happens next door, before the
   # galaxy's awareness level scales it. The spread is the point: two factions at the same
   # power level should not respond identically, so no two runs play out the same way.
@@ -157,6 +171,7 @@ class GalaxyGenerator
       factions = create_factions(galaxy, sectors)
       create_systems(galaxy, sectors, cells, factions)
       assign_capitals(galaxy, sectors, factions)
+      create_faction_worlds(galaxy, factions)
       create_players_and_empires(galaxy)
     end
 
@@ -583,6 +598,10 @@ class GalaxyGenerator
         awareness: (Random.rand(AWARENESS_RANGE) * @awareness).round.clamp(1, 100)
       )
       faction.wake_at_tick = faction.wake_delay if @restless && frontier.include?(sector.id)
+      # A war chest rather than an empty purse, so a roused faction answers at once instead
+      # of saving up first. Resources are the stock; build time is still the tempo.
+      faction.metal = faction.capacity
+      faction.crystal = faction.capacity
       faction.save!
 
       [ sector.id, faction ]
@@ -703,6 +722,38 @@ class GalaxyGenerator
 
       faction.update!(capital_system: capital)
     end
+  end
+
+  # A faction's industry, placed on systems it already garrisons and spread as widely as
+  # its territory allows, so taking one is a real blow rather than a rounding error.
+  def create_faction_worlds(galaxy, factions)
+    factions.each_value do |faction|
+      candidates = galaxy.systems.where(npc_faction_id: faction.id)
+                         .where.not(id: faction.capital_system_id).to_a
+      next if candidates.empty?
+
+      spread(candidates, WORLDS_PER_LEVEL[faction.power_level - 1]).each_with_index do |system, index|
+        planet = Planet.create!(npc_faction: faction, system: system,
+                                name: "#{faction.name} #{index + 1}")
+
+        WORLD_STRUCTURES.each do |kind, per_level|
+          planet.structures.create!(kind: kind, level: per_level * faction.power_level)
+        end
+      end
+    end
+  end
+
+  # Farthest-point selection: take the first, then repeatedly whichever candidate is
+  # furthest from everything already chosen.
+  def spread(candidates, count)
+    chosen = [ candidates.first ]
+
+    while chosen.size < [ count, candidates.size ].min
+      chosen << candidates.reject { |system| chosen.include?(system) }
+                          .max_by { |system| chosen.map { |taken| system.distance_to(taken.x, taken.y) }.min }
+    end
+
+    chosen
   end
 
   def create_players_and_empires(galaxy)

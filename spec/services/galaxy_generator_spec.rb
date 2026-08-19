@@ -173,6 +173,42 @@ RSpec.describe GalaxyGenerator, type: :service do
     end
   end
 
+  describe "faction worlds and stockpiles" do
+    it "gives every faction industry, spread off its capital" do
+      galaxy.npc_factions.each do |faction|
+        expect(faction.planets).to be_any, "#{faction.name} has no worlds"
+        expect(faction.planets.map(&:system_id)).not_to include(faction.capital_system_id)
+      end
+    end
+
+    it "puts worlds only on ground the faction already holds" do
+      galaxy.npc_factions.each do |faction|
+        expect(faction.planets.map { |planet| planet.system.npc_faction_id }.uniq).to eq([ faction.id ])
+      end
+    end
+
+    it "runs more worlds, and better built, the deeper a faction sits" do
+      by_level = galaxy.npc_factions.by_power
+      expect(by_level.map { |faction| faction.planets.count }).to eq(by_level.map { |f| f.planets.count }.sort)
+
+      shipyards = by_level.map { |faction| faction.planets.first.level_of("shipyard") }
+      expect(shipyards).to eq(shipyards.sort)
+    end
+
+    it "starts each faction with a full war chest it cannot yet spend" do
+      galaxy.npc_factions.each do |faction|
+        expect(faction.metal).to eq(faction.capacity)
+        expect(faction.crystal).to eq(faction.capacity)
+      end
+    end
+
+    it "banks more the deeper a faction sits" do
+      chests = galaxy.npc_factions.by_power.map(&:metal)
+
+      expect(chests).to eq(chests.sort)
+    end
+  end
+
   describe "the spawn sector" do
     it "belongs to nobody and is garrisoned by nobody" do
       spawn = galaxy.spawn_sector

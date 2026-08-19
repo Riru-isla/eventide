@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_19_210000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_19_220000) do
   create_table "build_orders", force: :cascade do |t|
     t.integer "completes_at_tick"
     t.datetime "created_at", null: false
@@ -94,8 +94,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_210000) do
     t.integer "capital_system_id"
     t.string "color"
     t.datetime "created_at", null: false
+    t.integer "crystal", default: 0, null: false
     t.integer "fallen_at_tick"
     t.integer "galaxy_id", null: false
+    t.integer "metal", default: 0, null: false
     t.string "name"
     t.integer "power_level", default: 1, null: false
     t.integer "sector_id"
@@ -122,11 +124,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_210000) do
 
   create_table "planets", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.integer "empire_id", null: false
+    t.integer "empire_id"
     t.string "name", null: false
+    t.integer "npc_faction_id"
     t.integer "system_id", null: false
     t.datetime "updated_at", null: false
     t.index ["empire_id"], name: "index_planets_on_empire_id"
+    t.index ["npc_faction_id"], name: "index_planets_on_npc_faction_id"
     t.index ["system_id"], name: "index_planets_on_system_id", unique: true
   end
 
@@ -235,6 +239,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_210000) do
   add_foreign_key "npc_factions", "systems", column: "capital_system_id"
   add_foreign_key "planet_structures", "planets"
   add_foreign_key "planets", "empires"
+  add_foreign_key "planets", "npc_factions"
   add_foreign_key "planets", "systems"
   add_foreign_key "players", "galaxies"
   add_foreign_key "players", "users"

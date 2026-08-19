@@ -10,6 +10,7 @@ class TickProcessor
       complete_builds
       complete_research
       collect_resources
+      collect_faction_income
       resolve_fleet_arrivals
       awakening.advance!
       @galaxy.increment!(:current_tick)
@@ -86,6 +87,20 @@ class TickProcessor
     empire.systems.where.not(id: planet_system_id).find_each do |system|
       income[:metal] += (system.metal_rate * empire.resource_bonus(:metal)).to_i
       income[:crystal] += (system.crystal_rate * empire.resource_bonus(:crystal)).to_i
+    end
+  end
+
+  # Roused factions work the ground they hold, up to what they can store. Nothing accrues
+  # to a faction nobody has provoked, so most of the map costs nothing to simulate for most
+  # of a run.
+  def collect_faction_income
+    @galaxy.npc_factions.standing.roused.find_each do |faction|
+      ceiling = faction.capacity
+
+      faction.update!(
+        metal: [ faction.metal + faction.income(:metal), ceiling ].min,
+        crystal: [ faction.crystal + faction.income(:crystal), ceiling ].min
+      )
     end
   end
 

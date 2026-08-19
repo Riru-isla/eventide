@@ -109,6 +109,10 @@ class Galaxy < ApplicationRecord
     { x: core_x, y: core_y }
   end
 
+  def threat_multiplier
+    THREAT_LEVELS.fetch(threat_level)
+  end
+
   # Whether the galaxy escalates without being provoked.
   def restless?
     stress_level != "chill"

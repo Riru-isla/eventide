@@ -70,7 +70,7 @@ class GalaxyPreview
   # which of them are counting down. A faction with no clock has no reason to stir yet, and
   # seeing that laid out is what tells you whether a run will unfold or stall.
   def awakening
-    @galaxy.npc_factions.includes(:sector).sort_by(&:power_level).map do |faction|
+    @galaxy.npc_factions.includes(:sector, :planets).sort_by(&:power_level).map do |faction|
       {
         name: faction.name,
         sector: faction.sector&.name,
@@ -78,6 +78,9 @@ class GalaxyPreview
         aggression: faction.aggression,
         awareness: faction.awareness,
         wake_at_tick: faction.wake_at_tick,
+        worlds: faction.planets.size,
+        stockpile: faction.metal,
+        income: faction.systems.sum(:metal_rate),
         neighbours: faction.neighbours.order(:power_level).pluck(:name)
       }
     end

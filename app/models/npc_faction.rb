@@ -17,6 +17,7 @@ class NpcFaction < ApplicationRecord
   belongs_to :sector, optional: true
   belongs_to :capital_system, class_name: "System", optional: true
   has_many :systems, dependent: :nullify
+  has_many :planets, dependent: :destroy
 
   enum :aggression, AGGRESSIONS, default: :unaware
 
@@ -35,6 +36,15 @@ class NpcFaction < ApplicationRecord
   # in days.
   WAKE_DELAY = 1_200
 
+  # What a faction can hold, calibrated against the player storage curve so the two
+  # economies do not drift apart as either is tuned. A level 1 faction can bank about what
+  # a modestly built commander can; the core faction, far more.
+  def capacity
+    (Structure::BASE_STORAGE * (Structure::STORAGE_GROWTH**power_level)).round
+  end
+
+
+
   scope :by_power, -> { order(:power_level) }
   scope :standing, -> { where(fallen_at_tick: nil) }
   scope :fallen, -> { where.not(fallen_at_tick: nil) }
@@ -44,6 +54,29 @@ class NpcFaction < ApplicationRecord
   def fallen? = fallen_at_tick.present?
 
   def roused? = ROUSED.include?(aggression)
+
+  # Only the galaxy's threat setting. Power level deliberately does *not* multiply income:
+  # a deeper faction already earns far more by holding far more ground at richer rates —
+  # roughly twelve times a rim faction from level 1 to 5 — and multiplying on top of that
+  # made it so rich that losing territory stopped meaning anything. Where power level
+  # belongs is build speed, which is the constraint that actually binds.
+  def income_multiplier
+    galaxy.threat_multiplier
+  end
+
+  # Named columns rather than an interpolated one: the caller passes a symbol, and a
+  # lookup that raises on anything unexpected is both safer than building the SQL and
+  # clearer about what a faction can actually earn.
+  RATES = { metal: :metal_rate, crystal: :crystal_rate }.freeze
+
+  # Income comes from territory rather than from its worlds: every system a player takes
+  # is income a faction loses, which is what makes grinding a faction down a strategy
+  # rather than a chore.
+  def income(resource)
+    return 0 unless roused?
+
+    (systems.sum(RATES.fetch(resource)) * income_multiplier).round
+  end
 
   def wake_delay
     (WAKE_DELAY * power_level * (1.5 - (awareness / 100.0))).round
