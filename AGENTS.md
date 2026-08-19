@@ -49,7 +49,7 @@ bin/rails solid_queue:start   # background jobs
 bin/rails runner 'TickJob.perform_now(Galaxy.first.id)'  # first tick
 ```
 
-Open `http://localhost:3000`. Demo empires use password `eventide`.
+Open `http://localhost:3333`. Demo empires use password `eventide`.
 
 ## How to test
 

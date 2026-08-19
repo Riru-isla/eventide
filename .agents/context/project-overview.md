@@ -45,7 +45,7 @@ Then trigger the first tick:
 bin/rails runner 'TickJob.perform_now(Galaxy.first.id)'
 ```
 
-Open `http://localhost:3000`.
+Open `http://localhost:3333`.
 
 ### Auth
 

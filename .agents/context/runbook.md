@@ -30,10 +30,11 @@ bin/rails runner 'TickJob.perform_now(Galaxy.first.id)' # one galaxy
 `bin/dev` binds to `0.0.0.0`, so anyone on the same network can join. Give them:
 
 ```bash
-echo "http://$(ipconfig getifaddr en0):3000"
+echo "http://$(ipconfig getifaddr en0):3333"
 ```
 
-They sign up at `/users/sign_up` and get their own empire and home sector.
+They sign up at `/users/sign_up`, which creates an account and nothing else, then
+pick a galaxy and a role from the lobby at `/galaxies`.
 
 ## Demo accounts
 
