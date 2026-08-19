@@ -28,18 +28,18 @@ class GalaxyGenerator
   # A seed claims the systems for which `distance / weight` is smallest, so weight is
   # region size. The core sector is deliberately the largest on the map, and sectors grow
   # as they near it.
-  CORE_WEIGHT = 2.4
+  CORE_WEIGHT = 1.8
 
   # How far the core sector may reach from its seed, as a fraction of the distance from
   # the players to the core. Weight alone made it the biggest sector on the map, which is
   # wanted, but also let it sweep around everything else and border the spawn — no amount
   # of seeding in between reliably stopped that, so it is capped outright.
-  CORE_REACH = 0.62
+  CORE_REACH = 0.45
 
   # No other seed may sit within this fraction of the core's reach. The cap that stops the
   # core sector touching the spawn also lets neighbouring seeds crowd it, and without this
   # the largest sector on the map was only the largest in about three runs out of four.
-  CORE_SPACING = 0.55
+  CORE_SPACING = 0.35
   MIN_WEIGHT = 0.75
   MAX_WEIGHT = 1.6
   WEIGHT_JITTER = 0.12
@@ -66,6 +66,9 @@ class GalaxyGenerator
   RELAX_BY = 0.94
 
   POWER_LEVELS = 5
+
+  # One corridor seed per level below the core's, so the direct route has a full ladder.
+  CORRIDOR_STEPS = POWER_LEVELS - 1
 
   # How many factions sit at each power level, as a share of the total, weighted toward
   # the rim so a campaign opens wide and narrows to one final enemy.
@@ -201,22 +204,32 @@ class GalaxyGenerator
   # The core is always the deepest level and the players always the shallowest; everything
   # between is ranked and dealt out according to LEVEL_SHAPE.
   #
-  # Ranked by distance to the *players*, not to the core. The two orderings mostly agree
-  # because the spawn sits opposite the core, but where they differ this is the one that
-  # matters: it guarantees whatever borders the spawn is the weakest thing on the map. By
-  # core distance the weakest sectors could land off to one side, leaving a new group to
-  # open the campaign against a level 2.
+  # Ranked by how far along the line from the players to the core a sector sits, rather
+  # than by raw distance to either end. A sector out on the flank is a long way from the
+  # spawn while having made no progress inward at all, and by spawn distance it was handed
+  # a high level for it — which pushed levels 3 and 4 off the direct path entirely, so
+  # walking straight at the core crossed 1, then 2, then the core itself.
   def power_levels(points, core)
     levels = Array.new(points.size)
     levels[0] = POWER_LEVELS
     levels[1] = 1
     spawn = points[1]
-
     quota = level_counts(points.size - 2)
+
+    # The corridor *is* the ladder: it takes one slot at each rank, in order, so the direct
+    # route from the players to the core crosses a sector of every level. Ranking every
+    # sector together by progress does not give that — a flank sector at a similar depth
+    # takes the slot instead and the route skips a rung.
+    corridor = (2...(2 + [ CORRIDOR_STEPS, points.size - 2 ].min)).to_a
+    corridor.each_with_index do |index, step|
+      levels[index] = step + 1
+      quota[step] = [ quota[step] - 1, 0 ].max
+    end
+
     level = 1
     taken = 0
 
-    (2...points.size).sort_by { |index| distance(points[index], spawn) }.each do |index|
+    ((2 + corridor.size)...points.size).sort_by { |index| axis_progress(points[index], spawn, core) }.each do |index|
       while taken >= quota[level - 1] && level < POWER_LEVELS
         level += 1
         taken = 0
@@ -227,6 +240,17 @@ class GalaxyGenerator
     end
 
     levels
+  end
+
+  # 0 at the players, 1 at the core, measured along the line between them. Sideways
+  # distance does not count, which is the whole point.
+  def axis_progress(point, spawn, core)
+    ax = core[0] - spawn[0]
+    ay = core[1] - spawn[1]
+    length = ((ax * ax) + (ay * ay)).nonzero? || 1
+    # to_f on the numerator, not on the result: every term here is an integer, so dividing
+    # first truncates every sector to 0 and the ranking silently does nothing.
+    (((point[0] - spawn[0]) * ax) + ((point[1] - spawn[1]) * ay)).to_f / length
   end
 
   def level_counts(count)
@@ -278,10 +302,13 @@ class GalaxyGenerator
     while points.size < @sector_count
       candidate = random_point_in_disc(galaxy)
 
-      # Nothing may sit further from the core than the players do. Without this the
-      # weakest sectors land *behind* the spawn, so the first fight is a detour rather
-      # than progress, and the rim beyond the players is somebody else's territory.
-      too_far = distance(candidate, core) > reach
+      # Seeds are confined to the ground between the two ends. Further from the core than
+      # the players are, and the weakest sectors land *behind* the spawn, so the first
+      # fight is a detour rather than progress. Further from the players than the core is,
+      # and a sector ends up stranded behind the core where nobody pushing for the middle
+      # would ever go — which is how a level 5 faction came to sit somewhere players would
+      # never meet it.
+      too_far = distance(candidate, core) > reach || distance(candidate, spawn) > reach
       crowded = points.any? { |point| distance(point, candidate) < spacing }
       smothering = distance(candidate, core) < keep_clear
 
@@ -319,7 +346,7 @@ class GalaxyGenerator
   # Laid between the players and the edge of the ground the core keeps clear, so the chain
   # fills the path without any link of it crowding the core sector.
   def corridor_points(galaxy, core, spawn, keep_clear)
-    steps = POWER_LEVELS - 2
+    steps = CORRIDOR_STEPS
     span = distance(spawn, core).nonzero? || 1.0
     across = [ (core[1] - spawn[1]) / span, -(core[0] - spawn[0]) / span ]
     usable = [ (span - keep_clear) / span, 0.0 ].max

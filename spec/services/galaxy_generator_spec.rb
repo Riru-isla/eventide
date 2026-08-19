@@ -12,6 +12,23 @@ RSpec.describe GalaxyGenerator, type: :service do
   # properties that need more sectors than `tiny` has are checked at `small` below.
   subject(:galaxy) { described_class.new(name: "Test", size: "tiny", player_configs: player_configs).generate }
 
+  # Walks the straight line from the players' seed to the core's, collapsing runs, so the
+  # result is the sequence of power levels a fleet pushing at the middle actually meets.
+  def levels_along_the_axis(galaxy)
+    spawn = galaxy.spawn_sector
+    core = galaxy.core_sector
+    dx = core.seed_x - spawn.seed_x
+    dy = core.seed_y - spawn.seed_y
+
+    owner = galaxy.systems.pluck(:x, :y, :sector_id).to_h { |x, y, id| [ [ x, y ], id ] }
+    sectors = galaxy.sectors.index_by(&:id)
+
+    (0..300).filter_map { |step|
+      along = step / 300.0
+      sectors[owner[[ (spawn.seed_x + (dx * along)).round, (spawn.seed_y + (dy * along)).round ]]]&.power_level
+    }.chunk_while { |a, b| a == b }.map(&:first)
+  end
+
   # Walks a sector's coordinates as a grid graph. A sector is meant to be pushed into and
   # crossed, so an exclave stranded behind somebody else's border is a defect.
   def contiguous?(cells)
@@ -195,12 +212,33 @@ RSpec.describe GalaxyGenerator, type: :service do
   describe "at a playable size" do
     subject(:galaxy) { described_class.new(name: "Playable", size: "small", player_configs: player_configs).generate }
 
-    it "makes the core sector the largest on the map" do
-      # Only meaningful at a real size: on `tiny` the core's reach cap bites hard enough
-      # against a 40-wide disc that a neighbour can out-grow it.
-      largest = galaxy.sectors.max_by { |sector| sector.systems.count }
+    it "gives the core a substantial territory to be pushed through" do
+      sizes = galaxy.sectors.map { |sector| sector.systems.count }
+      average = sizes.sum / sizes.size.to_f
 
-      expect(largest).to eq(galaxy.core_sector)
+      # Usually the largest sector on the map, but not guaranteed to be — it is capped so
+      # it cannot sweep round and border the spawn, and it was swallowing a quarter of the
+      # disc when weighted heavily enough to always win.
+      expect(galaxy.core_sector.systems.count).to be > average
+    end
+
+    it "crosses a sector of every power level on the direct route to the core" do
+      # The route used to run level 1, level 2, then straight into the core: the corridor
+      # ran out halfway and levels 3 and 4 were pushed onto the flanks, so pushing at the
+      # middle skipped most of the ladder.
+      expect(levels_along_the_axis(galaxy)).to eq([ 1, 2, 3, 4, described_class::POWER_LEVELS ])
+    end
+
+    it "strands no sector behind the core, where nobody would go" do
+      spawn = galaxy.spawn_sector
+      core = galaxy.core_sector
+      span = spawn.distance_to_core
+
+      behind = galaxy.sectors.reject(&:spawn?).select do |sector|
+        Math.sqrt(((sector.seed_x - spawn.seed_x)**2) + ((sector.seed_y - spawn.seed_y)**2)) > span
+      end
+
+      expect(behind).to be_empty, "#{behind.map(&:name).join(', ')} sit further from the players than #{core.name}"
     end
 
     it "spreads factions across every power level" do
