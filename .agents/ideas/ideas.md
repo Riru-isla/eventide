@@ -158,3 +158,50 @@ What it would cost / open questions:
 Where it would change: `Structure#upgrade_cost` for the cost side, and the extractor
 term in `PlanetEconomy#contributions` for the yield side. Both are single methods, and
 the contribution list is already shaped to show an extra named term.
+
+---
+
+## An LLM driving faction behaviour
+
+**Status:** idea only — deliberately not planned. A non-LLM faction AI is being built
+instead.
+
+The appeal is obvious: a faction that reasons about what the players are doing and
+responds in character would feel alive in a way a rules engine has to work hard to fake.
+
+### Why it does not fit *this* game, now
+
+- **It would share a laptop with the game server.** A local model on Ollama competes for
+  CPU and memory with Puma, Solid Queue and SQLite on the same machine, during a session
+  people are playing over the LAN. The tick is one minute; a model that takes ten seconds
+  to decide has eaten a sixth of it, per faction.
+- **A paid API moves the problem rather than solving it.** Now there is a per-tick cost,
+  a network dependency for a game hosted on a desk, and a key to manage.
+- **Called rarely enough to be affordable, it stops feeling alive.** The thing that reads
+  as intelligence is *responsiveness* — noticing a raid and answering it. A model
+  consulted every few hours produces considered decisions nobody connects to their own
+  actions, which is worse than a fast dumb one.
+
+### What it would actually be good at, if revisited
+
+Worth separating two very different jobs:
+
+- **Voice, not decisions.** Naming a faction, writing the message it sends when it wakes,
+  describing why it is coming for a particular commander, the intercepted-transmission
+  flavour on a scouting report. Low frequency, no latency budget, failure is cosmetic, and
+  it is exactly where a rules engine reads as canned.
+- **Per-tick decisions.** High frequency, latency-bound, needs to be deterministic enough
+  to test and tune, and failure is a faction doing something incoherent. This is the part
+  a utility-scored AI does better *and* cheaper.
+
+So if this is ever revisited, the shape is probably: the rules engine decides what a
+faction does, and a model is asked — rarely, asynchronously, with a cached fallback — to
+say it in character. That splits along the grain of what each is good at, and nothing
+breaks when the model is unavailable.
+
+### Related
+
+The behaviour system being built instead is in `design-decisions.md`. If it ends up
+feeling mechanical, the fix to try first is more legible telegraphing, not a bigger brain
+— players read intent from what they can *see* a faction doing.
+
