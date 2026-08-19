@@ -28,6 +28,12 @@ Rails.application.routes.draw do
   get "fleets", to: "fleets#index", as: :fleets
   post "fleets", to: "fleets#create", as: :dispatch_fleet
 
+  # Administration is account-wide, not per galaxy: an admin sees every galaxy and every
+  # account. Read-only — admin itself is granted from the console, never from the game.
+  namespace :admin do
+    root "dashboard#show", as: :dashboard
+  end
+
   # The lobby is where you land without an empire: your galaxies, the ones you can spawn
   # into, and — for an admin — generating a new one and inspecting how it came out.
   resources :galaxies, only: %i[index new create show] do

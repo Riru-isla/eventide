@@ -1,0 +1,106 @@
+<% content_for :title, "Administration — Eventide" %>
+
+<header class="mt-20 mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-[1.75rem] font-bold leading-none tracking-[0.06em] uppercase">Administration</h1>
+    <p class="mt-2 font-sans text-[0.8125rem] text-ink-2">
+      Every galaxy and every account on this server.
+    </p>
+  </div>
+
+  <div class="flex items-center gap-3">
+    <%= link_to "Generate galaxy", new_galaxy_path, class: "btn" %>
+    <%= link_to "Galaxies", galaxies_path, class: "font-sans text-[0.8125rem] text-ink-2 hover:underline" %>
+  </div>
+</header>
+
+<div class="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+  <section class="mod" aria-label="Galaxies">
+    <div class="mod-head">
+      <h2 class="mod-title">Galaxies</h2>
+      <span class="mod-note"><%= @galaxies.size %> total</span>
+    </div>
+
+    <% if @galaxies.none? %>
+      <p class="px-4 py-3 font-sans text-[0.8125rem] text-ink-2">Nothing generated yet.</p>
+    <% else %>
+      <table class="w-full font-sans text-[0.8125rem]">
+        <thead>
+          <tr class="text-ink-3">
+            <th class="px-4 py-2 text-left font-medium">Galaxy</th>
+            <th class="px-2 py-2 text-right font-medium">Factions</th>
+            <th class="px-2 py-2 text-right font-medium">Commanders</th>
+            <th class="px-2 py-2 text-right font-medium">Tick</th>
+            <th class="px-4 py-2 text-right font-medium"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @galaxies.each do |galaxy| %>
+            <tr class="border-t border-line-soft">
+              <td class="px-4 py-2">
+                <span class="text-ink"><%= galaxy.name %></span>
+                <span class="block text-xs text-ink-3">
+                  <%= galaxy.size %> · <%= galaxy.width %>×<%= galaxy.height %> ·
+                  <%= galaxy.threat_level %> threat · <%= galaxy.awareness_level %> awareness ·
+                  <%= galaxy.status %>
+                </span>
+              </td>
+              <td class="num px-2 py-2 text-right text-ink-2"><%= @factions.fetch(galaxy.id, 0) %></td>
+              <td class="num px-2 py-2 text-right text-ink-2"><%= @commanders.fetch(galaxy.id, 0) %></td>
+              <td class="num px-2 py-2 text-right text-ink-2"><%= number_with_delimiter(galaxy.current_tick) %></td>
+              <td class="px-4 py-2 text-right">
+                <%= link_to "Inspect", preview_galaxy_path(galaxy), class: "text-amber hover:underline" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </section>
+
+  <section class="mod" aria-label="Accounts">
+    <div class="mod-head">
+      <h2 class="mod-title">Accounts</h2>
+      <span class="mod-note"><%= @accounts.size %> total</span>
+    </div>
+
+    <table class="w-full font-sans text-[0.8125rem]">
+      <thead>
+        <tr class="text-ink-3">
+          <th class="px-4 py-2 text-left font-medium">Account</th>
+          <th class="px-4 py-2 text-right font-medium">Commanding</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @accounts.each do |account| %>
+          <tr class="border-t border-line-soft">
+            <td class="px-4 py-2">
+              <span class="text-ink"><%= account.username %></span>
+              <% if account.admin? %>
+                <span class="block text-xs text-amber">administrator</span>
+              <% end %>
+            </td>
+            <td class="px-4 py-2 text-right text-ink-2">
+              <% if account.empires.any? %>
+                <% account.empires.each do |empire| %>
+                  <span class="block">
+                    <%= empire.player.name %> · <%= empire.role %>
+                    <span class="block text-xs text-ink-3"><%= empire.galaxy.name %></span>
+                  </span>
+                <% end %>
+              <% else %>
+                <span class="text-ink-3">—</span>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <p class="border-t border-line-soft px-4 py-3 font-sans text-xs text-ink-3">
+      Administrators run the server rather than play it, so the rights are granted from the
+      console only:
+      <code class="text-ink-2">bin/rails "admin:grant[username]"</code>
+    </p>
+  </section>
+</div>

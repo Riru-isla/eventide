@@ -13,6 +13,12 @@ RSpec.describe "Galaxies", type: :request do
 
   before { sign_in(user) }
 
+  # Nothing promotes an account any more, so anything needing administrator rights has to
+  # say so.
+  def as_admin
+    user.update!(admin: true)
+  end
+
   describe "GET /galaxies/:id" do
     it "renders the galaxy map" do
       get galaxy_path(galaxy)
@@ -102,9 +108,10 @@ RSpec.describe "Galaxies", type: :request do
     end
 
     it "shows an administrator how to generate and inspect" do
+      as_admin
+
       get galaxies_path
 
-      expect(user).to be_admin
       expect(response.body).to include("Generate galaxy", "Inspect generation")
     end
 
@@ -119,6 +126,8 @@ RSpec.describe "Galaxies", type: :request do
 
   describe "GET /galaxies/new" do
     it "renders the settings an administrator can choose" do
+      as_admin
+
       get new_galaxy_path
 
       expect(response).to have_http_status(:ok)
@@ -126,6 +135,8 @@ RSpec.describe "Galaxies", type: :request do
     end
 
     it "shows teams as a fixed field, since everybody shares one spawn sector" do
+      as_admin
+
       get new_galaxy_path
 
       expect(response.body).to include("Teams", "disabled")
@@ -152,6 +163,8 @@ RSpec.describe "Galaxies", type: :request do
     end
 
     it "builds the galaxy the form asked for and shows how it came out" do
+      as_admin
+
       expect { generate }.to change(Galaxy, :count).by(1)
 
       built = Galaxy.order(:created_at).last
@@ -165,6 +178,7 @@ RSpec.describe "Galaxies", type: :request do
     end
 
     it "hits the garrisons harder at a higher threat level" do
+      as_admin
       generate(threat_level: "brutal")
 
       brutal = Galaxy.order(:created_at).last.npc_factions.by_power.first
@@ -172,6 +186,8 @@ RSpec.describe "Galaxies", type: :request do
     end
 
     it "refuses fewer factions than a campaign needs" do
+      as_admin
+
       expect { generate(faction_count: 2) }.not_to change(Galaxy, :count)
 
       expect(response).to have_http_status(:unprocessable_content)
@@ -188,6 +204,8 @@ RSpec.describe "Galaxies", type: :request do
 
   describe "GET /galaxies/:id/preview" do
     it "shows every sector, the core, and where commanders will land" do
+      as_admin
+
       get preview_galaxy_path(galaxy)
 
       expect(response).to have_http_status(:ok)
@@ -197,6 +215,7 @@ RSpec.describe "Galaxies", type: :request do
     end
 
     it "says there is nothing to measure when nobody has joined" do
+      as_admin
       empty = GalaxyGenerator.new(name: "Empty", size: "tiny").generate
 
       get preview_galaxy_path(empty)

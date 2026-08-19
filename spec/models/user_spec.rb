@@ -19,14 +19,16 @@ RSpec.describe User, type: :model do
   end
 
   describe "administrators" do
-    it "promotes the first account, since somebody has to create the first galaxy" do
-      expect(create(:user)).to be_admin
+    it "never promotes an account on its own — admin comes from the console" do
+      expect(create(:user)).not_to be_admin
+      expect(create(:user)).not_to be_admin
     end
 
-    it "leaves everyone who follows as an ordinary player" do
+    it "lists the accounts that can administer the server" do
+      admin = create(:user, admin: true)
       create(:user)
 
-      expect(create(:user)).not_to be_admin
+      expect(User.administrators).to contain_exactly(admin)
     end
   end
 end

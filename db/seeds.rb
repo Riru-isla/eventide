@@ -12,6 +12,11 @@ if Galaxy.none?
     ]
   ).generate
 
+  # Nothing promotes an account on its own, so a freshly seeded database would have no
+  # way to generate a second galaxy. Granted explicitly here rather than hidden in a
+  # model callback.
+  User.order(:id).first&.update!(admin: true)
+
   puts "Created galaxy '#{galaxy.name}' (#{galaxy.size}, #{galaxy.width}x#{galaxy.height}) " \
        "with #{galaxy.systems.count} systems and #{galaxy.empires.count} empires."
 

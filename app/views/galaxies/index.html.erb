@@ -10,6 +10,7 @@
 
   <div class="flex items-center gap-3">
     <% if admin? %>
+      <%= link_to "Administration", admin_dashboard_path, class: "btn" %>
       <%= link_to "Generate galaxy", new_galaxy_path, class: "btn" %>
     <% end %>
     <%= button_to "Sign out", destroy_user_session_path, method: :delete, class: "btn" %>

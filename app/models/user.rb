@@ -7,17 +7,12 @@ class User < ApplicationRecord
   has_many :players, dependent: :destroy
   has_many :empires, through: :players
 
-  # Whoever sets the game up registers first, and somebody has to be able to create the
-  # first galaxy. There is no other bootstrap path on a laptop-hosted server.
-  before_create :promote_first_account
+  # Administrators run the server rather than play it, and are granted from the console
+  # only — `bin/rails "admin:grant[username]"`. Nothing in the game promotes an account,
+  # so there is no path from being a player to being an administrator.
+  scope :administrators, -> { where(admin: true) }
 
   validates :username, presence: true, uniqueness: true
   validates :password, length: { minimum: 6 }, if: -> { password.present? }
   validates :password, confirmation: true, if: -> { password.present? }
-
-  private
-
-  def promote_first_account
-    self.admin = true if User.none?
-  end
 end

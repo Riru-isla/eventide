@@ -324,14 +324,24 @@ chosen from the lobby afterwards, and the session remembers which empire is bein
 Rationale: with more than one galaxy, role and galaxy are properties of an empire rather
 than of an account, and a player may sit out a galaxy or join a later one.
 
-## One admin flag, not a role system
+## One admin flag, granted only from the console
 
-`users.admin` is a boolean. It hides the generate and inspect controls, and guards those
-actions server-side. The first account registered is promoted automatically.
+`users.admin` is a boolean on the **account**, so an administrator is one everywhere: in
+every galaxy, and in none, since they need no empire at all. There is no per-galaxy admin.
 
-Rationale: the only distinction that exists is "can create and inspect galaxies", and a
-role table would be machinery for a single bit. Whoever sets the game up registers first,
-and there is no other bootstrap path on a laptop-hosted server.
+It is granted with `bin/rails "admin:grant[username]"` and nowhere else. Nothing in the
+game promotes an account, and the admin screens deliberately offer no way to — so there is
+no path from being a player to being an administrator.
+
+Rationale: the only distinction that exists is "can run the server", and a role table
+would be machinery for a single bit. Administrators are the people running the game rather
+than playing it, which makes the console the honest place for it. An earlier version
+promoted the first account to register and let admins grant each other rights in-game;
+both were dropped as more mechanism than the need justifies. If several admins with
+different powers are ever wanted, that is when a super-admin tier earns its place.
+
+`/admin` is read-only: every galaxy with its settings and tick, every account with what it
+commands, and a link to inspect each galaxy's generation.
 
 ## The inspect screen is the fog-of-war stand-in
 
