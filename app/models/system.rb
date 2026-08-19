@@ -4,6 +4,7 @@ class System < ApplicationRecord
   belongs_to :galaxy
   belongs_to :empire, optional: true
   belongs_to :npc_faction, optional: true
+  belongs_to :sector, optional: true
   has_many :stationed_fleets, class_name: "Fleet", foreign_key: "origin_system_id", dependent: :nullify
   has_one :planet, dependent: :destroy
 
@@ -23,9 +24,11 @@ class System < ApplicationRecord
     Math.sqrt((x - other_x) ** 2 + (y - other_y) ** 2)
   end
 
-  def distance_to_center
-    center = galaxy.center
-    distance_to(center[:x], center[:y])
+  # How far this system is from what the campaign is pushing toward. Everything about
+  # difficulty is measured from here: sector weight, power level, and garrison strength
+  # all rise as this falls.
+  def distance_to_core
+    distance_to(galaxy.core_x, galaxy.core_y)
   end
 
   # Defence a fleet actually has to beat: the system's own strength plus whatever the

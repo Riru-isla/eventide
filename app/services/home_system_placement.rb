@@ -1,67 +1,50 @@
 # Chooses where a new empire starts.
 #
-# Home systems sit out on the rim, inside the player band that generation deliberately
-# leaves clear of NPCs — so the first hostile system is a push inward rather than a
-# neighbour. Slots are fixed and claimed in a spread order, so players joining one at a
-# time still end up spaced around the ring, and two simultaneous signups cannot land on
-# the same coordinate.
-#
-# Team-based clustering replaces this ordering in the next step; for now the job is to
-# keep spawns out of the faction bands.
+# Everybody shares one spawn sector, out at the far end of the disc from the core, so the
+# whole group has a single frontier and shipments between players stay cheap. Within it,
+# commanders are packed toward the sector's heart rather than spread to its edges — the
+# point of a shared sector is that people can reach each other — but never closer to one
+# another than MINIMUM_GAP, or two of them end up in each other's laps.
 class HomeSystemPlacement
-  SLOTS = 24
-
-  # Claim order: opposite first, then quarters, then the gaps between, so the first few
-  # commanders are as far apart as the ring allows.
-  SLOT_ORDER = [
-    0, 12, 6, 18, 3, 15, 9, 21, 1, 13, 7, 19,
-    4, 16, 10, 22, 2, 14, 8, 20, 5, 17, 11, 23
-  ].freeze
-
-  # Where in the player band the ring sits. Far enough out to stay clear of tier 1,
-  # far enough in to leave somewhere to retreat to.
-  RING_POSITION = 0.93
+  MINIMUM_GAP = 6
 
   def initialize(galaxy)
     @galaxy = galaxy
   end
 
-  # The first unclaimed ring slot, or the nearest free system to the ring when every
-  # slot is taken.
   def next_free_system
-    ring_systems.find { |system| free?(system) } || nearest_free_to_ring
+    candidates = free_systems
+    return nil if candidates.empty?
+
+    claimed = @galaxy.systems.where(kind: "home").to_a
+    return closest_to_heart(candidates) if claimed.empty?
+
+    spaced = candidates.select { |system| gap_from(system, claimed) >= MINIMUM_GAP }
+    return closest_to_heart(spaced) if spaced.any?
+
+    # Too crowded to keep the gap. Better a tight squeeze than refusing to seat a
+    # commander who has just signed up.
+    candidates.max_by { |system| gap_from(system, claimed) }
   end
 
   private
 
-  def ring_systems
-    ring_coordinates.filter_map { |x, y| @galaxy.systems.at(x, y).first }
+  def free_systems
+    scope = @galaxy.spawn_sector&.systems || @galaxy.systems
+
+    scope.where(empire_id: nil, npc_faction_id: nil).to_a
   end
 
-  def ring_coordinates
-    centre_x = @galaxy.center[:x]
-    centre_y = @galaxy.center[:y]
-    radius = @galaxy.radius * RING_POSITION
-
-    SLOT_ORDER.map do |slot|
-      angle = (2 * Math::PI * slot) / SLOTS
-      [
-        (centre_x + (radius * Math.cos(angle))).round.clamp(0, @galaxy.width - 1),
-        (centre_y + (radius * Math.sin(angle))).round.clamp(0, @galaxy.height - 1)
-      ]
-    end
+  def gap_from(system, claimed)
+    claimed.map { |home| system.distance_to(home.x, home.y) }.min
   end
 
-  def free?(system)
-    system.empire_id.nil? && system.npc_faction_id.nil?
-  end
+  # A sector's seed is its deepest point, so working outward from there keeps the group
+  # together in the middle of their own territory.
+  def closest_to_heart(candidates)
+    sector = @galaxy.spawn_sector
+    return candidates.first if sector.nil?
 
-  # Falls back toward the ring rather than out to a corner: a latecomer should start
-  # beside everyone else, not half a galaxy further from the core.
-  def nearest_free_to_ring
-    target = @galaxy.radius * RING_POSITION
-
-    @galaxy.systems.where(empire_id: nil, npc_faction_id: nil)
-           .min_by { |system| (system.distance_to_center - target).abs }
+    candidates.min_by { |system| system.distance_to(sector.seed_x, sector.seed_y) }
   end
 end

@@ -16,9 +16,9 @@
       <p class="text-gray-300 mb-2">
         <span class="text-gray-500">Defense:</span> <%= @system.defense_strength %>
       </p>
-      <% if @system.distance_to_center > 0 %>
+      <% if @system.distance_to_core > 0 %>
         <p class="text-gray-300">
-          <span class="text-gray-500">Distance to core:</span> <%= @system.distance_to_center.round(1) %>
+          <span class="text-gray-500">Distance to core:</span> <%= @system.distance_to_core.round(1) %>
         </p>
       <% end %>
     </div>

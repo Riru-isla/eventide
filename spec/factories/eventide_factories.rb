@@ -11,6 +11,18 @@ FactoryBot.define do
     height { 15 }
     current_tick { 0 }
     status { "active" }
+    core_x { 12 }
+    core_y { 7 }
+  end
+
+  factory :sector do
+    galaxy
+    sequence(:name) { |n| "Sector #{n}" }
+    seed_x { 5 }
+    seed_y { 5 }
+    weight { 1.0 }
+    kind { "standard" }
+    power_level { 1 }
   end
 
   factory :npc_faction do
@@ -19,6 +31,7 @@ FactoryBot.define do
     color { "#ef4444" }
     strength_level { 1 }
     tech_level { 1 }
+    power_level { 1 }
   end
 
   factory :empire do

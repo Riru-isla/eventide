@@ -212,13 +212,13 @@ progress toward the core is the framing, never "you are behind".
 
 ## `Planet` is its own model
 
-`Sector` stays the **strategic** layer: map position, ownership, defense, NPC faction,
+`System` stays the **strategic** layer: map position, ownership, defense, NPC faction,
 distance to the core. `Planet` is the **management** layer: mines, structures, build
-queue. A planet belongs to an empire and sits in a sector.
+queue. A planet belongs to an empire and sits in a system.
 
-Rationale: putting mine and building columns on `sectors` would give all ~225 rows
-per galaxy fields that only a handful use, and would make capturing a sector imply
-inheriting a second management screen.
+Rationale: putting mine and building columns on `systems` would give tens of thousands
+of rows per galaxy fields that only a handful use, and would make capturing a system
+imply inheriting a second management screen.
 
 **One planet per empire for now.** Raising that limit later should be a matter of
 relaxing a validation, not a redesign.
@@ -228,3 +228,78 @@ relaxing a validation, not a redesign.
 `Galaxy` remains the season container, so seasons stay possible. There is no season
 length, end condition, or reset for now — the running galaxy is effectively infinite
 so the game can be developed and played against continuously.
+
+## "Sector" means a region; a single coordinate is a "system"
+
+A `System` is one coordinate: one planet, one place a fleet flies to. A `Sector` is a
+large region of a few hundred to a few thousand systems.
+
+Rationale: the region sense is both the conventional sci-fi meaning and the word already
+being used to design the galaxy, and renaming was far cheaper than living with a
+permanent mismatch between how we talk and what the code says. It also leaves room for
+the parked idea of a system holding several bodies without needing another rename.
+
+## The galaxy is a disc with the core on its rim
+
+The playable area is the disc inscribed in the grid — corners get no systems at all — and
+the core sits about 0.72 of the radius out from the centre, at a random bearing per
+galaxy. The players share one sector directly opposite it.
+
+Rationale: with a core in the middle, each player only ever cares about the wedge between
+their spawn and the centre. About a third of the map lay outside the spawn ring entirely,
+and whole angular sections went unvisited whenever players clustered. From the rim, the
+entire disc lies between the players and the objective. The random bearing stops every
+run being "head southwest".
+
+The framing is that the map is a *section* of a galaxy rather than a whole one, so a core
+at the edge needs no explanation.
+
+## Sectors are grown from weighted seeds, not measured in bands
+
+Every coordinate joins the seed minimising `distance / weight`, so weight is region size:
+the core sector is the largest on the map and sectors grow as they near it. Three seeds
+are laid along the line from the players to the core and two off the spawn's shoulders
+before the rest are scattered, and the core's reach is capped outright.
+
+Rationale: concentric bands gave a faction no interior. You skirted a ring hunting for one
+coordinate on an 880-system circumference, and the faction gating everyone's progress
+could sit 117 ticks from half the players while being 40 from the rest. Regions have to be
+pushed into and crossed.
+
+The structure is not decoration. Without the spine and the reach cap, the core sector —
+much the heaviest on the map — sweeps around everything else and borders the spawn, so a
+new commander can wander into 2,800-defence systems twenty ticks from home. Weighted
+Voronoi also splits regions into detached lobes, so each sector is reduced to the
+component holding its own seed and the leftovers are absorbed by their neighbours.
+
+## Power level is depth, not a running order
+
+Sectors are ranked by distance to the **players** and dealt levels 1–5 by that rank, with
+more factions at the rim than at the core. The core sector is always the deepest level.
+
+Rationale: bucketing raw distance left whole runs with no level 1 faction to open against
+and no level 4 at all — a cliff straight from level 3 to the core. Ranking by distance to
+the players rather than to the core guarantees that whatever borders the spawn is the
+weakest thing on the map.
+
+Level is *strength*, not a ladder to be climbed in order: which faction wakes next comes
+from what borders a fallen one. Garrison size is a per-faction weight normalised across
+the whole map, not a share of the budget split per level — splitting per level made a lone
+rim faction garrison 43 systems while each of the four behind it held 16.
+
+## A capital stands on its sector's seed
+
+A seed is always the deepest point of its own region, so a capital placed there is
+guaranteed to sit inside the territory rather than on an edge.
+
+Rationale: the sector has to be crossed to reach the thing that ends it. Putting a capital
+at the innermost edge of a band let it be clipped off a corner instead.
+
+## Everyone spawns in one shared sector
+
+A single spawn sector holds every commander, packed toward its seed but never closer than
+six systems to each other.
+
+Rationale: the whole group gets one frontier, shipments between players stay cheap, and
+helping whoever is behind is easy. Spreading commanders to the region's edges — which a
+farthest-point placement does — works against the reason for sharing a sector at all.

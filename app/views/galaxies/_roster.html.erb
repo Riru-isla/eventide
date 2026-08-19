@@ -1,6 +1,6 @@
 <%# Who else is out there. Cooperative game, so this is a roster and a shared push
     toward the core — never a ranking. %>
-<% closest = galaxy.systems.where.not(empire_id: nil).min_by(&:distance_to_center) %>
+<% closest = galaxy.systems.where.not(empire_id: nil).min_by(&:distance_to_core) %>
 
 <section class="mod" aria-label="Commanders">
   <div class="mod-head">
@@ -28,7 +28,7 @@
     <div class="border-t border-line px-4 py-3">
       <p class="label">Closest approach to the core</p>
       <p class="num mt-1 text-[0.8125rem] text-amber">
-        <%= closest.distance_to_center.round(1) %> from centre · <%= closest.coordinate %>
+        <%= closest.distance_to_core.round(1) %> from centre · <%= closest.coordinate %>
       </p>
     </div>
   <% end %>

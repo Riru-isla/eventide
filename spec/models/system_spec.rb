@@ -27,11 +27,12 @@ RSpec.describe System, type: :model do
     end
   end
 
-  describe "#distance_to_center" do
-    it "calculates distance to the galaxy center" do
-      galaxy = create(:galaxy, width: 11, height: 11)
-      system = create(:system, galaxy: galaxy, x: 5, y: 5)
-      expect(system.distance_to_center).to eq(0.0)
+  describe "#distance_to_core" do
+    it "measures from the core rather than the middle of the grid" do
+      galaxy = create(:galaxy, width: 11, height: 11, core_x: 9, core_y: 5)
+
+      expect(create(:system, galaxy: galaxy, x: 9, y: 5).distance_to_core).to eq(0.0)
+      expect(create(:system, galaxy: galaxy, x: 5, y: 5).distance_to_core).to eq(4.0)
     end
   end
 

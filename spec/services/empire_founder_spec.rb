@@ -52,13 +52,14 @@ RSpec.describe EmpireFounder, type: :service do
 
   it "clears any NPC faction from the claimed home system" do
     faction = galaxy.npc_factions.first
-    galaxy.systems.where(empire_id: nil).find_each { |system| system.update!(npc_faction: faction) }
-    corner = galaxy.systems.at(0, 0).first
-    corner.update!(npc_faction: nil)
+    spawn = galaxy.spawn_sector
+    spawn.systems.find_each { |system| system.update!(npc_faction: faction) }
+    free = spawn.systems.first
+    free.update!(npc_faction: nil)
 
     empire = found
 
-    expect(empire.home_system).to eq(corner)
+    expect(empire.home_system).to eq(free)
     expect(empire.home_system.npc_faction).to be_nil
   end
 

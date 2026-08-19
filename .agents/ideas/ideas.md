@@ -59,6 +59,26 @@ allocation by default, manual override for people who want to optimise.** The mi
 gets a dial, the once-a-day player never learns it exists. If population is ever built, it
 must arrive that way round.
 
+### Field evidence from a competitor
+
+*Nexus: Downfall* (browser 4X, launched August 2026) ships a settings toggle:
+
+> "Auto-assign population — automatically assigns the maximum available population to a
+> structure whenever it finishes upgrading."
+
+Worth reading as evidence rather than as a feature to copy. A game adds that switch when
+assigning the maximum is the right answer nearly every time — at which point the step is a
+confirmation dialog, not a decision, and the toggle exists to skip it. It is possible
+assignment is genuinely interesting there and the switch is only kindness for the routine
+90%, but the shape of it suggests otherwise. It is also precisely what the note below
+already warned against building.
+
+The conclusion: **population only earns its place if allocation is contested.** If you
+cannot staff everything, then staffing the refinery starves the shipyard, there is no
+"maximum available" to auto-assign, and the toggle is meaningless because the decision is
+real. If it is not contested, population is crew with extra clicks — and crew already
+exists.
+
 ### The real risk to watch
 
 The feeling of *having* to log in does not come from systems existing — it comes from

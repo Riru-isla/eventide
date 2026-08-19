@@ -15,9 +15,9 @@ if Galaxy.none?
   puts "Created galaxy '#{galaxy.name}' (#{galaxy.size}, #{galaxy.width}x#{galaxy.height}) " \
        "with #{galaxy.systems.count} systems and #{galaxy.empires.count} empires."
 
-  galaxy.npc_factions.by_tier.each do |faction|
-    puts "  tier #{faction.tier} #{faction.name}: #{faction.systems.count} systems, " \
-         "capital #{faction.capital_system&.coordinate}, #{faction.aggression}"
+  galaxy.npc_factions.by_power.each do |faction|
+    puts "  L#{faction.power_level} #{faction.name} (#{faction.sector.name}): " \
+         "#{faction.systems.count} systems, capital #{faction.capital_system&.coordinate}, #{faction.aggression}"
   end
 else
   puts "Galaxy already exists; skipping demo generation."

@@ -39,6 +39,6 @@
 
   <p class="border-t border-line-soft px-4 py-3 font-sans text-[0.8125rem] text-ink-2">
     Showing the <%= number_with_delimiter(systems.size) %> systems somebody holds, out of
-    <%= number_with_delimiter(galaxy.width * galaxy.height) %>. Empty space is not drawn.
+    <%= number_with_delimiter(galaxy.systems.count) %>. Empty space is not drawn.
   </p>
 </section>

@@ -5,15 +5,15 @@ class Galaxy < ApplicationRecord
   #
   # Size buys engagements and room to explore, not duration: travel is cheap even at
   # 400 wide. What makes a season long is how much there is to fight.
-  # dimension is the grid edge; npc_systems is how many systems the factions hold, which
-  # is the real campaign-length dial — roughly how many fights lie between a player and
-  # the core. It grows sub-linearly with area, so a large galaxy is more to explore
-  # rather than proportionally more to grind.
+  #
+  # dimension is the grid edge the disc is inscribed in; npc_systems is how many systems
+  # the factions garrison, which is the real campaign-length dial; sectors is how many
+  # regions the disc is carved into, which is roughly how many factions a run has.
   SIZES = {
-    "tiny" => { dimension: 40, npc_systems: 60 },
-    "small" => { dimension: 150, npc_systems: 540 },
-    "medium" => { dimension: 250, npc_systems: 900 },
-    "large" => { dimension: 400, npc_systems: 1_400 }
+    "tiny" => { dimension: 40, npc_systems: 60, sectors: 5 },
+    "small" => { dimension: 150, npc_systems: 540, sectors: 12 },
+    "medium" => { dimension: 250, npc_systems: 900, sectors: 18 },
+    "large" => { dimension: 400, npc_systems: 1_400, sectors: 26 }
   }.freeze
 
   # What a session-creation screen offers. `tiny` exists for tests and local poking and
@@ -21,6 +21,7 @@ class Galaxy < ApplicationRecord
   PLAYABLE_SIZES = %w[small medium large].freeze
 
   has_many :systems, dependent: :destroy
+  has_many :sectors, dependent: :destroy
   has_many :players, dependent: :destroy
   has_many :empires, dependent: :destroy
   has_many :npc_factions, dependent: :destroy
@@ -40,23 +41,37 @@ class Galaxy < ApplicationRecord
     SIZES.fetch(size.to_s)[:npc_systems]
   end
 
+  def self.sector_count_for(size)
+    SIZES.fetch(size.to_s)[:sectors]
+  end
+
   def center
     { x: width / 2, y: height / 2 }
   end
 
-  # The scale bands are measured against: the distance from the centre to the nearest
-  # edge, not to a corner.
-  #
-  # Normalising by the corner distance would mean the outer bands only exist diagonally
-  # — on a 150x150 the corners are 106 away but the edge midpoints only 75, so an
-  # "outermost 14%" would be four corner wedges rather than a ring. Using the inscribed
-  # radius makes every band a complete ring; the corners simply sit past 1.0.
+  # The galaxy is the disc inscribed in the grid, so the radius is the distance from the
+  # centre to the nearest edge. Corners are outside it and hold no systems at all —
+  # a map with corners has dead space nobody has a reason to visit.
   def radius
     [ center[:x], center[:y] ].min.to_f
   end
 
-  # The tier a player is currently up against — the outermost faction still standing.
-  def frontier_faction
-    npc_factions.standing.order(:tier).first
+  # Where the campaign is pushing toward. It sits out near the rim rather than in the
+  # middle: with a central core each player only ever cares about the wedge between their
+  # spawn and the centre, and the rest of the disc goes unexplored.
+  def core
+    { x: core_x, y: core_y }
+  end
+
+  def inside?(x, y)
+    Math.sqrt(((x - center[:x])**2) + ((y - center[:y])**2)) <= radius
+  end
+
+  def spawn_sector
+    sectors.find_by(kind: "spawn")
+  end
+
+  def core_sector
+    sectors.find_by(kind: "core")
   end
 end
