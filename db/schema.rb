@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_19_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_19_170000) do
   create_table "build_orders", force: :cascade do |t|
     t.integer "completes_at_tick"
     t.datetime "created_at", null: false
@@ -70,8 +70,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_160000) do
 
   create_table "galaxies", force: :cascade do |t|
     t.string "awareness_level", default: "standard", null: false
-    t.integer "core_x"
-    t.integer "core_y"
+    t.integer "core_x", null: false
+    t.integer "core_y", null: false
     t.datetime "created_at", null: false
     t.integer "current_tick"
     t.integer "faction_count", default: 4, null: false
