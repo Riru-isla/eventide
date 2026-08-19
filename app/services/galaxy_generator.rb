@@ -35,6 +35,11 @@ class GalaxyGenerator
   # wanted, but also let it sweep around everything else and border the spawn — no amount
   # of seeding in between reliably stopped that, so it is capped outright.
   CORE_REACH = 0.62
+
+  # No other seed may sit within this fraction of the core's reach. The cap that stops the
+  # core sector touching the spawn also lets neighbouring seeds crowd it, and without this
+  # the largest sector on the map was only the largest in about three runs out of four.
+  CORE_SPACING = 0.55
   MIN_WEIGHT = 0.75
   MAX_WEIGHT = 1.6
   WEIGHT_JITTER = 0.12
@@ -93,6 +98,11 @@ class GalaxyGenerator
   ].freeze
 
   CAPITAL_DEFENCE_MULTIPLIER = 6
+
+  # Base spread of how readily a faction reacts to what happens next door, before the
+  # galaxy's awareness level scales it. The spread is the point: two factions at the same
+  # power level should not respond identically, so no two runs play out the same way.
+  AWARENESS_RANGE = 20..80
   CORE_FACTION_NAME = "Core Imperium".freeze
   SPAWN_SECTOR_NAME = "The Shoals".freeze
   CORE_SECTOR_NAME = "The Nexus".freeze
@@ -111,12 +121,22 @@ class GalaxyGenerator
   # take minutes.
   BATCH_SIZE = 2_000
 
-  def initialize(name:, size: "small", player_configs: [])
+  def initialize(name:, size: "small", faction_count: nil, victory_condition: "reach_the_core",
+                 team_count: 1, threat_level: "standard", awareness_level: "standard",
+                 player_configs: [])
     @name = name
     @size = size.to_s
     @dimension = Galaxy.dimension_for(@size)
     @npc_systems = Galaxy.npc_systems_for(@size)
-    @sector_count = Galaxy.sector_count_for(@size)
+    @faction_count = faction_count || Galaxy.faction_count_for(@size)
+    # One sector per faction, plus the players'.
+    @sector_count = @faction_count + 1
+    @victory_condition = victory_condition
+    @team_count = team_count
+    @threat = Galaxy::THREAT_LEVELS.fetch(threat_level)
+    @awareness = Galaxy::AWARENESS_LEVELS.fetch(awareness_level)
+    @settings = { victory_condition: victory_condition, team_count: team_count,
+                  threat_level: threat_level, awareness_level: awareness_level }
     @player_configs = player_configs
   end
 
@@ -142,7 +162,8 @@ class GalaxyGenerator
     galaxy = Galaxy.new(
       name: @name, size: @size,
       width: @dimension, height: @dimension,
-      current_tick: 0, status: :active
+      current_tick: 0, status: :active,
+      faction_count: @faction_count, **@settings
     )
 
     centre = galaxy.center
@@ -246,10 +267,11 @@ class GalaxyGenerator
     core = core_point(galaxy)
     spawn = spawn_point(galaxy)
     reach = distance(spawn, core)
+    keep_clear = CORE_SPACING * CORE_REACH * reach
     points = [ core, spawn ]
     # A small galaxy has fewer sectors than the spine wants seeds, and the spine must not
     # be allowed to overshoot the count that was asked for.
-    points.concat(spine_points(galaxy, core, spawn).take(@sector_count - points.size))
+    points.concat(spine_points(galaxy, core, spawn, keep_clear).take(@sector_count - points.size))
     spacing = (2 * galaxy.radius * SEPARATION) / Math.sqrt(@sector_count)
     rejections = 0
 
@@ -261,8 +283,9 @@ class GalaxyGenerator
       # than progress, and the rim beyond the players is somebody else's territory.
       too_far = distance(candidate, core) > reach
       crowded = points.any? { |point| distance(point, candidate) < spacing }
+      smothering = distance(candidate, core) < keep_clear
 
-      if too_far || crowded
+      if too_far || crowded || smothering
         rejections += 1
         spacing *= RELAX_BY if (rejections % RELAX_AFTER).zero?
         next
@@ -274,8 +297,8 @@ class GalaxyGenerator
     points
   end
 
-  def spine_points(galaxy, core, spawn)
-    corridor_points(galaxy, core, spawn) + arc_points(galaxy, core, spawn)
+  def spine_points(galaxy, core, spawn, keep_clear)
+    corridor_points(galaxy, core, spawn, keep_clear) + arc_points(galaxy, core, spawn)
   end
 
   # Two seeds off either shoulder of the spawn, between the players and the core.
@@ -293,13 +316,16 @@ class GalaxyGenerator
     end
   end
 
-  def corridor_points(galaxy, core, spawn)
+  # Laid between the players and the edge of the ground the core keeps clear, so the chain
+  # fills the path without any link of it crowding the core sector.
+  def corridor_points(galaxy, core, spawn, keep_clear)
     steps = POWER_LEVELS - 2
     span = distance(spawn, core).nonzero? || 1.0
     across = [ (core[1] - spawn[1]) / span, -(core[0] - spawn[0]) / span ]
+    usable = [ (span - keep_clear) / span, 0.0 ].max
 
     (1..steps).map do |step|
-      along = step.to_f / (steps + 1)
+      along = (step.to_f / (steps + 1)) * usable
       drift = (Random.rand - 0.5) * 2 * CORRIDOR_JITTER * galaxy.radius
 
       [
@@ -474,7 +500,8 @@ class GalaxyGenerator
         power_level: sector.power_level,
         strength_level: sector.power_level,
         tech_level: sector.power_level,
-        aggression: sector.power_level == 1 ? :dormant : :unaware
+        aggression: sector.power_level == 1 ? :dormant : :unaware,
+        awareness: (Random.rand(AWARENESS_RANGE) * @awareness).round.clamp(1, 100)
       )
 
       [ sector.id, faction ]
@@ -524,7 +551,7 @@ class GalaxyGenerator
   end
 
   def npc_system(galaxy, sector, faction, x, y, now)
-    defence = DEFENCE[sector.power_level - 1]
+    defence = (DEFENCE[sector.power_level - 1] * @threat).round
 
     base_system(galaxy, sector, x, y, now).merge(
       kind: "outpost",
@@ -557,7 +584,7 @@ class GalaxyGenerator
       kind: "core",
       npc_faction_id: faction.id,
       metal_rate: 200, crystal_rate: 200, energy_rate: 0,
-      defense_strength: DEFENCE.last * CAPITAL_DEFENCE_MULTIPLIER
+      defense_strength: (DEFENCE.last * @threat * CAPITAL_DEFENCE_MULTIPLIER).round
     )
   end
 

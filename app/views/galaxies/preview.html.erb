@@ -1,0 +1,94 @@
+<% content_for :title, "#{@galaxy.name} — generation" %>
+
+<header class="mt-20 mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-[1.75rem] font-bold leading-none tracking-[0.06em] uppercase"><%= @galaxy.name %></h1>
+    <p class="mt-2 font-sans text-[0.8125rem] text-ink-2">
+      How generation came out. Administrator view — this shows everything, including what
+      fog of war will later hide from commanders.
+    </p>
+  </div>
+  <%= link_to "Back to galaxies", galaxies_path, class: "btn" %>
+</header>
+
+<div class="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+  <section class="mod" aria-label="Generated map">
+    <div class="mod-head">
+      <h2 class="mod-title">Map</h2>
+      <span class="mod-note">
+        <%= number_with_delimiter(@galaxy.systems.count) %> systems ·
+        core <%= @galaxy.core_x %>,<%= @galaxy.core_y %>
+      </span>
+    </div>
+    <div class="p-4"><%= @preview.to_svg %></div>
+  </section>
+
+  <div class="flex flex-col gap-5">
+    <section class="mod" aria-label="Sectors">
+      <div class="mod-head">
+        <h2 class="mod-title">Sectors</h2>
+        <span class="mod-note">shallowest first</span>
+      </div>
+      <table class="w-full font-sans text-[0.8125rem]">
+        <thead>
+          <tr class="text-ink-3">
+            <th class="px-4 py-2 text-left font-medium">Sector</th>
+            <th class="px-2 py-2 text-right font-medium">Lvl</th>
+            <th class="px-2 py-2 text-right font-medium">Systems</th>
+            <th class="px-4 py-2 text-right font-medium">Held</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @preview.summary.each do |row| %>
+            <tr class="border-t border-line-soft">
+              <td class="px-4 py-2">
+                <span class="text-ink"><%= row[:name] %></span>
+                <% if row[:faction] %>
+                  <span class="block text-xs text-ink-3"><%= row[:faction] %></span>
+                <% else %>
+                  <span class="block text-xs text-amber"><%= row[:kind] %></span>
+                <% end %>
+              </td>
+              <td class="num px-2 py-2 text-right text-ink-2"><%= row[:power_level] %></td>
+              <td class="num px-2 py-2 text-right text-ink-2"><%= number_with_delimiter(row[:systems]) %></td>
+              <td class="num px-4 py-2 text-right text-ink-2"><%= row[:garrisoned] %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </section>
+
+    <% frontier = @preview.frontier %>
+    <section class="mod" aria-label="Commander distances">
+      <div class="mod-head">
+        <h2 class="mod-title">Frontier</h2>
+        <span class="mod-note">ticks from home</span>
+      </div>
+
+      <% if frontier.any? %>
+        <table class="w-full font-sans text-[0.8125rem]">
+          <thead>
+            <tr class="text-ink-3">
+              <th class="px-4 py-2 text-left font-medium">Commander</th>
+              <th class="px-2 py-2 text-right font-medium">First fight</th>
+              <th class="px-4 py-2 text-right font-medium">First capital</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% frontier.each do |row| %>
+              <tr class="border-t border-line-soft">
+                <td class="px-4 py-2 text-ink"><%= row[:player] %></td>
+                <td class="num px-2 py-2 text-right text-ink-2"><%= row[:garrison_ticks] %></td>
+                <td class="num px-4 py-2 text-right text-ink-2"><%= row[:capital_ticks] %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p class="px-4 py-3 font-sans text-[0.8125rem] text-ink-2">
+          Nobody has joined this galaxy yet, so there is nothing to measure from.
+        </p>
+      <% end %>
+    </section>
+  </div>
+</div>

@@ -303,3 +303,42 @@ six systems to each other.
 Rationale: the whole group gets one frontier, shipments between players stay cheap, and
 helping whoever is behind is easy. Spreading commanders to the region's edges — which a
 farthest-point placement does — works against the reason for sharing a sector at all.
+
+## Galaxies are created from a form, not seeded
+
+A galaxy is generated from `/galaxies/new` with its own settings: name, size, NPC faction
+count (minimum four), victory condition, threat level and awareness level. Teams is a
+fixed field showing 1. The settings are stored on the galaxy rather than derived from
+`size`, and generation runs inline — it takes two to eight seconds, happens rarely, and
+the point is to look at the result immediately.
+
+Rationale: one hardcoded world meant the only way to try a different shape was to edit
+constants and reseed, which is no way to tune a campaign. Threat scales garrison defence;
+awareness scales how readily each faction reacts, which the awakening step reads.
+
+## Signing up no longer founds an empire
+
+An account is just an account. Which galaxy to command in, and which role to take, is
+chosen from the lobby afterwards, and the session remembers which empire is being played.
+
+Rationale: with more than one galaxy, role and galaxy are properties of an empire rather
+than of an account, and a player may sit out a galaxy or join a later one.
+
+## One admin flag, not a role system
+
+`users.admin` is a boolean. It hides the generate and inspect controls, and guards those
+actions server-side. The first account registered is promoted automatically.
+
+Rationale: the only distinction that exists is "can create and inspect galaxies", and a
+role table would be machinery for a single bit. Whoever sets the game up registers first,
+and there is no other bootstrap path on a laptop-hosted server.
+
+## The inspect screen is the fog-of-war stand-in
+
+`/galaxies/:id/preview` shows an admin everything: every sector, the core, capitals, and
+where commanders will land, alongside each player's distance to their first fight and
+first capital.
+
+Rationale: the numbers that decide whether a campaign is worth playing are invisible in
+the game itself, and will be more so once fog of war hides them from players. Tuning needs
+something that shows the whole thing at once.

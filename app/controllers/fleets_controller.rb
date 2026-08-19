@@ -31,7 +31,7 @@ class FleetsController < ApplicationController
     @empire = current_empire
     @galaxy = @empire&.galaxy
 
-    redirect_to galaxy_path(Galaxy.first), alert: "Your empire has no planet yet." if @empire&.planet.nil?
+    redirect_to galaxies_path, alert: "Your empire has no planet yet." if @empire&.planet.nil?
   end
 
   def fleets_for_display

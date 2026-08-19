@@ -52,6 +52,6 @@ class PlanetsController < ApplicationController
 
     return if @planet
 
-    redirect_to galaxy_path(Galaxy.first), alert: "Your empire has no planet yet."
+    redirect_to galaxies_path, alert: "Your empire has no planet yet."
   end
 end

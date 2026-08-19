@@ -18,23 +18,20 @@ RSpec.describe "Users", type: :request do
   end
 
   describe "POST /users" do
-    it "creates a user, player, empire, and logs them in" do
+    it "creates an account and sends them to the lobby to pick a galaxy" do
       expect {
         post user_registration_path, params: {
           user: {
             username: "ben",
             password: "secret123",
             password_confirmation: "secret123"
-          },
-          empire: { role: "warden" }
+          }
         }
       }.to change(User, :count).by(1)
-        .and change(Player, :count).by(1)
-        .and change(Empire, :count).by(1)
 
-      user = User.last
-      expect(user.players.count).to eq(1)
-      expect(response).to redirect_to(planet_path)
+      # Signing up no longer founds an empire: which galaxy, and which role, comes next.
+      expect(User.last.players).to be_empty
+      expect(response).to redirect_to(galaxies_path)
     end
 
     it "rejects mismatched passwords" do
@@ -44,8 +41,7 @@ RSpec.describe "Users", type: :request do
             username: "ben",
             password: "secret123",
             password_confirmation: "wrong"
-          },
-          empire: { role: "warden" }
+          }
         }
       }.not_to change(User, :count)
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_19_093000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_19_140000) do
   create_table "build_orders", force: :cascade do |t|
     t.integer "completes_at_tick"
     t.datetime "created_at", null: false
@@ -69,20 +69,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_093000) do
   end
 
   create_table "galaxies", force: :cascade do |t|
+    t.string "awareness_level", default: "standard", null: false
     t.integer "core_x"
     t.integer "core_y"
     t.datetime "created_at", null: false
     t.integer "current_tick"
+    t.integer "faction_count", default: 4, null: false
     t.integer "height"
     t.string "name"
     t.string "size", default: "small", null: false
     t.string "status"
+    t.integer "team_count", default: 1, null: false
+    t.string "threat_level", default: "standard", null: false
     t.datetime "updated_at", null: false
+    t.string "victory_condition", default: "reach_the_core", null: false
     t.integer "width"
   end
 
   create_table "npc_factions", force: :cascade do |t|
     t.string "aggression", default: "unaware", null: false
+    t.integer "awareness", default: 50, null: false
     t.integer "capital_system_id"
     t.string "color"
     t.datetime "created_at", null: false
@@ -193,6 +199,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_093000) do
   end
 
   create_table "users", force: :cascade do |t|
+    t.boolean "admin", default: false, null: false
     t.datetime "created_at", null: false
     t.string "encrypted_password", default: "", null: false
     t.datetime "remember_created_at"

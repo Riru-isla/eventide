@@ -20,7 +20,7 @@ class ShipyardController < ApplicationController
     @empire = current_empire
     @planet = @empire&.planet
 
-    redirect_to galaxy_path(Galaxy.first), alert: "Your empire has no planet yet." if @planet.nil?
+    redirect_to galaxies_path, alert: "Your empire has no planet yet." if @planet.nil?
   end
 
   def respond_with_shipyard

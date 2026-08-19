@@ -9,19 +9,21 @@ default: &default
   max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   timeout: 5000
 
+# EVENTIDE_DB names the file set, so a scratch instance can be run alongside the real one
+# without touching it: EVENTIDE_DB=scratch bin/rails db:prepare db:seed server -p 3001
 development:
   primary:
     <<: *default
-    database: storage/development.sqlite3
+    database: storage/<%= ENV.fetch("EVENTIDE_DB", "development") %>.sqlite3
   queue:
     <<: *default
-    database: storage/development_queue.sqlite3
+    database: storage/<%= ENV.fetch("EVENTIDE_DB", "development") %>_queue.sqlite3
     migrations_paths: db/queue_migrate
   # Solid Cable in development too, so a tick broadcast reaches the browser even when
   # jobs run outside Puma. The async adapter is in-process only and would drop it.
   cable:
     <<: *default
-    database: storage/development_cable.sqlite3
+    database: storage/<%= ENV.fetch("EVENTIDE_DB", "development") %>_cable.sqlite3
     migrations_paths: db/cable_migrate
 
 # Warning: The database defined as "test" will be erased and

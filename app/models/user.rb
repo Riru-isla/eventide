@@ -5,8 +5,19 @@ class User < ApplicationRecord
          :recoverable, :rememberable
 
   has_many :players, dependent: :destroy
+  has_many :empires, through: :players
+
+  # Whoever sets the game up registers first, and somebody has to be able to create the
+  # first galaxy. There is no other bootstrap path on a laptop-hosted server.
+  before_create :promote_first_account
 
   validates :username, presence: true, uniqueness: true
   validates :password, length: { minimum: 6 }, if: -> { password.present? }
   validates :password, confirmation: true, if: -> { password.present? }
+
+  private
+
+  def promote_first_account
+    self.admin = true if User.none?
+  end
 end

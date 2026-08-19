@@ -6,7 +6,7 @@
 class GalaxyGenerationJob < ApplicationJob
   queue_as :default
 
-  def perform(name:, size: "small", player_configs: [])
-    GalaxyGenerator.new(name: name, size: size, player_configs: player_configs).generate
+  def perform(name:, size: "small", **settings)
+    GalaxyGenerator.new(name: name, size: size, **settings).generate
   end
 end

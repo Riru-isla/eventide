@@ -7,29 +7,55 @@ class Galaxy < ApplicationRecord
   # 400 wide. What makes a season long is how much there is to fight.
   #
   # dimension is the grid edge the disc is inscribed in; npc_systems is how many systems
-  # the factions garrison, which is the real campaign-length dial; sectors is how many
-  # regions the disc is carved into, which is roughly how many factions a run has.
+  # the factions garrison between them, which is the real campaign-length dial; factions
+  # is what the new-galaxy form suggests for that size, not a limit.
   SIZES = {
-    "tiny" => { dimension: 40, npc_systems: 60, sectors: 5 },
-    "small" => { dimension: 150, npc_systems: 540, sectors: 12 },
-    "medium" => { dimension: 250, npc_systems: 900, sectors: 18 },
-    "large" => { dimension: 400, npc_systems: 1_400, sectors: 26 }
+    "tiny" => { dimension: 40, npc_systems: 60, factions: 4 },
+    "small" => { dimension: 150, npc_systems: 540, factions: 11 },
+    "medium" => { dimension: 250, npc_systems: 900, factions: 17 },
+    "large" => { dimension: 400, npc_systems: 1_400, factions: 25 }
   }.freeze
+
+  # Fewer than four and there is no campaign: the ladder needs a rim to open on, a couple
+  # of steps, and a core to finish at.
+  MINIMUM_FACTIONS = 4
+  # Past this, sectors on a small map are too thin to be territory.
+  MAXIMUM_FACTIONS = 40
+
+  # Only one for now. It exists as a column so a game mode that changes what winning means
+  # is a new entry here rather than a migration.
+  VICTORY_CONDITIONS = { "reach_the_core" => "Reach the core" }.freeze
+
+  # How hard a garrison hits, as a multiplier on defence.
+  THREAT_LEVELS = { "calm" => 0.6, "standard" => 1.0, "harsh" => 1.6, "brutal" => 2.4 }.freeze
+
+  # How readily factions notice players, as a multiplier on each faction's awareness.
+  AWARENESS_LEVELS = { "oblivious" => 0.5, "standard" => 1.0, "alert" => 1.5, "paranoid" => 2.0 }.freeze
 
   # What a session-creation screen offers. `tiny` exists for tests and local poking and
   # is far too small to play a campaign in.
   PLAYABLE_SIZES = %w[small medium large].freeze
 
+  # Order matters on destroy. A faction's capital_system_id is a real foreign key, so
+  # factions have to go before the systems they point at; systems reference sectors, so
+  # they go before those.
+  has_many :npc_factions, dependent: :destroy
   has_many :systems, dependent: :destroy
   has_many :sectors, dependent: :destroy
-  has_many :players, dependent: :destroy
-  has_many :empires, dependent: :destroy
-  has_many :npc_factions, dependent: :destroy
   has_many :fleets, dependent: :destroy
+  has_many :empires, dependent: :destroy
+  has_many :players, dependent: :destroy
 
   validates :name, presence: true
   validates :width, :height, numericality: { greater_than: 0 }
   validates :size, inclusion: { in: SIZES.keys }
+  validates :victory_condition, inclusion: { in: VICTORY_CONDITIONS.keys }
+  validates :threat_level, inclusion: { in: THREAT_LEVELS.keys }
+  validates :awareness_level, inclusion: { in: AWARENESS_LEVELS.keys }
+  validates :faction_count,
+            numericality: { only_integer: true, greater_than_or_equal_to: MINIMUM_FACTIONS,
+                            less_than_or_equal_to: MAXIMUM_FACTIONS }
+  validates :team_count, numericality: { only_integer: true, greater_than: 0 }
 
   enum :status, { active: "active", paused: "paused", completed: "completed" }, default: :active
 
@@ -41,8 +67,8 @@ class Galaxy < ApplicationRecord
     SIZES.fetch(size.to_s)[:npc_systems]
   end
 
-  def self.sector_count_for(size)
-    SIZES.fetch(size.to_s)[:sectors]
+  def self.faction_count_for(size)
+    SIZES.fetch(size.to_s)[:factions]
   end
 
   def center

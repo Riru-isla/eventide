@@ -1,0 +1,78 @@
+<% content_for :title, "Galaxies — Eventide" %>
+
+<header class="mt-20 mb-6 flex flex-wrap items-end justify-between gap-4">
+  <div>
+    <h1 class="text-[1.75rem] font-bold leading-none tracking-[0.06em] uppercase">Eventide</h1>
+    <p class="mt-2 font-sans text-[0.8125rem] text-ink-2">
+      Signed in as <%= current_user.username %><%= " · administrator" if admin? %>
+    </p>
+  </div>
+
+  <div class="flex items-center gap-3">
+    <% if admin? %>
+      <%= link_to "Generate galaxy", new_galaxy_path, class: "btn" %>
+    <% end %>
+    <%= button_to "Sign out", destroy_user_session_path, method: :delete, class: "btn" %>
+  </div>
+</header>
+
+<% if @galaxies.none? %>
+  <section class="mod p-8 text-center">
+    <p class="font-sans text-[0.9375rem] text-ink-2">No galaxies have been generated yet.</p>
+    <p class="mt-2 font-sans text-[0.8125rem] text-ink-3">
+      <%= admin? ? "Generate one to get started." : "Ask an administrator to generate one." %>
+    </p>
+  </section>
+<% end %>
+
+<div class="flex flex-col gap-4">
+  <% @galaxies.each do |galaxy| %>
+    <% empire = @empires[galaxy.id] %>
+
+    <section class="mod" aria-label="<%= galaxy.name %>">
+      <div class="mod-head">
+        <h2 class="mod-title"><%= galaxy.name %></h2>
+        <span class="mod-note">
+          <%= galaxy.status %> · tick <%= number_with_delimiter(galaxy.current_tick) %>
+        </span>
+      </div>
+
+      <div class="grid gap-5 p-4 md:grid-cols-2">
+        <dl class="grid grid-cols-2 gap-x-4 gap-y-2 font-sans text-[0.8125rem]">
+          <% [
+               [ "Size", "#{galaxy.size} · #{galaxy.width}×#{galaxy.height}" ],
+               [ "Factions", galaxy.npc_factions.count ],
+               [ "Commanders", @commanders.fetch(galaxy.id, 0) ],
+               [ "Objective", Galaxy::VICTORY_CONDITIONS.fetch(galaxy.victory_condition, galaxy.victory_condition) ],
+               [ "Threat", galaxy.threat_level ],
+               [ "Awareness", galaxy.awareness_level ]
+             ].each do |label, value| %>
+            <dt class="label self-center"><%= label %></dt>
+            <dd class="num text-ink capitalize"><%= value %></dd>
+          <% end %>
+        </dl>
+
+        <div class="flex flex-col items-start gap-3">
+          <% if empire %>
+            <p class="font-sans text-[0.8125rem] text-ink-2">
+              You command here as <span class="text-ink capitalize"><%= empire.role %></span>.
+            </p>
+            <%= button_to "Enter galaxy", join_galaxy_path(galaxy), class: "btn" %>
+          <% else %>
+            <%= form_with url: join_galaxy_path(galaxy), method: :post, class: "flex flex-wrap items-center gap-2" do %>
+              <%= label_tag "role_#{galaxy.id}", "Role", class: "label" %>
+              <%= select_tag :role, options_for_select(role_options), id: "role_#{galaxy.id}",
+                             class: "border border-line bg-ground-2 px-3 py-2 font-sans text-[0.8125rem] text-ink" %>
+              <%= submit_tag "Join", class: "btn", data: { turbo_submits_with: "Joining…" } %>
+            <% end %>
+          <% end %>
+
+          <% if admin? %>
+            <%= link_to "Inspect generation", preview_galaxy_path(galaxy),
+                        class: "font-sans text-[0.8125rem] text-amber hover:underline" %>
+          <% end %>
+        </div>
+      </div>
+    </section>
+  <% end %>
+</div>

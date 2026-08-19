@@ -1,0 +1,85 @@
+<% content_for :title, "Generate a galaxy — Eventide" %>
+
+<div class="mx-auto mt-20 max-w-md">
+  <h1 class="text-[1.75rem] font-bold leading-none tracking-[0.06em] uppercase">Generate galaxy</h1>
+  <p class="mt-2 mb-6 font-sans text-[0.8125rem] text-ink-2">
+    Settings are fixed once a galaxy exists — growing one under commanders who have already
+    explored it would mean seeding space they may have scouted.
+  </p>
+
+  <%= form_with model: @galaxy, url: galaxies_path, method: :post, class: "mod flex flex-col gap-4 p-4" do |f| %>
+    <% if @galaxy.errors.any? %>
+      <div class="flash flash-alert">
+        <% @galaxy.errors.full_messages.each do |message| %>
+          <p><%= message %></p>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div>
+      <%= f.label :name, class: "label mb-1 block" %>
+      <%= f.text_field :name, autofocus: true,
+                       class: "w-full border border-line bg-ground-2 px-3 py-2 font-sans text-[0.9375rem] text-ink" %>
+    </div>
+
+    <div>
+      <%= f.label :size, class: "label mb-1 block" %>
+      <%= f.select :size,
+                   Galaxy::PLAYABLE_SIZES.map { |size|
+                     [ "#{size.capitalize} — #{Galaxy.dimension_for(size)}×#{Galaxy.dimension_for(size)}", size ]
+                   },
+                   {},
+                   class: "w-full border border-line bg-ground-2 px-3 py-2 font-sans text-[0.9375rem] text-ink" %>
+      <p class="mt-1 font-sans text-xs text-ink-3">
+        Size buys room to explore, not a longer season. Travel is cheap even at 400 wide.
+      </p>
+    </div>
+
+    <div>
+      <%= f.label :faction_count, "NPC factions", class: "label mb-1 block" %>
+      <%= f.number_field :faction_count, min: Galaxy::MINIMUM_FACTIONS, max: Galaxy::MAXIMUM_FACTIONS,
+                         class: "w-full border border-line bg-ground-2 px-3 py-2 font-sans text-[0.9375rem] text-ink" %>
+      <p class="mt-1 font-sans text-xs text-ink-3">
+        One sector each, plus one for the commanders. Minimum <%= Galaxy::MINIMUM_FACTIONS %>:
+        the ladder needs a rim to open on, a couple of steps, and a core to finish at.
+      </p>
+    </div>
+
+    <div>
+      <%= f.label :victory_condition, "Victory condition", class: "label mb-1 block" %>
+      <%= f.select :victory_condition, Galaxy::VICTORY_CONDITIONS.map { |key, label| [ label, key ] }, {},
+                   class: "w-full border border-line bg-ground-2 px-3 py-2 font-sans text-[0.9375rem] text-ink" %>
+    </div>
+
+    <div>
+      <%= label_tag :team_count, "Teams", class: "label mb-1 block" %>
+      <%= text_field_tag :team_count, 1, disabled: true,
+                         class: "w-full border border-line bg-ground px-3 py-2 font-sans text-[0.9375rem] text-ink-3" %>
+      <p class="mt-1 font-sans text-xs text-ink-3">
+        Everybody shares one spawn sector for now, so the whole group has a single frontier.
+      </p>
+    </div>
+
+    <div>
+      <%= f.label :threat_level, "Threat level", class: "label mb-1 block" %>
+      <%= f.select :threat_level,
+                   Galaxy::THREAT_LEVELS.map { |key, factor| [ "#{key.capitalize} — ×#{factor} defence", key ] }, {},
+                   class: "w-full border border-line bg-ground-2 px-3 py-2 font-sans text-[0.9375rem] text-ink" %>
+    </div>
+
+    <div>
+      <%= f.label :awareness_level, "Awareness level", class: "label mb-1 block" %>
+      <%= f.select :awareness_level,
+                   Galaxy::AWARENESS_LEVELS.map { |key, factor| [ "#{key.capitalize} — ×#{factor} reaction", key ] }, {},
+                   class: "w-full border border-line bg-ground-2 px-3 py-2 font-sans text-[0.9375rem] text-ink" %>
+      <p class="mt-1 font-sans text-xs text-ink-3">
+        How readily a faction stirs when something falls next door.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3 border-t border-line-soft pt-4">
+      <%= f.submit "Generate", class: "btn", data: { turbo_submits_with: "Generating…" } %>
+      <%= link_to "Cancel", galaxies_path, class: "font-sans text-[0.8125rem] text-ink-2 hover:underline" %>
+    </div>
+  <% end %>
+</div>

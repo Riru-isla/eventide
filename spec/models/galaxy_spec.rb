@@ -26,7 +26,7 @@ RSpec.describe Galaxy, type: :model do
     it "reads dimension, garrison budget and sector count from the chosen size" do
       expect(described_class.dimension_for("small")).to eq(150)
       expect(described_class.npc_systems_for("small")).to eq(540)
-      expect(described_class.sector_count_for("small")).to eq(12)
+      expect(described_class.faction_count_for("small")).to eq(11)
     end
 
     it "offers only the sizes worth playing a campaign in" do

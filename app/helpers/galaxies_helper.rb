@@ -14,6 +14,17 @@ module GalaxiesHelper
   MAP_VIEWBOX = 1000
   MAP_RADIUS = 470
 
+  # Shown wherever somebody has to pick a role, which is now the lobby rather than signup.
+  ROLE_LABELS = {
+    "cultivator" => "Cultivator — crystal bonus",
+    "foundry" => "Foundry — metal bonus",
+    "warden" => "Warden — energy bonus"
+  }.freeze
+
+  def role_options
+    Empire::ROLES.map { |role| [ ROLE_LABELS.fetch(role), role ] }
+  end
+
   def empire_color(index)
     EMPIRE_COLORS[index % EMPIRE_COLORS.size]
   end

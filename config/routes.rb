@@ -28,7 +28,14 @@ Rails.application.routes.draw do
   get "fleets", to: "fleets#index", as: :fleets
   post "fleets", to: "fleets#create", as: :dispatch_fleet
 
-  resources :galaxies, only: [ :show ] do
+  # The lobby is where you land without an empire: your galaxies, the ones you can spawn
+  # into, and — for an admin — generating a new one and inspecting how it came out.
+  resources :galaxies, only: %i[index new create show] do
+    member do
+      get :preview
+      post :join
+    end
+
     resources :systems, only: %i[show]
   end
 end

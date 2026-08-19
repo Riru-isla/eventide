@@ -100,12 +100,12 @@ RSpec.describe "Planets", type: :request do
       expect(response.body).to include("throttled")
     end
 
-    it "redirects to the galaxy when the empire has no planet" do
+    it "redirects to the lobby when the empire has no planet" do
       planet.destroy!
 
       get planet_path
 
-      expect(response).to redirect_to(galaxy_path(Galaxy.first))
+      expect(response).to redirect_to(galaxies_path)
       expect(flash[:alert]).to match(/no planet/)
     end
   end

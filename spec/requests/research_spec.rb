@@ -85,7 +85,7 @@ RSpec.describe "Research", type: :request do
 
       get research_path
 
-      expect(response).to redirect_to(galaxy_path(Galaxy.first))
+      expect(response).to redirect_to(galaxies_path)
     end
 
     it "requires a signed-in user" do
@@ -142,7 +142,7 @@ RSpec.describe "Research", type: :request do
 
       post start_research_path("extraction_technology")
 
-      expect(response).to redirect_to(galaxy_path(Galaxy.first))
+      expect(response).to redirect_to(galaxies_path)
     end
 
     it "answers a Turbo request with streams instead of a redirect" do

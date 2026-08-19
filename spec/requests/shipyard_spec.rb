@@ -74,7 +74,7 @@ RSpec.describe "Shipyard", type: :request do
 
       get shipyard_path
 
-      expect(response).to redirect_to(galaxy_path(Galaxy.first))
+      expect(response).to redirect_to(galaxies_path)
     end
 
     it "requires a signed-in user" do
@@ -139,7 +139,7 @@ RSpec.describe "Shipyard", type: :request do
 
       post build_ships_path("light_fighter"), params: { quantity: 1 }
 
-      expect(response).to redirect_to(galaxy_path(Galaxy.first))
+      expect(response).to redirect_to(galaxies_path)
     end
 
     it "answers a Turbo request with streams instead of a redirect" do

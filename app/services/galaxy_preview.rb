@@ -14,10 +14,22 @@ class GalaxyPreview
   RESOURCE_OPACITY = 0.30
   HELD_OPACITY = 0.95
 
+  # A large galaxy is 125,000 systems, and a rectangle each would be a several-megabyte
+  # page. Past this width the grid is sampled every few coordinates instead, which loses
+  # individual outposts but keeps the territory shapes the picture exists to show.
+  FULL_DETAIL_WIDTH = 150
+
+  # Colours come out of the database, so they are checked rather than trusted before being
+  # written into an attribute. Anything that is not a plain hex colour is drawn neutral.
+  HEX_COLOUR = /\A#\h{3,8}\z/
+
   def initialize(galaxy)
     @galaxy = galaxy
   end
 
+  # Marked safe here rather than in the view, because here is where the escaping happens:
+  # every name goes through html_escape, every colour through HEX_COLOUR, and everything
+  # else is an integer out of the database.
   def to_svg
     parts = [ header, disc ]
     parts.concat(system_rects)
@@ -25,7 +37,7 @@ class GalaxyPreview
     parts.concat(labels)
     parts << legend
     parts << "</svg>"
-    parts.join("\n")
+    parts.join("\n").html_safe
   end
 
   # One row per sector, deepest last: what to read alongside the picture when tuning.
@@ -88,8 +100,12 @@ class GalaxyPreview
   end
 
   def colour_for(sector_id)
-    @colours ||= sectors.transform_values { |sector| sector.npc_faction&.color || SPAWN_COLOR }
+    @colours ||= sectors.transform_values { |sector| safe_colour(sector.npc_faction&.color) }
     @colours.fetch(sector_id, SPAWN_COLOR)
+  end
+
+  def safe_colour(value)
+    value.to_s.match?(HEX_COLOUR) ? value : SPAWN_COLOR
   end
 
   def header
@@ -106,9 +122,17 @@ class GalaxyPreview
       %(stroke="#2c2650" stroke-width="0.4"/>)
   end
 
+  def step
+    @step ||= [ (dimension / FULL_DETAIL_WIDTH.to_f).ceil, 1 ].max
+  end
+
   def system_rects
-    rows.map do |x, y, kind, sector_id, faction_id|
-      %(<rect x="#{x}" y="#{y}" width="1" height="1" fill="#{fill_for(kind, sector_id)}" ) +
+    rows.filter_map do |x, y, kind, sector_id, faction_id|
+      # Homes and garrisons are the whole point of the picture, so they are drawn whether
+      # or not they land on the sampling grid.
+      next unless step == 1 || kind == "home" || faction_id || ((x % step).zero? && (y % step).zero?)
+
+      %(<rect x="#{x}" y="#{y}" width="#{step}" height="#{step}" fill="#{fill_for(kind, sector_id)}" ) +
         %(opacity="#{opacity_for(kind, faction_id)}"/>)
     end
   end
@@ -133,7 +157,7 @@ class GalaxyPreview
       capital = faction.capital_system
       next if capital.nil?
 
-      ring(capital.x, capital.y, faction.sector&.core? ? 4.5 : 2.5, faction.color)
+      ring(capital.x, capital.y, faction.sector&.core? ? 4.5 : 2.5, safe_colour(faction.color))
     end
 
     marks + @galaxy.systems.where(kind: "home").map { |home| ring(home.x, home.y, 2.0, HOME_COLOR) }

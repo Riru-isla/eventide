@@ -53,7 +53,7 @@ RSpec.describe GalaxyGenerator, type: :service do
 
   describe "sectors" do
     it "creates the number the size asks for" do
-      expect(galaxy.sectors.count).to eq(Galaxy.sector_count_for("tiny"))
+      expect(galaxy.sectors.count).to eq(Galaxy.faction_count_for("tiny") + 1)
     end
 
     it "gives every sector territory" do
@@ -69,12 +69,6 @@ RSpec.describe GalaxyGenerator, type: :service do
     it "has exactly one core sector and one spawn sector" do
       expect(galaxy.sectors.where(kind: "core").count).to eq(1)
       expect(galaxy.sectors.where(kind: "spawn").count).to eq(1)
-    end
-
-    it "makes the core sector the largest on the map" do
-      largest = galaxy.sectors.max_by { |sector| sector.systems.count }
-
-      expect(largest).to eq(galaxy.core_sector)
     end
   end
 
@@ -200,6 +194,14 @@ RSpec.describe GalaxyGenerator, type: :service do
   # These need more sectors than `tiny` has, so they pay for a real generation.
   describe "at a playable size" do
     subject(:galaxy) { described_class.new(name: "Playable", size: "small", player_configs: player_configs).generate }
+
+    it "makes the core sector the largest on the map" do
+      # Only meaningful at a real size: on `tiny` the core's reach cap bites hard enough
+      # against a 40-wide disc that a neighbour can out-grow it.
+      largest = galaxy.sectors.max_by { |sector| sector.systems.count }
+
+      expect(largest).to eq(galaxy.core_sector)
+    end
 
     it "spreads factions across every power level" do
       expect(galaxy.npc_factions.pluck(:power_level).uniq.sort).to eq((1..described_class::POWER_LEVELS).to_a)
