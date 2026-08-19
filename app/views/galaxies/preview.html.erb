@@ -58,6 +58,45 @@
       </table>
     </section>
 
+    <section class="mod" aria-label="Awakening">
+      <div class="mod-head">
+        <h2 class="mod-title">Awakening</h2>
+        <span class="mod-note">who reacts to whom</span>
+      </div>
+      <table class="w-full font-sans text-[0.8125rem]">
+        <thead>
+          <tr class="text-ink-3">
+            <th class="px-4 py-2 text-left font-medium">Faction</th>
+            <th class="px-2 py-2 text-right font-medium">Alert</th>
+            <th class="px-4 py-2 text-right font-medium">Stirs</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @preview.awakening.each do |row| %>
+            <tr class="border-t border-line-soft">
+              <td class="px-4 py-2">
+                <span class="text-ink">L<%= row[:power_level] %> <%= row[:name] %></span>
+                <span class="block text-xs text-ink-3">borders <%= row[:neighbours].join(", ") %></span>
+              </td>
+              <td class="num px-2 py-2 text-right text-ink-2"><%= row[:awareness] %></td>
+              <td class="px-4 py-2 text-right">
+                <% if row[:wake_at_tick] %>
+                  <span class="num text-amber">tick <%= number_with_delimiter(row[:wake_at_tick]) %></span>
+                <% else %>
+                  <span class="text-ink-3">unprovoked</span>
+                <% end %>
+                <span class="block text-xs text-ink-3"><%= row[:aggression] %></span>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+      <p class="border-t border-line-soft px-4 py-3 font-sans text-xs text-ink-3">
+        Only factions bordering the spawn are counting down. Everything else has no clock
+        at all until a neighbour falls, so escalation cannot outrun the players.
+      </p>
+    </section>
+
     <% frontier = @preview.frontier %>
     <section class="mod" aria-label="Commander distances">
       <div class="mod-head">

@@ -66,6 +66,23 @@ class GalaxyPreview
     end
   end
 
+  # How the galaxy is wired to escalate: who borders whom, how alert each faction is, and
+  # which of them are counting down. A faction with no clock has no reason to stir yet, and
+  # seeing that laid out is what tells you whether a run will unfold or stall.
+  def awakening
+    @galaxy.npc_factions.includes(:sector).sort_by(&:power_level).map do |faction|
+      {
+        name: faction.name,
+        sector: faction.sector&.name,
+        power_level: faction.power_level,
+        aggression: faction.aggression,
+        awareness: faction.awareness,
+        wake_at_tick: faction.wake_at_tick,
+        neighbours: faction.neighbours.order(:power_level).pluck(:name)
+      }
+    end
+  end
+
   # What the shape costs a player: how far away the first fight is, and the first capital.
   # This is the pair of numbers the previous concentric-ring design failed on — one player
   # was 40 ticks from the frontier capital and another 117 — so it belongs in front of you

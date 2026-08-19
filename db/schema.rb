@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_19_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_19_190000) do
   create_table "build_orders", force: :cascade do |t|
     t.integer "completes_at_tick"
     t.datetime "created_at", null: false
@@ -100,10 +100,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_170000) do
     t.integer "strength_level"
     t.integer "tech_level"
     t.datetime "updated_at", null: false
+    t.integer "wake_at_tick"
     t.index ["capital_system_id"], name: "index_npc_factions_on_capital_system_id"
     t.index ["galaxy_id", "power_level"], name: "index_npc_factions_on_galaxy_id_and_power_level"
     t.index ["galaxy_id"], name: "index_npc_factions_on_galaxy_id"
     t.index ["sector_id"], name: "index_npc_factions_on_sector_id"
+    t.index ["wake_at_tick"], name: "index_npc_factions_on_wake_at_tick"
   end
 
   create_table "planet_structures", force: :cascade do |t|
@@ -148,6 +150,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_170000) do
     t.datetime "updated_at", null: false
     t.index ["completes_at_tick"], name: "index_research_orders_on_completes_at_tick"
     t.index ["empire_id"], name: "index_research_orders_on_empire_id"
+  end
+
+  create_table "sector_borders", force: :cascade do |t|
+    t.integer "neighbour_id", null: false
+    t.integer "sector_id", null: false
+    t.index ["neighbour_id"], name: "index_sector_borders_on_neighbour_id"
+    t.index ["sector_id", "neighbour_id"], name: "index_sector_borders_on_sector_id_and_neighbour_id", unique: true
+    t.index ["sector_id"], name: "index_sector_borders_on_sector_id"
   end
 
   create_table "sectors", force: :cascade do |t|
@@ -227,6 +237,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_170000) do
   add_foreign_key "players", "galaxies"
   add_foreign_key "players", "users"
   add_foreign_key "research_orders", "empires"
+  add_foreign_key "sector_borders", "sectors"
+  add_foreign_key "sector_borders", "sectors", column: "neighbour_id"
   add_foreign_key "sectors", "galaxies"
   add_foreign_key "ship_orders", "planets"
   add_foreign_key "systems", "empires"

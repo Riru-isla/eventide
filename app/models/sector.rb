@@ -10,6 +10,13 @@ class Sector < ApplicationRecord
   belongs_to :galaxy
   has_many :systems, dependent: :nullify
   has_one :npc_faction, dependent: :nullify
+  has_many :borders, class_name: "SectorBorder", dependent: :destroy
+  has_many :neighbours, through: :borders
+  # Borders are stored both ways round, so a sector appears on the far side of its
+  # neighbours' rows too. Without this, destroying it leaves those behind and trips the
+  # foreign key.
+  has_many :facing_borders, class_name: "SectorBorder", foreign_key: :neighbour_id,
+           inverse_of: :neighbour, dependent: :destroy
 
   validates :name, presence: true
   validates :seed_x, :seed_y, numericality: { only_integer: true }

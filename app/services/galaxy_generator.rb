@@ -149,7 +149,9 @@ class GalaxyGenerator
     ActiveRecord::Base.transaction do
       galaxy = create_galaxy
       sectors = create_sectors(galaxy)
-      cells = assign_cells(galaxy, sectors)
+      owner = assign_cells(galaxy, sectors)
+      record_borders(sectors, owner)
+      cells = group_cells(owner, sectors.size)
       factions = create_factions(galaxy, sectors)
       create_systems(galaxy, sectors, cells, factions)
       assign_capitals(galaxy, sectors, factions)
@@ -387,18 +389,55 @@ class GalaxyGenerator
     ]
   end
 
-  # Every disc coordinate handed to the sector whose seed claims it, returned grouped by
-  # sector so garrisons can be sampled from within a territory.
+  # Every disc coordinate handed to the sector whose seed claims it: a flat grid of sector
+  # indices, nil outside the disc.
   def assign_cells(galaxy, sectors)
     owner = voronoi_owners(galaxy, sectors)
     absorb_exclaves(owner, sectors)
 
-    buckets = Array.new(sectors.size) { [] }
+    owner
+  end
+
+  # The same grid grouped by sector, so garrisons can be sampled from within a territory.
+  def group_cells(owner, count)
+    buckets = Array.new(count) { [] }
+
     owner.each_with_index do |index, position|
       buckets[index] << [ position % @dimension, position / @dimension ] unless index.nil?
     end
 
     buckets
+  end
+
+  # Which sectors touch which, read straight off the ownership grid by comparing each
+  # coordinate with its eastern and southern neighbour. Stored both ways round so a
+  # sector's neighbours are one query.
+  #
+  # Waking spreads across this graph and nowhere else, which is what keeps escalation from
+  # getting ahead of where players have actually pushed.
+  def record_borders(sectors, owner)
+    pairs = Set.new
+
+    (0...@dimension).each do |y|
+      (0...@dimension).each do |x|
+        here = owner[(y * @dimension) + x]
+        next if here.nil?
+
+        [ [ 1, 0 ], [ 0, 1 ] ].each do |dx, dy|
+          next if (x + dx) >= @dimension || (y + dy) >= @dimension
+
+          there = owner[((y + dy) * @dimension) + (x + dx)]
+          pairs << [ here, there ].minmax unless there.nil? || there == here
+        end
+      end
+    end
+
+    rows = pairs.flat_map do |one, other|
+      [ { sector_id: sectors[one].id, neighbour_id: sectors[other].id },
+        { sector_id: sectors[other].id, neighbour_id: sectors[one].id } ]
+    end
+
+    rows.each_slice(BATCH_SIZE) { |slice| SectorBorder.insert_all!(slice) }
   end
 
   # Squared distance over squared weight rather than distance over weight: the comparison
@@ -514,22 +553,29 @@ class GalaxyGenerator
     yield(position + @dimension) if y < @dimension - 1
   end
 
-  # One faction per sector, except the players'. Only the outermost start awake; the rest
-  # have no reason to know players exist until something next door falls.
+  # One faction per sector, except the players'.
+  #
+  # Only the factions whose territory actually touches the spawn begin knowing players
+  # exist, with a clock already running — otherwise nothing would ever have a reason to
+  # stir and the galaxy would sleep forever. Everything behind them is `unaware` and has no
+  # clock at all until a neighbour falls.
   def create_factions(galaxy, sectors)
     names = faction_names(sectors.size)
+    frontier = sectors.find(&:spawn?).neighbours.pluck(:id).to_set
 
     sectors.reject(&:spawn?).each_with_index.to_h do |sector, index|
-      faction = galaxy.npc_factions.create!(
+      faction = galaxy.npc_factions.new(
         sector: sector,
         name: sector.core? ? CORE_FACTION_NAME : names[index],
         color: LEVEL_COLORS[sector.power_level - 1][index % LEVEL_COLORS.first.size],
         power_level: sector.power_level,
         strength_level: sector.power_level,
         tech_level: sector.power_level,
-        aggression: sector.power_level == 1 ? :dormant : :unaware,
+        aggression: frontier.include?(sector.id) ? :dormant : :unaware,
         awareness: (Random.rand(AWARENESS_RANGE) * @awareness).round.clamp(1, 100)
       )
+      faction.wake_at_tick = faction.wake_delay if frontier.include?(sector.id)
+      faction.save!
 
       [ sector.id, faction ]
     end

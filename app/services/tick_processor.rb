@@ -11,6 +11,7 @@ class TickProcessor
       complete_research
       collect_resources
       resolve_fleet_arrivals
+      awakening.advance!
       @galaxy.increment!(:current_tick)
     end
 
@@ -142,8 +143,13 @@ class TickProcessor
 
   def resolve_combat(fleet)
     target = fleet.target_system
+    faction = target.npc_faction
 
-    if target.npc_faction
+    if faction
+      # Read before the fight: a won attack clears the faction off the system, and a lost
+      # one still means they have seen a player fleet in their space.
+      awakening.contact!(faction)
+
       defender_power = target.total_defence
       attacker_power = fleet.power
 
@@ -156,6 +162,7 @@ class TickProcessor
           defense_strength: [ attacker_power / 2, 1 ].max
         )
         fleet.join_garrison!(target)
+        awakening.captured!(target, faction)
       elsif !fleet.retreat!
         # Nothing survived the failed attack.
         fleet.destroy!
@@ -163,5 +170,9 @@ class TickProcessor
     else
       fleet.join_garrison!(target)
     end
+  end
+
+  def awakening
+    @awakening ||= FactionAwakening.new(@galaxy)
   end
 end

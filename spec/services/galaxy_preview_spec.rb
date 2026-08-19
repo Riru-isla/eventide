@@ -66,6 +66,31 @@ RSpec.describe GalaxyPreview, type: :service do
     end
   end
 
+  describe "#awakening" do
+    it "reports one row per faction, shallowest first" do
+      rows = preview.awakening
+
+      expect(rows.size).to eq(galaxy.npc_factions.count)
+      expect(rows.map { |row| row[:power_level] }).to eq(rows.map { |row| row[:power_level] }.sort)
+    end
+
+    it "names who each faction would react to" do
+      row = preview.awakening.first
+
+      expect(row[:neighbours]).to be_any
+      expect(row[:neighbours]).to match_array(galaxy.npc_factions.find_by(name: row[:name]).neighbours.pluck(:name))
+    end
+
+    it "shows the frontier counting down and everything behind it unprovoked" do
+      rows = preview.awakening.index_by { |row| row[:name] }
+      frontier = galaxy.spawn_sector.neighbours.filter_map(&:npc_faction)
+      behind = galaxy.npc_factions.where.not(id: frontier.map(&:id))
+
+      expect(frontier.map { |f| rows[f.name][:wake_at_tick] }).to all(be_present)
+      expect(behind.map { |f| rows[f.name][:wake_at_tick] }.uniq).to eq([ nil ])
+    end
+  end
+
   describe "#frontier" do
     it "reports how far each commander is from their first fight and first capital" do
       rows = preview.frontier

@@ -193,18 +193,47 @@ RSpec.describe GalaxyGenerator, type: :service do
     end
   end
 
-  describe "aggression" do
-    it "wakes only the factions on the rim" do
-      rim = galaxy.npc_factions.where(power_level: 1)
+  describe "borders" do
+    it "records which sectors touch, both ways round" do
+      galaxy.sectors.each do |sector|
+        expect(sector.neighbours).to be_any, "#{sector.name} borders nothing"
 
-      expect(rim).to be_any
-      expect(rim.map(&:aggression).uniq).to eq([ "dormant" ])
+        sector.neighbours.each do |other|
+          expect(other.neighbours).to include(sector), "#{other.name} does not border #{sector.name} back"
+        end
+      end
     end
 
-    it "leaves every deeper faction unaware that players exist" do
-      deeper = galaxy.npc_factions.where.not(power_level: 1)
+    it "never borders a sector against itself" do
+      expect(SectorBorder.where("sector_id = neighbour_id")).to be_empty
+    end
 
-      expect(deeper.map(&:aggression).uniq).to eq([ "unaware" ])
+    it "gives every faction somebody to react to" do
+      expect(galaxy.npc_factions.map { |faction| faction.neighbours.count }).to all(be_positive)
+    end
+  end
+
+  describe "aggression" do
+    it "rouses the factions whose ground touches the players, and only those" do
+      frontier = galaxy.spawn_sector.neighbours.filter_map(&:npc_faction)
+
+      expect(frontier).to be_any
+      expect(frontier.map(&:aggression).uniq).to eq([ "dormant" ])
+    end
+
+    it "leaves everything behind them unaware, with no clock at all" do
+      frontier = galaxy.spawn_sector.neighbours.select(:id)
+      behind = galaxy.npc_factions.where.not(sector_id: frontier)
+
+      expect(behind).to be_any
+      expect(behind.map(&:aggression).uniq).to eq([ "unaware" ])
+      expect(behind.map(&:wake_at_tick).uniq).to eq([ nil ])
+    end
+
+    it "starts the frontier counting down, or the galaxy would sleep forever" do
+      frontier = galaxy.spawn_sector.neighbours.filter_map(&:npc_faction)
+
+      expect(frontier.map(&:wake_at_tick)).to all(be_positive)
     end
   end
 
