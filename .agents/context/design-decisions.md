@@ -352,3 +352,28 @@ first capital.
 Rationale: the numbers that decide whether a campaign is worth playing are invisible in
 the game itself, and will be more so once fog of war hides them from players. Tuning needs
 something that shows the whole thing at once.
+
+## Every route inward is a different sequence, not an easier one
+
+The straight line from the players to the core crosses one sector of each rank in order —
+the corridor claims a slot at every level, so that is guaranteed. The flanks are not
+guaranteed anything, and that is the point: a route round the side might read 1, 3, 2, 4
+or 1, 3, 5 before reaching the core.
+
+Rationale: a flank that is reliably easier makes the corridor pointless, and one that is
+reliably harder makes it the only route. Neither is true here — going round means meeting
+levels out of order, which can mean a level 5 before you have cleared a level 4. That is a
+choice with a cost rather than a trap, because the ordered route is always available.
+
+Worth protecting when generation is tuned: the guarantee is that the *middle* is a ladder,
+not that every path is.
+
+## Rushing the core has to fail on the numbers
+
+A level 1 faction garrisons ~11 systems at 60 defence; the core faction garrisons ~133 at
+2,800. That is roughly a 500x jump in total defence between the rim and the middle, which
+is what makes building up before pushing inward a strategy rather than a stall.
+
+`GARRISON_WEIGHT` and `DEFENCE` in `GalaxyGenerator` are the two curves this rests on, and
+they compound — deeper factions hold more systems *and* defend each one harder. Flattening
+either one turns the campaign into a straight run at the core.
