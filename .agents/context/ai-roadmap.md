@@ -65,11 +65,12 @@ shipyard is what lets a player build a ship, a faction conjuring one from a stoc
 not playing by the same rules. It also reuses `Planet`, `Structure` and `Shipyard` rather
 than inventing a parallel abstraction beside them.
 
-**Two to five worlds per faction, spread through its territory** — not one, and not all
-133 garrisons. Spread matters: infrastructure concentrated at the capital would be
-worthless as a target, because taking the capital already ends the faction. Scattered, it
-means a player can **cripple a faction's ability to answer without finishing it**, which
-is a genuine strategic choice and the thing factions currently lack.
+**Two to five worlds per faction, spread through its territory** — count scaling with power
+level, chosen at generation from systems it already garrisons, and **never the capital**.
+Not one, and not all 133 garrisons. Keeping industry off the capital matters: the capital already ends the faction when it
+falls, so infrastructure there would never be worth attacking on its own. Kept elsewhere,
+a player can **cripple a faction's ability to answer without finishing it**, and
+"cripple, then kill" becomes a real strategy rather than a race to one coordinate.
 
 Income has two sources, exactly as it does for a player: the `metal_rate` and
 `crystal_rate` of every system held — data that already exists and is ignored today — plus
@@ -102,10 +103,41 @@ Awake factions spend on raising `defense_strength` and on their own structures, 
 at a rate set by their build-speed multiplier. Defences before fleets deliberately: it
 needs no new movement or combat code, and it is immediately felt.
 
-**Tempo scales with aggression**, which is where an escalating cooldown belongs: `aware`
-builds slowly, `hunting` faster, `total_war` fastest, composing with the power-level and
-threat-level multipliers. One dial shaping how a faction fights, rather than a separate
-system governing what it hoarded before you met it.
+### Aggression is how many hours a day the faction plays
+
+The clarifying idea, and worth keeping as the spine of the whole design. Aggression is not
+a mood; it is an engagement level, and it answers "what should each state change?" without
+inventing anything per state.
+
+| State | plays like | tempo | repertoire |
+|---|---|---|---|
+| `unaware` | offline | — | nothing |
+| `dormant` | knows you exist, is not looking | — | nothing until struck |
+| `aware` | two hours a day, reactive | slow | rebuild losses, harden the front |
+| `hunting` | on daily, engaged | medium | + build ships, scout, raid |
+| `total_war` | eight hours, micromanaging | fast | + research, upgrade worlds, coordinated strikes |
+
+It drives two table lookups, not branching logic: a **multiplier** on how much gets done
+per tick, and an **eligible action set**. The scoring loop is unchanged — actions outside
+the repertoire simply are not candidates. The difference in feel between a `total_war`
+faction and an `aware` one is large for very little code.
+
+Composes with the power-level and threat-level multipliers. This is also where an
+escalating cooldown belongs: shaping how a faction fights once roused, rather than a
+separate system governing what it hoarded before anyone met it.
+
+### Aggression and threat are orthogonal
+
+Easy to conflate, worth keeping apart:
+
+- **Aggression** — *how hard it is playing*. Global to the faction, escalates through
+  awakening, decays never.
+- **Threat, per commander** — *who it is playing against*. Local, rises with what you do
+  to it, decays over time.
+
+A `total_war` faction with no threat on anyone builds and researches furiously with nobody
+to hit. An `aware` faction carrying high threat on one commander comes for **them**,
+slowly. Both are needed.
 
 **What a player notices:** a faction you woke and then ignored **gets harder**. Hitting the
 frontier early is now worth something, and dithering costs.
@@ -123,6 +155,18 @@ to watch it coming: a raid should be a thing on the map with travel time that ca
 intercepted, met in orbit, or beaten before it lands.
 
 **What a player notices:** the game starts pushing back. This is the big one.
+
+### How far a faction may expand
+
+- **More systems inside its own sector** — yes. It already owns that ground, it needs no
+  model change, and it is how a faction you woke and then ignored grows in *territory*
+  rather than only in stockpile.
+- **Keeping systems taken from a player** — yes. `System#npc_faction_id` is already
+  independent of `sector_id`, so holdings can reach outside a faction's own sector without
+  any change. It also makes losing ground genuinely costly.
+- **Founding new sectors** — no. Sector boundaries are fixed at generation and are
+  load-bearing for adjacency and awakening; a faction creating one would ripple through
+  all of it. Parked.
 
 **Risk:** a faction that raids while everyone is asleep can grind a planet down
 unanswerably. Raids must cost the raider and be survivable — being caught out of position
