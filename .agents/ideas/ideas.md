@@ -205,3 +205,42 @@ The behaviour system being built instead is in `design-decisions.md`. If it ends
 feeling mechanical, the fix to try first is more legible telegraphing, not a bigger brain
 — players read intent from what they can *see* a faction doing.
 
+---
+
+## Factions that grow while dormant
+
+**Status:** idea only — a harder difficulty mode for later. The shipped behaviour is that
+dormant factions are static.
+
+Today a faction accumulates nothing until something wakes it: it starts with a war chest
+sized by its power level and spends only once roused. The alternative is that factions run
+their economy from tick zero, so one left alone for three weeks is genuinely more dangerous
+than one met on day two.
+
+### Why it is not the default
+
+It punishes **slowness**, which is the one thing that should not cost players. A group
+playing two hours a day would face a harder galaxy than one playing six, through no
+decision either of them made — the same failure the "no clock until a neighbour falls"
+rule exists to prevent.
+
+A cooldown between builds only softens it: 50 ticks across a 40,320-tick season is still
+800 builds. A slower ramp to the same place, with more dials to tune.
+
+### Why it is still interesting
+
+As an **opt-in difficulty setting** it is a different game rather than a broken one, because
+the group has chosen it. "The galaxy does not wait for you" is a legitimate mode, and it
+would reward scouting early and picking fights on your own schedule.
+
+### What it would need
+
+- A growth rate slow enough that a late-met faction is *harder*, not *unbeatable* —
+  probably logarithmic, or capped at some multiple of its starting strength.
+- Per-tick economy for every faction rather than only awake ones. On a large galaxy that
+  is 25 factions ticking from the start, where today they cost nothing at all.
+- A way to see it, or it is invisible: a faction that quietly tripled is only interesting
+  if scouting can tell you before you commit.
+
+Probably belongs beside the existing threat and awareness settings on the new-galaxy form.
+

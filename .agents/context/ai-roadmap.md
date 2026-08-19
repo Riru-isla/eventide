@@ -28,6 +28,10 @@ More than it looks, because generation laid the groundwork:
 | A trait | `awareness`, rolled per faction and scaled by the galaxy's setting |
 | Something to lose | `capital_system` — a faction dies when it falls |
 
+Note that `Planet` and `Fleet` both `belong_to :empire` today, so neither can be owned by a
+faction. That is one consistent change rather than two hacks: both become ownable by an
+empire *or* a faction.
+
 ## What is missing
 
 Adjacency, an economy, production, fleets, decisions, and a way for players to see any of
@@ -54,31 +58,57 @@ players have actually pushed.
 
 ---
 
-## 2. A faction economy
+## 2. Worlds and an economy
 
-Income is the sum of `metal_rate` and `crystal_rate` across the systems a faction holds,
-which is data that already exists and is currently ignored. A stockpile on `NpcFaction`,
-and a per-tick collection that only runs for awake factions.
+Factions get **real infrastructure**, for the same reason they get real fleets: if a
+shipyard is what lets a player build a ship, a faction conjuring one from a stockpile is
+not playing by the same rules. It also reuses `Planet`, `Structure` and `Shipyard` rather
+than inventing a parallel abstraction beside them.
 
-Multipliers by power level and by the galaxy's `threat_level` — a level 5 faction in a
-`brutal` galaxy earns far faster than a level 1 in a `calm` one, without either breaking a
-rule.
+**Two to five worlds per faction, spread through its territory** — not one, and not all
+133 garrisons. Spread matters: infrastructure concentrated at the capital would be
+worthless as a target, because taking the capital already ends the faction. Scattered, it
+means a player can **cripple a faction's ability to answer without finishing it**, which
+is a genuine strategic choice and the thing factions currently lack.
 
-**What a player notices:** nothing yet, directly. But this is the step that makes every
-later one meaningful, because now a faction can be **starved**: take its systems and its
-ability to answer shrinks.
+Income has two sources, exactly as it does for a player: the `metal_rate` and
+`crystal_rate` of every system held — data that already exists and is ignored today — plus
+whatever their worlds' extractors produce. Both only accrue once awake.
+
+**Starting stock:** each faction begins with a war chest sized to its power level, and
+spends nothing until roused. Resources are the *stock*; build time is the *tempo* — a full
+stockpile means a woken faction never stalls on money, not that a fleet appears from
+nowhere. The number is derived from the player storage formula so the two economies stay
+calibrated against each other:
+
+```ruby
+capacity = Structure::BASE_STORAGE * (Structure::STORAGE_GROWTH ** silo_level(power_level))
+```
+
+Dormant factions cost **nothing** — no income, no production, no decisions — which matters
+when a large galaxy holds 25 of them. The alternative, factions that grow from tick zero,
+is parked in `ideas.md` as an opt-in difficulty mode: it punishes slowness, which is the
+one thing that should not cost players.
+
+**What a player notices:** nothing yet, directly. But this is what makes every later step
+matter, because a faction can now be **starved** — take its systems and its ability to
+answer shrinks.
 
 ---
 
 ## 3. Production — defences first
 
-Awake factions spend on raising `defense_strength` at their own systems, over ticks, at a
-rate set by their build-speed multiplier. Defences before fleets deliberately: it needs no
-new movement or combat code, and it is immediately felt.
+Awake factions spend on raising `defense_strength` and on their own structures, over ticks,
+at a rate set by their build-speed multiplier. Defences before fleets deliberately: it
+needs no new movement or combat code, and it is immediately felt.
+
+**Tempo scales with aggression**, which is where an escalating cooldown belongs: `aware`
+builds slowly, `hunting` faster, `total_war` fastest, composing with the power-level and
+threat-level multipliers. One dial shaping how a faction fights, rather than a separate
+system governing what it hoarded before you met it.
 
 **What a player notices:** a faction you woke and then ignored **gets harder**. Hitting the
-frontier early is now worth something, and dithering costs. That is real pressure from a
-small amount of code.
+frontier early is now worth something, and dithering costs.
 
 ---
 
