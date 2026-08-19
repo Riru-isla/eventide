@@ -41,8 +41,8 @@ RSpec.describe ApplicationHelper, type: :helper do
   describe "#structure_effect_summary" do
     let(:galaxy) { create(:galaxy) }
     let(:empire) { create(:empire, galaxy: galaxy, role: "foundry") }
-    let(:sector) { create(:sector, galaxy: galaxy, metal_rate: 30, crystal_rate: 20) }
-    let(:planet) { Planet.create!(empire: empire, sector: sector, name: "World") }
+    let(:system) { create(:system, galaxy: galaxy, metal_rate: 30, crystal_rate: 20) }
+    let(:planet) { Planet.create!(empire: empire, system: system, name: "World") }
     let(:economy) { PlanetEconomy.new(planet) }
 
     def summary(key, level)

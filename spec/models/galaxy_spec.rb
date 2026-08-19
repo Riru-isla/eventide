@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe Galaxy, type: :model do
   describe "associations" do
-    it { is_expected.to have_many(:sectors).dependent(:destroy) }
+    it { is_expected.to have_many(:systems).dependent(:destroy) }
     it { is_expected.to have_many(:empires).dependent(:destroy) }
     it { is_expected.to have_many(:npc_factions).dependent(:destroy) }
     it { is_expected.to have_many(:fleets).dependent(:destroy) }

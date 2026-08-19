@@ -3,8 +3,8 @@ require 'rails_helper'
 RSpec.describe PlanetEconomy, type: :service do
   let(:galaxy) { create(:galaxy) }
   let(:empire) { create(:empire, galaxy: galaxy, role: "foundry") }
-  let(:sector) { create(:sector, galaxy: galaxy, metal_rate: 30, crystal_rate: 20) }
-  let(:planet) { Planet.create!(empire: empire, sector: sector, name: "Test World") }
+  let(:system) { create(:system, galaxy: galaxy, metal_rate: 30, crystal_rate: 20) }
+  let(:planet) { Planet.create!(empire: empire, system: system, name: "Test World") }
 
   def build_structure(kind, level)
     planet.structures.create!(kind: kind, level: level)
@@ -71,7 +71,7 @@ RSpec.describe PlanetEconomy, type: :service do
       expect(line.value).to eq(90 * 0.05 * 4) # 20% of the 90 raw subtotal
     end
 
-    it "computes each contribution from the sector, level, role, and refinery" do
+    it "computes each contribution from the system, level, role, and refinery" do
       values = economy.contributions(:metal).map { |line| line.value.round }
 
       # base 30, +60 from levels 2-3, +50% foundry on 90, +20% refinery on 90, no research
@@ -230,14 +230,14 @@ RSpec.describe PlanetEconomy, type: :service do
     end
 
     it "adds to what an attacker has to beat" do
-      sector.update!(defense_strength: 50)
+      system.update!(defense_strength: 50)
       build_structure("light_turret", 2)
 
-      expect(sector.reload.total_defence).to eq(100)
+      expect(system.reload.total_defence).to eq(100)
     end
 
-    it "leaves a sector with no planet on its own strength" do
-      bare = create(:sector, galaxy: galaxy, defense_strength: 75)
+    it "leaves a system with no planet on its own strength" do
+      bare = create(:system, galaxy: galaxy, defense_strength: 75)
 
       expect(bare.total_defence).to eq(75)
     end

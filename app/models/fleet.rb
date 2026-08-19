@@ -8,20 +8,20 @@ class Fleet < ApplicationRecord
 
   belongs_to :empire
   belongs_to :galaxy
-  # origin_sector is the fleet's home: where it sits while orbiting and where it comes
-  # back to. target_sector is only set while it is away.
-  belongs_to :origin_sector, class_name: "Sector"
-  belongs_to :target_sector, class_name: "Sector", optional: true
+  # origin_system is the fleet's home: where it sits while orbiting and where it comes
+  # back to. target_system is only set while it is away.
+  belongs_to :origin_system, class_name: "System"
+  belongs_to :target_system, class_name: "System", optional: true
 
   scope :moving, -> { where(status: "moving") }
   scope :returning, -> { where(status: "returning") }
   scope :under_way, -> { where(status: %w[moving returning]) }
-  # Everything whose next landfall is this sector: fleets heading here, and this
-  # sector's own fleets on their way back.
-  scope :bound_for, ->(sector) {
+  # Everything whose next landfall is this system: fleets heading here, and this
+  # system's own fleets on their way back.
+  scope :bound_for, ->(system) {
     under_way.where(
-      "(status = 'moving' AND target_sector_id = :id) OR (status = 'returning' AND origin_sector_id = :id)",
-      id: sector.id
+      "(status = 'moving' AND target_system_id = :id) OR (status = 'returning' AND origin_system_id = :id)",
+      id: system.id
     )
   }
 
@@ -56,7 +56,7 @@ class Fleet < ApplicationRecord
     ShipType.each_in(ships).sum { |definition, count| definition.attack * count }
   end
 
-  # How much plunder this fleet can haul out of a captured sector.
+  # How much plunder this fleet can haul out of a captured system.
   def cargo_capacity
     ShipType.each_in(ships).sum { |definition, count| definition.cargo * count }
   end
@@ -68,7 +68,7 @@ class Fleet < ApplicationRecord
     [ factors.max || 1.0, ShipType::MINIMUM_SPEED_FACTOR ].max
   end
 
-  # Ticks to cross between two sectors: raw distance, slowed by the heaviest hull
+  # Ticks to cross between two systems: raw distance, slowed by the heaviest hull
   # aboard and quickened by Propulsion Technology. Never less than a single tick.
   def travel_ticks_between(from, to)
     distance = from.distance_to(to.x, to.y)
@@ -90,26 +90,26 @@ class Fleet < ApplicationRecord
 
     return false if survivors.empty?
 
-    update!(ships: survivors, target_sector: nil, status: "orbiting", arrival_tick: nil)
+    update!(ships: survivors, target_system: nil, status: "orbiting", arrival_tick: nil)
     true
   end
 
-  # Sends the fleet back the way it came. origin_sector is untouched, so arriving home
+  # Sends the fleet back the way it came. origin_system is untouched, so arriving home
   # is simply a matter of clearing the target.
   def turn_for_home!(current_tick, travel_ticks)
     update!(status: "returning", arrival_tick: current_tick + travel_ticks)
   end
 
   def dock!
-    update!(status: "orbiting", target_sector: nil, arrival_tick: nil, cargo: {})
+    update!(status: "orbiting", target_system: nil, arrival_tick: nil, cargo: {})
   end
 
   # Ships settling somewhere join the fleet already in orbit there rather than forming
-  # a second one. A second orbiting fleet at the same sector would strand its ships:
+  # a second one. A second orbiting fleet at the same system would strand its ships:
   # the dispatch form, the shipyard and the garrison count all look at the first only.
-  def join_garrison!(sector = origin_sector)
-    self.origin_sector = sector
-    existing = empire.fleets.where(origin_sector: sector, status: "orbiting").where.not(id: id).first
+  def join_garrison!(system = origin_system)
+    self.origin_system = system
+    existing = empire.fleets.where(origin_system: system, status: "orbiting").where.not(id: id).first
     return dock! if existing.nil?
 
     merged = existing.ships.dup

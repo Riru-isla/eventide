@@ -6,7 +6,7 @@
 #
 # Every stat here is used somewhere:
 #   attack       — fleet combat power
-#   cargo        — how much can be hauled out of a captured sector
+#   cargo        — how much can be hauled out of a captured system
 #   speed_factor — travel time; a fleet moves at the pace of its slowest hull
 class ShipType
   # A fleet never crosses faster than this fraction of raw distance, whatever it holds.
@@ -43,7 +43,7 @@ class ShipType
     ),
     new(
       key: "transport", name: "Transport",
-      summary: "Unarmed hauler. Carries plunder home from a captured sector, but slows a fleet down.",
+      summary: "Unarmed hauler. Carries plunder home from a captured system, but slows a fleet down.",
       attack: 1, cargo: 500, speed_factor: 1.4,
       metal_cost: 60, crystal_cost: 60, crew_cost: 5, build_ticks: 2,
       requires_shipyard: 2, requires: { "propulsion_technology" => 1 }

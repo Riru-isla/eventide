@@ -22,33 +22,33 @@ RSpec.describe "Galaxies", type: :request do
       expect(response.body).to include("Ada")
     end
 
-    it "draws only the sectors somebody holds" do
-      # A galaxy is 22,500 sectors at its smallest. Drawing empty space would lock the
+    it "draws only the systems somebody holds" do
+      # A galaxy is 22,500 systems at its smallest. Drawing empty space would lock the
       # browser and show nothing; a viewport arrives with fog of war.
-      held = galaxy.sectors.where.not(empire_id: nil).or(galaxy.sectors.where.not(npc_faction_id: nil)).count
+      held = galaxy.systems.where.not(empire_id: nil).or(galaxy.systems.where.not(npc_faction_id: nil)).count
 
       get galaxy_path(galaxy)
 
-      expect(response.body.scan(/class="sector"/).size).to eq(held)
-      expect(held).to be < galaxy.sectors.count
+      expect(response.body.scan(/class="system"/).size).to eq(held)
+      expect(held).to be < galaxy.systems.count
       expect(response.body).to include("galaxy-render")
     end
 
     it "says how much of the galaxy is being shown" do
       get galaxy_path(galaxy)
 
-      expect(response.body).to include("sectors somebody holds")
-      expect(response.body).to include(ActiveSupport::NumberHelper.number_to_delimited(galaxy.sectors.count))
+      expect(response.body).to include("systems somebody holds")
+      expect(response.body).to include(ActiveSupport::NumberHelper.number_to_delimited(galaxy.systems.count))
     end
 
-    it "names each sector in a tooltip" do
+    it "names each system in a tooltip" do
       get galaxy_path(galaxy)
 
       expect(response.body).to include("<title>")
       expect(response.body).to include(galaxy.npc_factions.first.name)
     end
 
-    it "no longer carries the prototype's attack form or sector picker" do
+    it "no longer carries the prototype's attack form or system picker" do
       get galaxy_path(galaxy)
 
       expect(response.body).not_to include("Launch from")
@@ -63,8 +63,8 @@ RSpec.describe "Galaxies", type: :request do
       expect(response.body).to include("Closest approach to the core")
     end
 
-    it "does not run a query per sector to colour the map" do
-      # This used to resolve each sector's owner individually: 225 queries on a 15x15.
+    it "does not run a query per system to colour the map" do
+      # This used to resolve each system's owner individually: 225 queries on a 15x15.
       queries = 0
       counter = ->(*, payload) { queries += 1 unless payload[:name].in?(%w[CACHE SCHEMA TRANSACTION]) }
 

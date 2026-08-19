@@ -1,6 +1,6 @@
 class Planet < ApplicationRecord
   belongs_to :empire
-  belongs_to :sector
+  belongs_to :system
   has_many :structures, class_name: "PlanetStructure", dependent: :destroy
   has_many :build_orders, dependent: :destroy
   has_many :ship_orders, dependent: :destroy
@@ -13,7 +13,7 @@ class Planet < ApplicationRecord
 
   # Hulls of one kind sitting in the fleet orbiting this planet.
   def garrison_count(ship_key)
-    empire.fleets.detect { |fleet| fleet.origin_sector_id == sector_id && fleet.status == "orbiting" }
+    empire.fleets.detect { |fleet| fleet.origin_system_id == system_id && fleet.status == "orbiting" }
           &.ships&.fetch(ship_key, 0).to_i
   end
 

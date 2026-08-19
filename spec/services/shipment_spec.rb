@@ -4,16 +4,16 @@ RSpec.describe Shipment, type: :service do
   let(:galaxy) { create(:galaxy) }
   let(:sender) { create(:empire, galaxy: galaxy, metal: 5_000, crystal: 5_000, crew: 50) }
   let(:recipient) { create(:empire, galaxy: galaxy, metal: 0, crystal: 0, crew: 0) }
-  let(:origin) { create(:sector, galaxy: galaxy) }
+  let(:origin) { create(:system, galaxy: galaxy) }
 
   def planet_for(empire)
-    planet = Planet.create!(empire: empire, sector: create(:sector, galaxy: galaxy), name: "World")
+    planet = Planet.create!(empire: empire, system: create(:system, galaxy: galaxy), name: "World")
     Structure::STARTING_LEVELS.each { |kind, level| planet.structures.create!(kind: kind, level: level) }
     planet
   end
 
   def fleet_with(cargo, ships: { "transport" => 2 })
-    create(:fleet, empire: sender, galaxy: galaxy, origin_sector: origin, ships: ships, cargo: cargo)
+    create(:fleet, empire: sender, galaxy: galaxy, origin_system: origin, ships: ships, cargo: cargo)
   end
 
   describe ".load!" do

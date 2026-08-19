@@ -14,8 +14,8 @@ class PlanetsController < ApplicationController
   # and anything about to arrive.
   def show
     @economy = @planet.economy
-    @inbound = Fleet.bound_for(@planet.sector)
-                    .includes(:origin_sector, :target_sector, empire: :player)
+    @inbound = Fleet.bound_for(@planet.system)
+                    .includes(:origin_system, :target_system, empire: :player)
                     .order(:arrival_tick)
   end
 

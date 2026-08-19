@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_13_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_19_090000) do
   create_table "build_orders", force: :cascade do |t|
     t.integer "completes_at_tick"
     t.datetime "created_at", null: false
@@ -42,7 +42,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_090000) do
     t.integer "crystal"
     t.integer "energy"
     t.integer "galaxy_id", null: false
-    t.integer "home_sector_id"
+    t.integer "home_system_id"
     t.integer "metal"
     t.integer "player_id", null: false
     t.string "role"
@@ -58,10 +58,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_090000) do
     t.integer "empire_id", null: false
     t.integer "galaxy_id", null: false
     t.string "mission", default: "attack", null: false
-    t.integer "origin_sector_id"
+    t.integer "origin_system_id"
     t.json "ships"
     t.string "status"
-    t.integer "target_sector_id"
+    t.integer "target_system_id"
     t.datetime "updated_at", null: false
     t.index ["empire_id"], name: "index_fleets_on_empire_id"
     t.index ["galaxy_id"], name: "index_fleets_on_galaxy_id"
@@ -81,7 +81,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_090000) do
 
   create_table "npc_factions", force: :cascade do |t|
     t.string "aggression", default: "unaware", null: false
-    t.integer "capital_sector_id"
+    t.integer "capital_system_id"
     t.string "color"
     t.datetime "created_at", null: false
     t.integer "fallen_at_tick"
@@ -91,7 +91,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_090000) do
     t.integer "tech_level"
     t.integer "tier", default: 1, null: false
     t.datetime "updated_at", null: false
-    t.index ["capital_sector_id"], name: "index_npc_factions_on_capital_sector_id"
+    t.index ["capital_system_id"], name: "index_npc_factions_on_capital_system_id"
     t.index ["galaxy_id", "tier"], name: "index_npc_factions_on_galaxy_id_and_tier"
     t.index ["galaxy_id"], name: "index_npc_factions_on_galaxy_id"
   end
@@ -110,10 +110,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_090000) do
     t.datetime "created_at", null: false
     t.integer "empire_id", null: false
     t.string "name", null: false
-    t.integer "sector_id", null: false
+    t.integer "system_id", null: false
     t.datetime "updated_at", null: false
     t.index ["empire_id"], name: "index_planets_on_empire_id"
-    t.index ["sector_id"], name: "index_planets_on_sector_id", unique: true
+    t.index ["system_id"], name: "index_planets_on_system_id", unique: true
   end
 
   create_table "players", force: :cascade do |t|
@@ -139,25 +139,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_090000) do
     t.index ["empire_id"], name: "index_research_orders_on_empire_id"
   end
 
-  create_table "sectors", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.integer "crystal_rate"
-    t.integer "defense_strength"
-    t.integer "empire_id"
-    t.integer "energy_rate"
-    t.integer "galaxy_id", null: false
-    t.string "kind"
-    t.integer "metal_rate"
-    t.string "name"
-    t.integer "npc_faction_id"
-    t.datetime "updated_at", null: false
-    t.integer "x"
-    t.integer "y"
-    t.index ["empire_id"], name: "index_sectors_on_empire_id"
-    t.index ["galaxy_id"], name: "index_sectors_on_galaxy_id"
-    t.index ["npc_faction_id"], name: "index_sectors_on_npc_faction_id"
-  end
-
   create_table "ship_orders", force: :cascade do |t|
     t.integer "completes_at_tick"
     t.datetime "created_at", null: false
@@ -171,6 +152,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_090000) do
     t.index ["completes_at_tick"], name: "index_ship_orders_on_completes_at_tick"
     t.index ["planet_id", "position"], name: "index_ship_orders_on_planet_id_and_position"
     t.index ["planet_id"], name: "index_ship_orders_on_planet_id"
+  end
+
+  create_table "systems", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "crystal_rate"
+    t.integer "defense_strength"
+    t.integer "empire_id"
+    t.integer "energy_rate"
+    t.integer "galaxy_id", null: false
+    t.string "kind"
+    t.integer "metal_rate"
+    t.string "name"
+    t.integer "npc_faction_id"
+    t.datetime "updated_at", null: false
+    t.integer "x"
+    t.integer "y"
+    t.index ["empire_id"], name: "index_systems_on_empire_id"
+    t.index ["galaxy_id"], name: "index_systems_on_galaxy_id"
+    t.index ["npc_faction_id"], name: "index_systems_on_npc_faction_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -192,15 +192,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_090000) do
   add_foreign_key "fleets", "empires"
   add_foreign_key "fleets", "galaxies"
   add_foreign_key "npc_factions", "galaxies"
-  add_foreign_key "npc_factions", "sectors", column: "capital_sector_id"
+  add_foreign_key "npc_factions", "systems", column: "capital_system_id"
   add_foreign_key "planet_structures", "planets"
   add_foreign_key "planets", "empires"
-  add_foreign_key "planets", "sectors"
+  add_foreign_key "planets", "systems"
   add_foreign_key "players", "galaxies"
   add_foreign_key "players", "users"
   add_foreign_key "research_orders", "empires"
-  add_foreign_key "sectors", "empires"
-  add_foreign_key "sectors", "galaxies"
-  add_foreign_key "sectors", "npc_factions"
   add_foreign_key "ship_orders", "planets"
+  add_foreign_key "systems", "empires"
+  add_foreign_key "systems", "galaxies"
+  add_foreign_key "systems", "npc_factions"
 end

@@ -4,8 +4,8 @@ RSpec.describe Empire, type: :model do
   describe "associations" do
     it { is_expected.to belong_to(:player) }
     it { is_expected.to belong_to(:galaxy) }
-    it { is_expected.to belong_to(:home_sector).class_name("Sector").optional }
-    it { is_expected.to have_many(:sectors).dependent(:nullify) }
+    it { is_expected.to belong_to(:home_system).class_name("System").optional }
+    it { is_expected.to have_many(:systems).dependent(:nullify) }
     it { is_expected.to have_many(:fleets).dependent(:destroy) }
   end
 

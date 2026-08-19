@@ -3,8 +3,8 @@ require 'rails_helper'
 RSpec.describe Shipyard, type: :service do
   let(:galaxy) { create(:galaxy, current_tick: 300) }
   let(:empire) { create(:empire, galaxy: galaxy, metal: 500_000, crystal: 500_000, crew: 5_000) }
-  let(:sector) { create(:sector, galaxy: galaxy) }
-  let!(:planet) { Planet.create!(empire: empire, sector: sector, name: "World") }
+  let(:system) { create(:system, galaxy: galaxy) }
+  let!(:planet) { Planet.create!(empire: empire, system: system, name: "World") }
 
   before do
     Structure::STARTING_LEVELS.each { |kind, level| planet.structures.create!(kind: kind, level: level) }
@@ -132,7 +132,7 @@ RSpec.describe Shipyard, type: :service do
     end
 
     it "delivers finished hulls into the orbiting garrison" do
-      garrison = galaxy.fleets.create!(empire: empire, origin_sector: sector,
+      garrison = galaxy.fleets.create!(empire: empire, origin_system: system,
                                        status: "orbiting", ships: { "light_fighter" => 4 })
       order = yard.enqueue!("light_fighter", 6)
       galaxy.update!(current_tick: order.completes_at_tick)

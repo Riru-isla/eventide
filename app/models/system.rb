@@ -1,10 +1,10 @@
-class Sector < ApplicationRecord
+class System < ApplicationRecord
   KINDS = %w[empty home resource outpost fortress core].freeze
 
   belongs_to :galaxy
   belongs_to :empire, optional: true
   belongs_to :npc_faction, optional: true
-  has_many :stationed_fleets, class_name: "Fleet", foreign_key: "origin_sector_id", dependent: :nullify
+  has_many :stationed_fleets, class_name: "Fleet", foreign_key: "origin_system_id", dependent: :nullify
   has_one :planet, dependent: :destroy
 
   validates :x, :y, presence: true, numericality: { only_integer: true }
@@ -28,7 +28,7 @@ class Sector < ApplicationRecord
     distance_to(center[:x], center[:y])
   end
 
-  # Defence a fleet actually has to beat: the sector's own strength plus whatever the
+  # Defence a fleet actually has to beat: the system's own strength plus whatever the
   # planet standing on it has built.
   def total_defence
     defense_strength.to_i + (planet&.economy&.defence_rating).to_i

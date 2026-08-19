@@ -18,27 +18,27 @@
     <svg viewBox="0 0 <%= GalaxiesHelper::MAP_VIEWBOX %> <%= GalaxiesHelper::MAP_VIEWBOX %>"
          class="absolute inset-0 h-full w-full"
          role="img"
-         aria-label="Held sectors of <%= galaxy.name %>">
-      <% sectors.each do |sector| %>
-        <% x, y = sector_position(sector, galaxy) %>
-        <% colour = sector_color(sector, empire_colors) %>
+         aria-label="Held systems of <%= galaxy.name %>">
+      <% systems.each do |system| %>
+        <% x, y = system_position(system, galaxy) %>
+        <% colour = system_color(system, empire_colors) %>
 
-        <% if sector.kind == "core" %>
+        <% if system.kind == "core" %>
           <circle cx="<%= x %>" cy="<%= y %>" r="22" fill="none"
                   stroke="#ef4444" stroke-width="1.5" opacity="0.45" />
         <% end %>
 
-        <circle class="sector"
-                cx="<%= x %>" cy="<%= y %>" r="<%= sector_radius(sector) %>"
+        <circle class="system"
+                cx="<%= x %>" cy="<%= y %>" r="<%= system_radius(system) %>"
                 fill="<%= colour %>">
-          <title><%= sector.name %> (<%= sector.coordinate %>) — <%= sector.owner_name %></title>
+          <title><%= system.name %> (<%= system.coordinate %>) — <%= system.owner_name %></title>
         </circle>
       <% end %>
     </svg>
   </div>
 
   <p class="border-t border-line-soft px-4 py-3 font-sans text-[0.8125rem] text-ink-2">
-    Showing the <%= number_with_delimiter(sectors.size) %> sectors somebody holds, out of
+    Showing the <%= number_with_delimiter(systems.size) %> systems somebody holds, out of
     <%= number_with_delimiter(galaxy.width * galaxy.height) %>. Empty space is not drawn.
   </p>
 </section>

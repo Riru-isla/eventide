@@ -32,7 +32,7 @@ class TickProcessor
   end
 
   def complete_builds
-    Planet.where(empire_id: @galaxy.empires.select(:id)).includes(:build_orders, :structures, :sector)
+    Planet.where(empire_id: @galaxy.empires.select(:id)).includes(:build_orders, :structures, :system)
           .find_each do |planet|
       planet.queue.advance!
       planet.shipyard.advance!
@@ -44,13 +44,13 @@ class TickProcessor
   end
 
   # Income comes from two places: the empire's planet, where structure levels and
-  # the energy balance decide the yield, and any other sector it holds, which still
+  # the energy balance decide the yield, and any other system it holds, which still
   # contributes its flat rate. Energy is not collected — it is a balance on the
   # planet, not a stored resource.
   def collect_resources
-    @galaxy.empires.includes(planet: [ :structures, :sector ]).find_each do |empire|
+    @galaxy.empires.includes(planet: [ :structures, :system ]).find_each do |empire|
       income = planet_income(empire)
-      add_sector_income(empire, income)
+      add_system_income(empire, income)
 
       empire.update!(
         metal: store(empire, :metal, income[:metal]),
@@ -79,12 +79,12 @@ class TickProcessor
     { metal: economy.output(:metal), crystal: economy.output(:crystal), crew: economy.crew_production }
   end
 
-  def add_sector_income(empire, income)
-    planet_sector_id = empire.planet&.sector_id
+  def add_system_income(empire, income)
+    planet_system_id = empire.planet&.system_id
 
-    empire.sectors.where.not(id: planet_sector_id).find_each do |sector|
-      income[:metal] += (sector.metal_rate * empire.resource_bonus(:metal)).to_i
-      income[:crystal] += (sector.crystal_rate * empire.resource_bonus(:crystal)).to_i
+    empire.systems.where.not(id: planet_system_id).find_each do |system|
+      income[:metal] += (system.metal_rate * empire.resource_bonus(:metal)).to_i
+      income[:crystal] += (system.crystal_rate * empire.resource_bonus(:crystal)).to_i
     end
   end
 
@@ -94,7 +94,7 @@ class TickProcessor
     due.find_each do |fleet|
       if fleet.status == "returning"
         arrive_home(fleet)
-      elsif fleet.target_sector.nil?
+      elsif fleet.target_system.nil?
         next
       elsif fleet.transport?
         deliver_shipment(fleet)
@@ -105,10 +105,10 @@ class TickProcessor
   end
 
   # A transport hands its cargo to whoever holds the destination, then turns around.
-  # Delivering to an unowned sector is a wasted trip rather than a loss: the hold stays
+  # Delivering to an unowned system is a wasted trip rather than a loss: the hold stays
   # full and comes home.
   def deliver_shipment(fleet)
-    recipient = fleet.target_sector.empire
+    recipient = fleet.target_system.empire
     Shipment.new(fleet).deliver!(recipient) if recipient
 
     fleet.turn_for_home!(@galaxy.current_tick, return_ticks(fleet))
@@ -122,10 +122,10 @@ class TickProcessor
   end
 
   def return_ticks(fleet)
-    fleet.travel_ticks_between(fleet.target_sector, fleet.origin_sector)
+    fleet.travel_ticks_between(fleet.target_system, fleet.origin_system)
   end
 
-  # A captured sector is stripped of what the fleet can carry. Transports exist for
+  # A captured system is stripped of what the fleet can carry. Transports exist for
   # this: without cargo space a victory takes the ground but none of the spoils.
   def plunder!(fleet, target)
     capacity = fleet.cargo_capacity
@@ -141,7 +141,7 @@ class TickProcessor
   end
 
   def resolve_combat(fleet)
-    target = fleet.target_sector
+    target = fleet.target_system
 
     if target.npc_faction
       defender_power = target.total_defence

@@ -24,15 +24,15 @@ RSpec.describe TickProcessor, type: :service do
 
     it "applies role bonuses to resource income" do
       empire.update!(role: "foundry")
-      base_sector = empire.home_sector
-      base_sector.update!(metal_rate: 100, crystal_rate: 0, energy_rate: 0)
+      base_system = empire.home_system
+      base_system.update!(metal_rate: 100, crystal_rate: 0, energy_rate: 0)
 
       described_class.new(galaxy).process
       expect(empire.reload.metal).to eq(500 + 150)
     end
 
     it "takes planet income from structure levels" do
-      empire.home_sector.update!(metal_rate: 100, crystal_rate: 0)
+      empire.home_system.update!(metal_rate: 100, crystal_rate: 0)
       empire.planet.structures.find_by(kind: "metal_extractor").update!(level: 3)
       empire.planet.structures.find_by(kind: "solar_array").update!(level: 20)
 
@@ -43,7 +43,7 @@ RSpec.describe TickProcessor, type: :service do
     end
 
     it "throttles planet income while the planet is in energy deficit" do
-      empire.home_sector.update!(metal_rate: 100, crystal_rate: 0)
+      empire.home_system.update!(metal_rate: 100, crystal_rate: 0)
       empire.planet.structures.find_by(kind: "metal_extractor").update!(level: 3)
       empire.planet.structures.find_by(kind: "solar_array").update!(level: 0)
 
@@ -52,10 +52,10 @@ RSpec.describe TickProcessor, type: :service do
       expect(empire.reload.metal).to eq(500 + (450 * PlanetEconomy::THROTTLE).round)
     end
 
-    it "still collects flat rates from sectors without a planet" do
-      empire.home_sector.update!(metal_rate: 0, crystal_rate: 0)
+    it "still collects flat rates from systems without a planet" do
+      empire.home_system.update!(metal_rate: 0, crystal_rate: 0)
       empire.planet.structures.find_by(kind: "solar_array").update!(level: 20)
-      captured = galaxy.sectors.find_by(kind: "empty")
+      captured = galaxy.systems.find_by(kind: "empty")
       captured.update!(empire: empire, metal_rate: 40, crystal_rate: 0)
 
       described_class.new(galaxy).process
@@ -64,7 +64,7 @@ RSpec.describe TickProcessor, type: :service do
     end
 
     it "stops collecting once storage is full" do
-      empire.home_sector.update!(metal_rate: 100, crystal_rate: 0)
+      empire.home_system.update!(metal_rate: 100, crystal_rate: 0)
       empire.planet.structures.find_by(kind: "solar_array").update!(level: 20)
       empire.update!(metal: empire.storage_capacity(:metal) - 10)
 
@@ -83,7 +83,7 @@ RSpec.describe TickProcessor, type: :service do
     end
 
     it "collects more once a silo raises the cap" do
-      empire.home_sector.update!(metal_rate: 100, crystal_rate: 0)
+      empire.home_system.update!(metal_rate: 100, crystal_rate: 0)
       empire.planet.structures.find_by(kind: "solar_array").update!(level: 20)
       empire.planet.structures.find_by(kind: "metal_silo").update!(level: 4)
       empire.update!(metal: Structure::BASE_STORAGE)
@@ -111,7 +111,7 @@ RSpec.describe TickProcessor, type: :service do
     end
 
     it "still stops mining at the cap, not the overflow ceiling" do
-      empire.home_sector.update!(metal_rate: 100, crystal_rate: 0)
+      empire.home_system.update!(metal_rate: 100, crystal_rate: 0)
       empire.planet.structures.find_by(kind: "solar_array").update!(level: 20)
       empire.update!(metal: empire.storage_capacity(:metal) - 10)
 
@@ -142,15 +142,15 @@ RSpec.describe TickProcessor, type: :service do
       end
     end
 
-    it "resolves fleet arrivals and captures NPC sectors" do
-      origin = empire.home_sector
-      target = galaxy.sectors.npc.first
+    it "resolves fleet arrivals and captures NPC systems" do
+      origin = empire.home_system
+      target = galaxy.systems.npc.first
       target.update!(defense_strength: 10)
 
       fleet = galaxy.fleets.create!(
         empire: empire,
-        origin_sector: origin,
-        target_sector: target,
+        origin_system: origin,
+        target_system: target,
         arrival_tick: galaxy.current_tick,
         status: "moving",
         ships: { "light_fighter" => 10 }
@@ -164,12 +164,12 @@ RSpec.describe TickProcessor, type: :service do
       expect(fleet.reload.status).to eq("orbiting")
     end
 
-    it "hauls plunder out of a captured sector, up to the fleet's cargo space" do
-      target = galaxy.sectors.npc.first
+    it "hauls plunder out of a captured system, up to the fleet's cargo space" do
+      target = galaxy.systems.npc.first
       target.update!(defense_strength: 10, metal_rate: 20, crystal_rate: 20)
 
       galaxy.fleets.create!(
-        empire: empire, origin_sector: empire.home_sector, target_sector: target,
+        empire: empire, origin_system: empire.home_system, target_system: target,
         arrival_tick: galaxy.current_tick, status: "moving",
         ships: { "light_fighter" => 10, "transport" => 1 } # 700 cargo, haul capped at 400
       )
@@ -178,11 +178,11 @@ RSpec.describe TickProcessor, type: :service do
     end
 
     it "takes the ground but no spoils when a fleet has no cargo space" do
-      target = galaxy.sectors.npc.first
+      target = galaxy.systems.npc.first
       target.update!(defense_strength: 10, metal_rate: 20, crystal_rate: 20)
 
       fleet = galaxy.fleets.create!(
-        empire: empire, origin_sector: empire.home_sector, target_sector: target,
+        empire: empire, origin_system: empire.home_system, target_system: target,
         arrival_tick: galaxy.current_tick, status: "moving",
         ships: { "light_fighter" => 10 }
       )
@@ -201,7 +201,7 @@ RSpec.describe TickProcessor, type: :service do
 
       described_class.new(galaxy.reload).process
 
-      garrison = empire.fleets.find_by(origin_sector: empire.home_sector, status: "orbiting")
+      garrison = empire.fleets.find_by(origin_system: empire.home_system, status: "orbiting")
       expect(garrison.ships["light_fighter"]).to eq(13) # 10 starting + 3 delivered
     end
 
@@ -217,15 +217,15 @@ RSpec.describe TickProcessor, type: :service do
     end
 
     it "lets an armoured fleet retreat instead of being destroyed" do
-      origin = empire.home_sector
-      target = galaxy.sectors.npc.first
+      origin = empire.home_system
+      target = galaxy.systems.npc.first
       target.update!(defense_strength: 10_000)
       empire.technologies.create!(kind: "armor_technology", level: 5)
 
       fleet = galaxy.fleets.create!(
         empire: empire,
-        origin_sector: origin,
-        target_sector: target,
+        origin_system: origin,
+        target_system: target,
         arrival_tick: galaxy.current_tick,
         status: "moving",
         ships: { "light_fighter" => 10 }
@@ -239,14 +239,14 @@ RSpec.describe TickProcessor, type: :service do
     end
 
     it "destroys fleets that lose combat" do
-      origin = empire.home_sector
-      target = galaxy.sectors.npc.first
+      origin = empire.home_system
+      target = galaxy.systems.npc.first
       target.update!(defense_strength: 10_000)
 
       fleet = galaxy.fleets.create!(
         empire: empire,
-        origin_sector: origin,
-        target_sector: target,
+        origin_system: origin,
+        target_system: target,
         arrival_tick: galaxy.current_tick,
         status: "moving",
         ships: { "light_fighter" => 1 }
@@ -259,16 +259,16 @@ RSpec.describe TickProcessor, type: :service do
       let!(:recipient) do
         other = create(:empire, galaxy: galaxy, player: create(:player, galaxy: galaxy),
                        metal: 0, crystal: 0)
-        sector = galaxy.sectors.find_by(kind: "empty")
-        sector.update!(empire: other)
-        Planet.create!(empire: other, sector: sector, name: "Far World")
+        system = galaxy.systems.find_by(kind: "empty")
+        system.update!(empire: other)
+        Planet.create!(empire: other, system: system, name: "Far World")
         other
       end
 
       def send_shipment(cargo: { "metal" => 300 }, ticks_out: 0)
         galaxy.fleets.create!(
-          empire: empire, origin_sector: empire.home_sector,
-          target_sector: recipient.planet.sector,
+          empire: empire, origin_system: empire.home_system,
+          target_system: recipient.planet.system,
           arrival_tick: galaxy.current_tick + ticks_out,
           status: "moving", mission: "transport",
           ships: { "transport" => 2 }, cargo: cargo
@@ -288,7 +288,7 @@ RSpec.describe TickProcessor, type: :service do
 
         expect(fleet.reload.status).to eq("returning")
         expect(fleet.arrival_tick).to be > galaxy.reload.current_tick
-        expect(fleet.origin_sector).to eq(empire.home_sector)
+        expect(fleet.origin_system).to eq(empire.home_system)
       end
 
       it "leaves a shipment alone before it arrives" do
@@ -298,9 +298,9 @@ RSpec.describe TickProcessor, type: :service do
       end
 
       it "folds the returning ships back into the home garrison" do
-        # A second orbiting fleet at the same sector would strand its ships: the
+        # A second orbiting fleet at the same system would strand its ships: the
         # dispatch form and shipyard only ever look at the first one.
-        garrison = empire.fleets.find_by(origin_sector: empire.home_sector, status: "orbiting")
+        garrison = empire.fleets.find_by(origin_system: empire.home_system, status: "orbiting")
         before = garrison.ships["transport"]
         fleet = send_shipment
         described_class.new(galaxy).process
@@ -310,7 +310,7 @@ RSpec.describe TickProcessor, type: :service do
 
         expect(Fleet.exists?(fleet.id)).to be false
         expect(garrison.reload.ships["transport"]).to eq(before + 2)
-        expect(empire.fleets.where(origin_sector: empire.home_sector, status: "orbiting").count).to eq(1)
+        expect(empire.fleets.where(origin_system: empire.home_system, status: "orbiting").count).to eq(1)
       end
 
       it "becomes the garrison when nothing is orbiting at home" do
@@ -322,7 +322,7 @@ RSpec.describe TickProcessor, type: :service do
         described_class.new(galaxy.reload).process
 
         expect(fleet.reload.status).to eq("orbiting")
-        expect(fleet.target_sector).to be_nil
+        expect(fleet.target_system).to be_nil
         expect(fleet.cargo).to eq({})
       end
 
@@ -343,10 +343,10 @@ RSpec.describe TickProcessor, type: :service do
           .to change { empire.reload.metal }.by_at_least(300)
       end
 
-      it "returns a load sent to a sector nobody holds" do
-        empty = galaxy.sectors.where(kind: "empty", empire_id: nil).first
+      it "returns a load sent to a system nobody holds" do
+        empty = galaxy.systems.where(kind: "empty", empire_id: nil).first
         fleet = galaxy.fleets.create!(
-          empire: empire, origin_sector: empire.home_sector, target_sector: empty,
+          empire: empire, origin_system: empire.home_system, target_system: empty,
           arrival_tick: galaxy.current_tick, status: "moving", mission: "transport",
           ships: { "transport" => 1 }, cargo: { "metal" => 100 }
         )
@@ -360,24 +360,24 @@ RSpec.describe TickProcessor, type: :service do
 
     it "skips a fleet under way with no destination left" do
       fleet = galaxy.fleets.create!(
-        empire: empire, origin_sector: empire.home_sector,
-        target_sector: galaxy.sectors.npc.first,
+        empire: empire, origin_system: empire.home_system,
+        target_system: galaxy.systems.npc.first,
         arrival_tick: galaxy.current_tick, status: "moving", ships: { "light_fighter" => 1 }
       )
-      fleet.update_column(:target_sector_id, nil)
+      fleet.update_column(:target_system_id, nil)
 
       expect { described_class.new(galaxy).process }.not_to change { galaxy.fleets.count }
       expect(fleet.reload.status).to eq("moving")
     end
 
-    it "moves fleets to empty sectors without combat" do
-      origin = empire.home_sector
-      target = galaxy.sectors.find_by(kind: "empty")
+    it "moves fleets to empty systems without combat" do
+      origin = empire.home_system
+      target = galaxy.systems.find_by(kind: "empty")
 
       fleet = galaxy.fleets.create!(
         empire: empire,
-        origin_sector: origin,
-        target_sector: target,
+        origin_system: origin,
+        target_system: target,
         arrival_tick: galaxy.current_tick,
         status: "moving",
         ships: { "light_fighter" => 5 }
@@ -386,8 +386,8 @@ RSpec.describe TickProcessor, type: :service do
       described_class.new(galaxy).process
 
       fleet.reload
-      expect(fleet.origin_sector).to eq(target)
-      expect(fleet.target_sector).to be_nil
+      expect(fleet.origin_system).to eq(target)
+      expect(fleet.target_system).to be_nil
       expect(fleet.status).to eq("orbiting")
     end
   end

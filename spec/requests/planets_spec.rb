@@ -117,7 +117,7 @@ RSpec.describe "Planets", type: :request do
 
     def incoming(mission: "transport", cargo: {}, from: other, ticks: 4)
       galaxy.fleets.create!(
-        empire: from, origin_sector: from.planet.sector, target_sector: planet.sector,
+        empire: from, origin_system: from.planet.system, target_system: planet.system,
         arrival_tick: galaxy.current_tick + ticks, status: "moving", mission: mission,
         ships: { "transport" => 2 }, cargo: cargo
       )
@@ -152,7 +152,7 @@ RSpec.describe "Planets", type: :request do
 
     it "counts the player's own fleet on its way home" do
       galaxy.fleets.create!(
-        empire: empire, origin_sector: planet.sector, target_sector: other.planet.sector,
+        empire: empire, origin_system: planet.system, target_system: other.planet.system,
         arrival_tick: galaxy.current_tick + 2, status: "returning", mission: "transport",
         ships: { "transport" => 1 }, cargo: { "metal" => 40 }
       )

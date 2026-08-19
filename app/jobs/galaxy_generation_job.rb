@@ -1,6 +1,6 @@
 # Builds a new session's galaxy in the background.
 #
-# A large galaxy is 160,000 sectors. Even bulk inserted that is far too slow to do
+# A large galaxy is 160,000 systems. Even bulk inserted that is far too slow to do
 # inside a request, and it only ever happens once per session, so it can take as long as
 # it needs to.
 class GalaxyGenerationJob < ApplicationJob

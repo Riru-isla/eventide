@@ -10,7 +10,7 @@ module GalaxiesHelper
   }.freeze
   EMPTY_COLOR = "#3b3560".freeze
 
-  # Leaves room for the spiral arms to sweep past the outermost sectors.
+  # Leaves room for the spiral arms to sweep past the outermost systems.
   MAP_VIEWBOX = 1000
   MAP_RADIUS = 470
 
@@ -19,35 +19,35 @@ module GalaxiesHelper
   end
 
   # Takes a prebuilt {empire_id => colour} map rather than looking the empire up, which
-  # is what previously made this run a query for every sector on the map.
-  def sector_color(sector, empire_colors)
-    return empire_colors.fetch(sector.empire_id, EMPTY_COLOR) if sector.empire_id
-    return sector.npc_faction.color if sector.npc_faction
+  # is what previously made this run a query for every system on the map.
+  def system_color(system, empire_colors)
+    return empire_colors.fetch(system.empire_id, EMPTY_COLOR) if system.empire_id
+    return system.npc_faction.color if system.npc_faction
 
-    UNOWNED_COLORS.fetch(sector.kind, EMPTY_COLOR)
+    UNOWNED_COLORS.fetch(system.kind, EMPTY_COLOR)
   end
 
   # Grid coordinates placed on the galaxy disc, centred on the core. Scaled so the
   # furthest corner still sits inside the disc.
-  def sector_position(sector, galaxy)
+  def system_position(system, galaxy)
     centre = galaxy.center
     span = corner_distance(galaxy)
     scale = MAP_RADIUS / span
     middle = MAP_VIEWBOX / 2.0
 
     [
-      (middle + ((sector.x - centre[:x]) * scale)).round(1),
-      (middle + ((sector.y - centre[:y]) * scale)).round(1)
+      (middle + ((system.x - centre[:x]) * scale)).round(1),
+      (middle + ((system.y - centre[:y]) * scale)).round(1)
     ]
   end
 
-  # How prominent a sector is: owned worlds and the core read louder than empty space.
-  def sector_radius(sector)
-    case sector.kind
+  # How prominent a system is: owned worlds and the core read louder than empty space.
+  def system_radius(system)
+    case system.kind
     when "core" then 13
     when "home" then 10
     when "fortress" then 8
-    else sector.empire_id ? 9 : 6
+    else system.empire_id ? 9 : 6
     end
   end
 

@@ -26,11 +26,11 @@
       <%= hidden_field_tag "fleet[mission]", "transport" %>
 
       <div class="flex flex-col gap-1.5">
-        <%= label_tag "fleet[target_sector_id]", "Destination", class: "label" %>
-        <%= select_tag "fleet[target_sector_id]",
+        <%= label_tag "fleet[target_system_id]", "Destination", class: "label" %>
+        <%= select_tag "fleet[target_system_id]",
                        options_for_select(destinations.map { |planet|
-                         [ "#{planet.name} — #{planet.empire.player.name} (#{planet.sector.coordinate})",
-                           planet.sector_id ]
+                         [ "#{planet.name} — #{planet.empire.player.name} (#{planet.system.coordinate})",
+                           planet.system_id ]
                        }),
                        class: "w-full border border-line bg-ground-2 px-3 py-2 text-[0.8125rem] text-ink" %>
       </div>

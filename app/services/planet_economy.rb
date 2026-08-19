@@ -25,7 +25,7 @@ class PlanetEconomy
 
   def initialize(planet)
     @planet = planet
-    @sector = planet.sector
+    @system = planet.system
     @empire = planet.empire
   end
 
@@ -142,7 +142,7 @@ class PlanetEconomy
 
   # ── Defence ───────────────────────────────────────────────────────────────
 
-  # What the emplacements on this planet add to its sector's defence. Nothing attacks
+  # What the emplacements on this planet add to its system's defence. Nothing attacks
   # a player yet, so this is preparation — but it is wired into combat resolution, so
   # it takes effect the moment something does.
   def defence_rating
@@ -189,7 +189,7 @@ class PlanetEconomy
   private
 
   def base_yield(resource)
-    resource == :metal ? @sector.metal_rate.to_i : @sector.crystal_rate.to_i
+    resource == :metal ? @system.metal_rate.to_i : @system.crystal_rate.to_i
   end
 
   def role_contribution(resource, subtotal)

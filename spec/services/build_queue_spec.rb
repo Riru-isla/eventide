@@ -3,8 +3,8 @@ require 'rails_helper'
 RSpec.describe BuildQueue, type: :service do
   let(:galaxy) { create(:galaxy, current_tick: 100) }
   let(:empire) { create(:empire, galaxy: galaxy, metal: 100_000, crystal: 100_000) }
-  let(:sector) { create(:sector, galaxy: galaxy) }
-  let(:planet) { Planet.create!(empire: empire, sector: sector, name: "World") }
+  let(:system) { create(:system, galaxy: galaxy) }
+  let(:planet) { Planet.create!(empire: empire, system: system, name: "World") }
 
   before do
     Structure::STARTING_LEVELS.each { |kind, level| planet.structures.create!(kind: kind, level: level) }

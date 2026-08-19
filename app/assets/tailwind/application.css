@@ -253,9 +253,9 @@
 }
 
 @layer components {
-  /* Galaxy map sectors sit on the drawn galaxy; the thin dark stroke keeps them
+  /* Galaxy map systems sit on the drawn galaxy; the thin dark stroke keeps them
      legible where the arms are brightest. */
-  .sector {
+  .system {
     stroke: rgb(10 9 18 / 0.85);
     stroke-width: 2;
   }

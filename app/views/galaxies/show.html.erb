@@ -5,7 +5,7 @@
   <%= render "shared/nav", current: :galaxy %>
 
   <main class="grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-    <%= render "galaxies/map", galaxy: @galaxy, sectors: @sectors, empire_colors: @empire_colors %>
+    <%= render "galaxies/map", galaxy: @galaxy, systems: @systems, empire_colors: @empire_colors %>
 
     <div class="flex flex-col gap-5">
       <%= render "galaxies/roster", empires: @empires, empire_colors: @empire_colors, galaxy: @galaxy %>

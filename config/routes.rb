@@ -29,6 +29,6 @@ Rails.application.routes.draw do
   post "fleets", to: "fleets#create", as: :dispatch_fleet
 
   resources :galaxies, only: [ :show ] do
-    resources :sectors, only: %i[show]
+    resources :systems, only: %i[show]
   end
 end

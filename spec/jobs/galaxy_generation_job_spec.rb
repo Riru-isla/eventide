@@ -8,7 +8,7 @@ RSpec.describe GalaxyGenerationJob, type: :job do
     galaxy = Galaxy.last
     expect(galaxy.name).to eq("Job Galaxy")
     expect(galaxy.size).to eq("tiny")
-    expect(galaxy.sectors.count).to eq(galaxy.width * galaxy.height)
+    expect(galaxy.systems.count).to eq(galaxy.width * galaxy.height)
   end
 
   it "founds the empires it is given" do
@@ -21,7 +21,7 @@ RSpec.describe GalaxyGenerationJob, type: :job do
   end
 
   it "defaults to a small galaxy" do
-    # A large galaxy is 160,000 sectors, which is exactly why generation runs in a job
+    # A large galaxy is 160,000 systems, which is exactly why generation runs in a job
     # rather than a request.
     expect(GalaxyGenerator).to receive(:new).with(hash_including(size: "small")).and_call_original
     allow_any_instance_of(GalaxyGenerator).to receive(:generate)

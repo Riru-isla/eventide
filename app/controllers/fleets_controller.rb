@@ -13,10 +13,10 @@ class FleetsController < ApplicationController
     fleet = dispatch_fleet
 
     flash.now[:notice] = if fleet.transport?
-      "#{fleet.total_ships} ships away to #{fleet.target_sector.coordinate}, " \
+      "#{fleet.total_ships} ships away to #{fleet.target_system.coordinate}, " \
       "carrying #{manifest_summary(fleet)}. Back in #{fleet.arrival_tick - @galaxy.current_tick} ticks."
     else
-      "#{fleet.total_ships} ships dispatched to #{fleet.target_sector.coordinate}."
+      "#{fleet.total_ships} ships dispatched to #{fleet.target_system.coordinate}."
     end
 
     respond_with_fleets
@@ -35,18 +35,18 @@ class FleetsController < ApplicationController
   end
 
   def fleets_for_display
-    @empire.fleets.includes(:origin_sector, target_sector: { empire: :player }).order(:arrival_tick, :id)
+    @empire.fleets.includes(:origin_system, target_system: { empire: :player }).order(:arrival_tick, :id)
   end
 
   # Ships can only be sent from the planet, which is where the shipyard delivers them.
   def garrison_at_home
-    @empire.fleets.find_by(origin_sector: @empire.planet.sector, status: "orbiting")
+    @empire.fleets.find_by(origin_system: @empire.planet.system, status: "orbiting")
   end
 
   # Every planet in the galaxy is a valid destination — this is a cooperative game, so
   # shipping to another commander is the point rather than an exploit.
   def destination_planets
-    Planet.includes(:sector, empire: :player)
+    Planet.includes(:system, empire: :player)
           .where(empire: @galaxy.empires)
           .reject { |planet| planet.id == @empire.planet.id }
   end
@@ -55,17 +55,17 @@ class FleetsController < ApplicationController
     ships = requested_ships
     raise DispatchError, "select at least one ship" if ships.empty?
 
-    target = @galaxy.sectors.find(params[:fleet][:target_sector_id])
+    target = @galaxy.systems.find(params[:fleet][:target_system_id])
     origin = requested_origin
 
     ActiveRecord::Base.transaction do
-      garrison = @empire.fleets.find_by(origin_sector: origin, status: "orbiting")
+      garrison = @empire.fleets.find_by(origin_system: origin, status: "orbiting")
       raise DispatchError, "no ships are stationed at #{origin.coordinate}" if garrison.nil?
 
       detach!(garrison, ships)
 
       fleet = @galaxy.fleets.new(
-        empire: @empire, origin_sector: origin, target_sector: target,
+        empire: @empire, origin_system: origin, target_system: target,
         status: "moving", mission: mission, ships: ships, cargo: {}
       )
       fleet.cargo = load_cargo(fleet) if fleet.transport?
@@ -101,7 +101,7 @@ class FleetsController < ApplicationController
       if available < count
         # Players see hull names, never catalogue keys.
         label = ShipType.find(key)&.name || key
-        raise DispatchError, "only #{available} #{label} stationed at #{garrison.origin_sector.coordinate}"
+        raise DispatchError, "only #{available} #{label} stationed at #{garrison.origin_system.coordinate}"
       end
 
       remaining[key] = available - count
@@ -111,13 +111,13 @@ class FleetsController < ApplicationController
     remaining.empty? ? garrison.destroy! : garrison.update!(ships: remaining)
   end
 
-  # Fleets usually leave from the planet, but one that captured a sector sits there and
+  # Fleets usually leave from the planet, but one that captured a system sits there and
   # can push on from it.
   def requested_origin
-    given = params[:fleet][:origin_sector_id]
-    return @empire.planet.sector if given.blank?
+    given = params[:fleet][:origin_system_id]
+    return @empire.planet.system if given.blank?
 
-    @empire.sectors.find(given)
+    @empire.systems.find(given)
   end
 
   def mission

@@ -1,4 +1,4 @@
-<% heading = fleet.status == "returning" ? fleet.origin_sector : fleet.target_sector %>
+<% heading = fleet.status == "returning" ? fleet.origin_system : fleet.target_system %>
 <% remaining = [ fleet.arrival_tick.to_i - current_tick, 0 ].max %>
 
 <div class="border-b border-line-soft p-4 last:border-b-0">

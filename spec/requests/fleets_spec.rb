@@ -15,16 +15,16 @@ RSpec.describe "Fleets", type: :request do
   let(:empire) { galaxy.empires.first }
   let(:other) { galaxy.empires.last }
   let(:user) { empire.player.user }
-  let(:origin) { empire.planet.sector }
-  let(:npc_target) { galaxy.sectors.npc.first }
-  let(:garrison) { empire.fleets.find_by(origin_sector: origin, status: "orbiting") }
+  let(:origin) { empire.planet.system }
+  let(:npc_target) { galaxy.systems.npc.first }
+  let(:garrison) { empire.fleets.find_by(origin_system: origin, status: "orbiting") }
 
   before { sign_in(user) }
 
   def dispatch(ships:, target_id:, mission: "attack", cargo: nil, origin_id: nil)
-    params = { fleet: { target_sector_id: target_id, ships: ships, mission: mission } }
+    params = { fleet: { target_system_id: target_id, ships: ships, mission: mission } }
     params[:fleet][:cargo] = cargo if cargo
-    params[:fleet][:origin_sector_id] = origin_id if origin_id
+    params[:fleet][:origin_system_id] = origin_id if origin_id
 
     post dispatch_fleet_path, params: params
   end
@@ -47,7 +47,7 @@ RSpec.describe "Fleets", type: :request do
 
     it "lists a fleet under way, with its hold" do
       empire.update!(metal: 5_000)
-      dispatch(ships: { "transport" => 2 }, target_id: other.planet.sector_id,
+      dispatch(ships: { "transport" => 2 }, target_id: other.planet.system_id,
                mission: "transport", cargo: { "metal" => 300 })
 
       get fleets_path
@@ -83,7 +83,7 @@ RSpec.describe "Fleets", type: :request do
       fleet = Fleet.last
       expect(fleet.status).to eq("moving")
       expect(fleet.mission).to eq("attack")
-      expect(fleet.target_sector).to eq(npc_target)
+      expect(fleet.target_system).to eq(npc_target)
     end
 
     it "refuses to dispatch more ships than are stationed" do
@@ -99,7 +99,7 @@ RSpec.describe "Fleets", type: :request do
       expect(flash[:alert]).to match(/select at least one ship/)
     end
 
-    it "refuses to leave from a sector the empire does not hold" do
+    it "refuses to leave from a system the empire does not hold" do
       dispatch(ships: { "light_fighter" => 1 }, target_id: npc_target.id, origin_id: npc_target.id)
 
       expect(flash[:alert]).to be_present
@@ -116,7 +116,7 @@ RSpec.describe "Fleets", type: :request do
     before { empire.update!(metal: 5_000, crystal: 5_000) }
 
     def ship(cargo, ships: { "transport" => 2 })
-      dispatch(ships: ships, target_id: other.planet.sector_id, mission: "transport", cargo: cargo)
+      dispatch(ships: ships, target_id: other.planet.system_id, mission: "transport", cargo: cargo)
     end
 
     it "takes the cargo out of the sender's stores at once" do
@@ -129,7 +129,7 @@ RSpec.describe "Fleets", type: :request do
       fleet = Fleet.last
       expect(fleet.mission).to eq("transport")
       expect(fleet.manifest).to eq(metal: 400, crystal: 100)
-      expect(fleet.target_sector).to eq(other.planet.sector)
+      expect(fleet.target_system).to eq(other.planet.system)
     end
 
     it "says when it will be back" do
@@ -163,7 +163,7 @@ RSpec.describe "Fleets", type: :request do
 
     it "answers a Turbo request with streams" do
       post dispatch_fleet_path,
-           params: { fleet: { target_sector_id: other.planet.sector_id, mission: "transport",
+           params: { fleet: { target_system_id: other.planet.system_id, mission: "transport",
                               ships: { "transport" => 1 }, cargo: { "metal" => 100 } } },
            as: :turbo_stream
 

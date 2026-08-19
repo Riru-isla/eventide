@@ -5,22 +5,22 @@ class Galaxy < ApplicationRecord
   #
   # Size buys engagements and room to explore, not duration: travel is cheap even at
   # 400 wide. What makes a season long is how much there is to fight.
-  # dimension is the grid edge; npc_sectors is how many sectors the factions hold, which
+  # dimension is the grid edge; npc_systems is how many systems the factions hold, which
   # is the real campaign-length dial — roughly how many fights lie between a player and
   # the core. It grows sub-linearly with area, so a large galaxy is more to explore
   # rather than proportionally more to grind.
   SIZES = {
-    "tiny" => { dimension: 40, npc_sectors: 60 },
-    "small" => { dimension: 150, npc_sectors: 540 },
-    "medium" => { dimension: 250, npc_sectors: 900 },
-    "large" => { dimension: 400, npc_sectors: 1_400 }
+    "tiny" => { dimension: 40, npc_systems: 60 },
+    "small" => { dimension: 150, npc_systems: 540 },
+    "medium" => { dimension: 250, npc_systems: 900 },
+    "large" => { dimension: 400, npc_systems: 1_400 }
   }.freeze
 
   # What a session-creation screen offers. `tiny` exists for tests and local poking and
   # is far too small to play a campaign in.
   PLAYABLE_SIZES = %w[small medium large].freeze
 
-  has_many :sectors, dependent: :destroy
+  has_many :systems, dependent: :destroy
   has_many :players, dependent: :destroy
   has_many :empires, dependent: :destroy
   has_many :npc_factions, dependent: :destroy
@@ -36,8 +36,8 @@ class Galaxy < ApplicationRecord
     SIZES.fetch(size.to_s)[:dimension]
   end
 
-  def self.npc_sectors_for(size)
-    SIZES.fetch(size.to_s)[:npc_sectors]
+  def self.npc_systems_for(size)
+    SIZES.fetch(size.to_s)[:npc_systems]
   end
 
   def center

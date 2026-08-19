@@ -3,8 +3,8 @@ require 'rails_helper'
 RSpec.describe ResearchLab, type: :service do
   let(:galaxy) { create(:galaxy, current_tick: 200) }
   let(:empire) { create(:empire, galaxy: galaxy, metal: 100_000, crystal: 100_000) }
-  let(:sector) { create(:sector, galaxy: galaxy) }
-  let!(:planet) { Planet.create!(empire: empire, sector: sector, name: "World") }
+  let(:system) { create(:system, galaxy: galaxy) }
+  let!(:planet) { Planet.create!(empire: empire, system: system, name: "World") }
 
   def set_center(level)
     planet.structures.find_or_create_by!(kind: "research_center") { |s| s.level = 0 }.update!(level: level)

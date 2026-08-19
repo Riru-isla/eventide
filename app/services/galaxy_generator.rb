@@ -1,14 +1,14 @@
 # Builds a session's galaxy: the grid, the NPC factions that hold it, and their capitals.
 #
 # Bands are measured from the **rim inward**, so the faction a player meets first is the
-# weakest one. Each tier inward holds more sectors and defends them harder, so difficulty
+# weakest one. Each tier inward holds more systems and defends them harder, so difficulty
 # compounds on both axes rather than only one.
 #
 # The previous version mapped distance to faction index directly, which put the weakest
 # faction on the fortress ring next to the core and the strongest out on the sparse rim.
 class GalaxyGenerator
   # Ordered outermost first. `share` is the slice of the NPC budget a tier holds, and
-  # `defence` the base strength of an ordinary sector it owns.
+  # `defence` the base strength of an ordinary system it owns.
   #
   # These are a starting point. Nothing has been fought yet, so they want tuning once
   # somebody has actually pushed a fleet into a band.
@@ -20,13 +20,13 @@ class GalaxyGenerator
     { tier: 5, name: "Core Imperium", color: "#dc2626", share: 0.38, defence: 2_800, strength: 13 }
   ].freeze
 
-  # A capital is this many times tougher than an ordinary sector of its tier.
+  # A capital is this many times tougher than an ordinary system of its tier.
   CAPITAL_DEFENCE_MULTIPLIER = 6
 
   # Players spawn in this outermost slice of the map, which holds no NPCs at all.
   PLAYER_BAND = 0.14
 
-  # Rows written per INSERT. A 400x400 galaxy is 160,000 sectors; one statement each
+  # Rows written per INSERT. A 400x400 galaxy is 160,000 systems; one statement each
   # would take minutes.
   BATCH_SIZE = 2_000
 
@@ -34,7 +34,7 @@ class GalaxyGenerator
     @name = name
     @size = size.to_s
     @dimension = Galaxy.dimension_for(@size)
-    @npc_sectors = Galaxy.npc_sectors_for(@size)
+    @npc_systems = Galaxy.npc_systems_for(@size)
     @player_configs = player_configs
   end
 
@@ -44,7 +44,7 @@ class GalaxyGenerator
     ActiveRecord::Base.transaction do
       galaxy = create_galaxy
       factions = create_factions(galaxy)
-      create_sectors(galaxy, factions)
+      create_systems(galaxy, factions)
       assign_capitals(galaxy, factions)
       create_players_and_empires(galaxy)
     end
@@ -81,7 +81,7 @@ class GalaxyGenerator
   # A tier's holdings are drawn at random from across the whole width of its band. Taking
   # the innermost coordinates instead would spend the budget on one ring and leave the
   # rest of the band empty, so each faction would be a hoop rather than territory.
-  def create_sectors(galaxy, factions)
+  def create_systems(galaxy, factions)
     coordinates = coordinates_by_tier(galaxy)
     held = claimed_coordinates(coordinates)
     now = Time.current
@@ -90,16 +90,16 @@ class GalaxyGenerator
     coordinates.each do |tier, points|
       points.each do |x, y, normalized|
         rows << if core?(galaxy, x, y)
-          core_sector(galaxy, x, y, factions, now)
+          core_system(galaxy, x, y, factions, now)
         elsif held.include?([ x, y ])
-          npc_sector(galaxy, x, y, factions[tier], now)
+          npc_system(galaxy, x, y, factions[tier], now)
         else
-          open_sector(galaxy, x, y, normalized, now)
+          open_system(galaxy, x, y, normalized, now)
         end
       end
     end
 
-    rows.each_slice(BATCH_SIZE) { |slice| Sector.insert_all!(slice) }
+    rows.each_slice(BATCH_SIZE) { |slice| System.insert_all!(slice) }
   end
 
   # Every coordinate grouped by the tier whose band it falls in; nil for open space.
@@ -124,7 +124,7 @@ class GalaxyGenerator
   end
 
   def tier_budgets
-    TIERS.to_h { |config| [ config[:tier], (@npc_sectors * config[:share]).round ] }
+    TIERS.to_h { |config| [ config[:tier], (@npc_systems * config[:share]).round ] }
   end
 
   # Which tier owns a given distance. Tier 5 sits against the core and tier 1 just
@@ -142,10 +142,10 @@ class GalaxyGenerator
     x == galaxy.center[:x] && y == galaxy.center[:y]
   end
 
-  def npc_sector(galaxy, x, y, faction, now)
+  def npc_system(galaxy, x, y, faction, now)
     config = TIERS.find { |c| c[:tier] == faction.tier }
 
-    base_sector(galaxy, x, y, now).merge(
+    base_system(galaxy, x, y, now).merge(
       kind: "outpost",
       npc_faction_id: faction.id,
       metal_rate: 20 + (faction.tier * 12),
@@ -155,13 +155,13 @@ class GalaxyGenerator
     )
   end
 
-  def open_sector(galaxy, x, y, normalized, now)
+  def open_system(galaxy, x, y, normalized, now)
     # Richer deposits nearer the core, so pushing inward is worth it for more than
     # just reaching the middle.
     richness = ((1.0 - normalized) * 30).round
     resource = Random.rand < 0.25
 
-    base_sector(galaxy, x, y, now).merge(
+    base_system(galaxy, x, y, now).merge(
       kind: resource ? "resource" : "empty",
       npc_faction_id: nil,
       metal_rate: resource ? richness + 10 : (richness / 3),
@@ -171,8 +171,8 @@ class GalaxyGenerator
     )
   end
 
-  def core_sector(galaxy, x, y, factions, now)
-    base_sector(galaxy, x, y, now).merge(
+  def core_system(galaxy, x, y, factions, now)
+    base_system(galaxy, x, y, now).merge(
       kind: "core",
       npc_faction_id: factions[TIERS.last[:tier]].id,
       metal_rate: 200, crystal_rate: 200, energy_rate: 0,
@@ -180,26 +180,26 @@ class GalaxyGenerator
     )
   end
 
-  def base_sector(galaxy, x, y, now)
-    { galaxy_id: galaxy.id, x: x, y: y, name: "Sector #{x}-#{y}", created_at: now, updated_at: now }
+  def base_system(galaxy, x, y, now)
+    { galaxy_id: galaxy.id, x: x, y: y, name: "System #{x}-#{y}", created_at: now, updated_at: now }
   end
 
-  # Each faction's capital is the sector it holds closest to the core: the deepest and
+  # Each faction's capital is the system it holds closest to the core: the deepest and
   # best defended point of its band, and the objective that ends the tier.
   def assign_capitals(galaxy, factions)
     centre = galaxy.center
 
     factions.each_value do |faction|
-      capital = galaxy.sectors.where(npc_faction_id: faction.id).where.not(kind: "core")
-                      .min_by { |sector| sector.distance_to(centre[:x], centre[:y]) }
-      capital ||= galaxy.sectors.find_by(npc_faction_id: faction.id)
+      capital = galaxy.systems.where(npc_faction_id: faction.id).where.not(kind: "core")
+                      .min_by { |system| system.distance_to(centre[:x], centre[:y]) }
+      capital ||= galaxy.systems.find_by(npc_faction_id: faction.id)
       next if capital.nil?
 
       capital.update!(
         kind: "fortress",
         defense_strength: capital.defense_strength * CAPITAL_DEFENCE_MULTIPLIER
       )
-      faction.update!(capital_sector: capital)
+      faction.update!(capital_system: capital)
     end
   end
 

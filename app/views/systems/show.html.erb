@@ -1,8 +1,8 @@
 <div class="max-w-4xl mx-auto">
   <header class="mb-6 flex items-center justify-between">
     <div>
-      <h1 class="text-3xl font-bold text-white"><%= @sector.name %></h1>
-      <p class="text-gray-400"><%= @sector.coordinate %> · <%= @sector.kind.humanize %></p>
+      <h1 class="text-3xl font-bold text-white"><%= @system.name %></h1>
+      <p class="text-gray-400"><%= @system.coordinate %> · <%= @system.kind.humanize %></p>
     </div>
     <%= link_to "← Back to map", galaxy_path(@galaxy), class: "text-blue-400 hover:text-blue-300" %>
   </header>
@@ -11,14 +11,14 @@
     <div class="bg-gray-900 rounded-lg p-6">
       <h2 class="text-xl font-semibold text-white mb-4">Status</h2>
       <p class="text-gray-300 mb-2">
-        <span class="text-gray-500">Owner:</span> <%= @sector.owner_name %>
+        <span class="text-gray-500">Owner:</span> <%= @system.owner_name %>
       </p>
       <p class="text-gray-300 mb-2">
-        <span class="text-gray-500">Defense:</span> <%= @sector.defense_strength %>
+        <span class="text-gray-500">Defense:</span> <%= @system.defense_strength %>
       </p>
-      <% if @sector.distance_to_center > 0 %>
+      <% if @system.distance_to_center > 0 %>
         <p class="text-gray-300">
-          <span class="text-gray-500">Distance to core:</span> <%= @sector.distance_to_center.round(1) %>
+          <span class="text-gray-500">Distance to core:</span> <%= @system.distance_to_center.round(1) %>
         </p>
       <% end %>
     </div>
@@ -28,28 +28,28 @@
       <div class="grid grid-cols-3 gap-3 text-center">
         <div class="bg-gray-800 rounded p-3">
           <p class="text-xs text-gray-400">Metal</p>
-          <p class="text-xl font-bold text-white">+<%= @sector.metal_rate %></p>
+          <p class="text-xl font-bold text-white">+<%= @system.metal_rate %></p>
         </div>
         <div class="bg-gray-800 rounded p-3">
           <p class="text-xs text-gray-400">Crystal</p>
-          <p class="text-xl font-bold text-white">+<%= @sector.crystal_rate %></p>
+          <p class="text-xl font-bold text-white">+<%= @system.crystal_rate %></p>
         </div>
         <div class="bg-gray-800 rounded p-3">
           <p class="text-xs text-gray-400">Energy</p>
-          <p class="text-xl font-bold text-white">+<%= @sector.energy_rate %></p>
+          <p class="text-xl font-bold text-white">+<%= @system.energy_rate %></p>
         </div>
       </div>
-      <% if @sector.empire == @empire %>
+      <% if @system.empire == @empire %>
         <p class="text-sm text-gray-400 mt-3">
           With your <%= @empire.role %> bonus, you earn
-          M<%= (@sector.metal_rate * @empire.resource_bonus(:metal)).to_i %>
-          C<%= (@sector.crystal_rate * @empire.resource_bonus(:crystal)).to_i %>
-          E<%= (@sector.energy_rate * @empire.resource_bonus(:energy)).to_i %> per tick.
+          M<%= (@system.metal_rate * @empire.resource_bonus(:metal)).to_i %>
+          C<%= (@system.crystal_rate * @empire.resource_bonus(:crystal)).to_i %>
+          E<%= (@system.energy_rate * @empire.resource_bonus(:energy)).to_i %> per tick.
         </p>
       <% end %>
     </div>
 
-    <% if @sector.empire == @empire %>
+    <% if @system.empire == @empire %>
       <div class="bg-gray-900 rounded-lg p-6">
         <h2 class="text-xl font-semibold text-white mb-4">Stationed Fleets</h2>
         <% if @fleets.any? %>
@@ -57,8 +57,8 @@
             <% @fleets.each do |fleet| %>
               <li class="text-gray-300 text-sm">
                 <%= fleet.total_ships %> ships · <%= fleet.status %>
-                <% if fleet.target_sector %>
-                  → <%= fleet.target_sector.coordinate %> (arrives tick <%= fleet.arrival_tick %>)
+                <% if fleet.target_system %>
+                  → <%= fleet.target_system.coordinate %> (arrives tick <%= fleet.arrival_tick %>)
                 <% end %>
               </li>
             <% end %>

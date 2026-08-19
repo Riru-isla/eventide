@@ -5,7 +5,7 @@ RSpec.describe BuildOrder, type: :model do
   let(:planet) do
     Planet.create!(
       empire: create(:empire, galaxy: galaxy),
-      sector: create(:sector, galaxy: galaxy),
+      system: create(:system, galaxy: galaxy),
       name: "World"
     )
   end

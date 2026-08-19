@@ -30,12 +30,12 @@ FactoryBot.define do
     energy { 500 }
   end
 
-  factory :sector do
+  factory :system do
     galaxy
     sequence(:x) { |n| n % 15 }
     sequence(:y) { |n| n / 15 }
     kind { "empty" }
-    sequence(:name) { |n| "Sector #{n}" }
+    sequence(:name) { |n| "System #{n}" }
     metal_rate { 10 }
     crystal_rate { 10 }
     energy_rate { 10 }
@@ -45,7 +45,7 @@ FactoryBot.define do
   factory :fleet do
     empire
     galaxy { empire.galaxy }
-    origin_sector factory: :sector
+    origin_system factory: :system
     status { "orbiting" }
     ships { { "light_fighter" => 10 } }
   end

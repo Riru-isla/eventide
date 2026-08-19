@@ -13,7 +13,7 @@ class Users::RegistrationsController < Devise::RegistrationsController
     sign_up(resource_name, resource)
     session[:empire_id] = resource.players.first&.empires&.first&.id
     respond_with resource, location: after_sign_up_path_for(resource)
-  rescue ActiveRecord::RecordInvalid, EmpireFounder::NoHomeSectorAvailable => e
+  rescue ActiveRecord::RecordInvalid, EmpireFounder::NoHomeSystemAvailable => e
     clean_up_passwords resource
     set_minimum_password_length
     flash.now[:alert] = "Could not create empire: #{e.message}"

@@ -1,4 +1,4 @@
-<% current_tick = planet.sector.galaxy.current_tick %>
+<% current_tick = planet.system.galaxy.current_tick %>
 <% orders = shipyard.orders.to_a %>
 
 <section class="mod" aria-label="Yard">
@@ -65,5 +65,5 @@
 
 <p class="font-sans text-[0.8125rem] text-ink-2">
   Finished hulls join the fleet orbiting <%= planet.name %>. A fleet crosses at the pace of
-  its slowest hull, and only cargo space brings plunder home from a captured sector.
+  its slowest hull, and only cargo space brings plunder home from a captured system.
 </p>

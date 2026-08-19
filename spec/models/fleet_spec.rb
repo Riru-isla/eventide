@@ -4,8 +4,8 @@ RSpec.describe Fleet, type: :model do
   describe "associations" do
     it { is_expected.to belong_to(:empire) }
     it { is_expected.to belong_to(:galaxy) }
-    it { is_expected.to belong_to(:origin_sector).class_name("Sector") }
-    it { is_expected.to belong_to(:target_sector).class_name("Sector").optional }
+    it { is_expected.to belong_to(:origin_system).class_name("System") }
+    it { is_expected.to belong_to(:target_system).class_name("System").optional }
   end
 
   describe "validations" do
@@ -111,7 +111,7 @@ RSpec.describe Fleet, type: :model do
       expect(fleet.reload.retreat!).to be true
       expect(fleet.reload.ships).to eq("light_fighter" => 5, "medium_fighter" => 2)
       expect(fleet.status).to eq("orbiting")
-      expect(fleet.target_sector).to be_nil
+      expect(fleet.target_system).to be_nil
     end
 
     it "drops ship types too few to round up to one survivor" do

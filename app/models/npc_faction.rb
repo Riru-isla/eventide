@@ -13,8 +13,8 @@ class NpcFaction < ApplicationRecord
   }.freeze
 
   belongs_to :galaxy
-  belongs_to :capital_sector, class_name: "Sector", optional: true
-  has_many :sectors, dependent: :nullify
+  belongs_to :capital_system, class_name: "System", optional: true
+  has_many :systems, dependent: :nullify
 
   enum :aggression, AGGRESSIONS, default: :unaware
 
@@ -28,8 +28,8 @@ class NpcFaction < ApplicationRecord
 
   def fallen? = fallen_at_tick.present?
 
-  # A faction dies when its capital is taken, not when every sector it holds is
+  # A faction dies when its capital is taken, not when every system it holds is
   # cleared — so each tier ends in one battle worth organising for rather than a
   # mop-up nobody wants to do.
-  def capital_held? = capital_sector&.npc_faction_id == id
+  def capital_held? = capital_system&.npc_faction_id == id
 end

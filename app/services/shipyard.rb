@@ -8,7 +8,7 @@ class Shipyard
   def initialize(planet)
     @planet = planet
     @empire = planet.empire
-    @galaxy = planet.sector.galaxy
+    @galaxy = planet.system.galaxy
   end
 
   def level
@@ -111,7 +111,7 @@ class Shipyard
 
   # New hulls join the fleet already orbiting the planet, or start a new one.
   def deliver!(order)
-    garrison = @empire.fleets.find_by(origin_sector: @planet.sector, status: "orbiting")
+    garrison = @empire.fleets.find_by(origin_system: @planet.system, status: "orbiting")
 
     if garrison
       ships = garrison.ships.dup
@@ -120,7 +120,7 @@ class Shipyard
     else
       @galaxy.fleets.create!(
         empire: @empire,
-        origin_sector: @planet.sector,
+        origin_system: @planet.system,
         arrival_tick: @galaxy.current_tick,
         status: "orbiting",
         ships: { order.kind => order.quantity }

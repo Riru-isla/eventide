@@ -8,7 +8,7 @@ class BuildQueue
 
   def initialize(planet)
     @planet = planet
-    @galaxy = planet.sector.galaxy
+    @galaxy = planet.system.galaxy
   end
 
   def orders

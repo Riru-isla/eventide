@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Draws the galaxy the sectors sit on: a bright core bulge, logarithmic spiral arms
+// Draws the galaxy the systems sit on: a bright core bulge, logarithmic spiral arms
 // scattered with stars, and a faint disc fading to nothing at the rim.
 //
 // Canvas rather than SVG because this is a few thousand stars — as path data it would

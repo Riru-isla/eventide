@@ -1,6 +1,6 @@
 <%# Who else is out there. Cooperative game, so this is a roster and a shared push
     toward the core — never a ranking. %>
-<% closest = galaxy.sectors.where.not(empire_id: nil).min_by(&:distance_to_center) %>
+<% closest = galaxy.systems.where.not(empire_id: nil).min_by(&:distance_to_center) %>
 
 <section class="mod" aria-label="Commanders">
   <div class="mod-head">
@@ -18,7 +18,7 @@
           <span class="label"><%= empire.role %></span>
         </span>
         <span class="num text-[0.6875rem] text-ink-3">
-          <%= pluralize(empire.sectors.size, "sector") %>
+          <%= pluralize(empire.systems.size, "system") %>
         </span>
       </div>
     <% end %>

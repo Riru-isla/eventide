@@ -1,4 +1,4 @@
-<% current_tick = planet.sector.galaxy.current_tick %>
+<% current_tick = planet.system.galaxy.current_tick %>
 
 <% if inbound.any? %>
   <%= render "planets/inbound", inbound: inbound, empire: empire, current_tick: current_tick %>

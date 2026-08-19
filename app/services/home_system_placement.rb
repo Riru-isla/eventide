@@ -1,14 +1,14 @@
 # Chooses where a new empire starts.
 #
-# Home sectors sit out on the rim, inside the player band that generation deliberately
-# leaves clear of NPCs — so the first hostile sector is a push inward rather than a
+# Home systems sit out on the rim, inside the player band that generation deliberately
+# leaves clear of NPCs — so the first hostile system is a push inward rather than a
 # neighbour. Slots are fixed and claimed in a spread order, so players joining one at a
 # time still end up spaced around the ring, and two simultaneous signups cannot land on
 # the same coordinate.
 #
 # Team-based clustering replaces this ordering in the next step; for now the job is to
 # keep spawns out of the faction bands.
-class HomeSectorPlacement
+class HomeSystemPlacement
   SLOTS = 24
 
   # Claim order: opposite first, then quarters, then the gaps between, so the first few
@@ -26,16 +26,16 @@ class HomeSectorPlacement
     @galaxy = galaxy
   end
 
-  # The first unclaimed ring slot, or the nearest free sector to the ring when every
+  # The first unclaimed ring slot, or the nearest free system to the ring when every
   # slot is taken.
-  def next_free_sector
-    ring_sectors.find { |sector| free?(sector) } || nearest_free_to_ring
+  def next_free_system
+    ring_systems.find { |system| free?(system) } || nearest_free_to_ring
   end
 
   private
 
-  def ring_sectors
-    ring_coordinates.filter_map { |x, y| @galaxy.sectors.at(x, y).first }
+  def ring_systems
+    ring_coordinates.filter_map { |x, y| @galaxy.systems.at(x, y).first }
   end
 
   def ring_coordinates
@@ -52,8 +52,8 @@ class HomeSectorPlacement
     end
   end
 
-  def free?(sector)
-    sector.empire_id.nil? && sector.npc_faction_id.nil?
+  def free?(system)
+    system.empire_id.nil? && system.npc_faction_id.nil?
   end
 
   # Falls back toward the ring rather than out to a corner: a latecomer should start
@@ -61,7 +61,7 @@ class HomeSectorPlacement
   def nearest_free_to_ring
     target = @galaxy.radius * RING_POSITION
 
-    @galaxy.sectors.where(empire_id: nil, npc_faction_id: nil)
-           .min_by { |sector| (sector.distance_to_center - target).abs }
+    @galaxy.systems.where(empire_id: nil, npc_faction_id: nil)
+           .min_by { |system| (system.distance_to_center - target).abs }
   end
 end

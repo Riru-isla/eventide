@@ -3,8 +3,8 @@ class Empire < ApplicationRecord
 
   belongs_to :player
   belongs_to :galaxy
-  belongs_to :home_sector, class_name: "Sector", optional: true
-  has_many :sectors, dependent: :nullify
+  belongs_to :home_system, class_name: "System", optional: true
+  has_many :systems, dependent: :nullify
   has_many :fleets, dependent: :destroy
   has_one :planet, dependent: :destroy
   has_many :technologies, class_name: "EmpireTechnology", dependent: :destroy
