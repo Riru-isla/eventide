@@ -32,6 +32,24 @@ class Galaxy < ApplicationRecord
   # How readily factions notice players, as a multiplier on each faction's awareness.
   AWARENESS_LEVELS = { "oblivious" => 0.5, "standard" => 1.0, "alert" => 1.5, "paranoid" => 2.0 }.freeze
 
+  # What the galaxy does while nobody is pushing it.
+  #
+  # `chill` is the default and the honest one: nothing anywhere has a clock until a
+  # commander makes the first move, so a group that plays two hours a day is never
+  # overtaken by an escalation they did not provoke. `restless` gives up that guarantee
+  # deliberately — the factions on your border start counting down at tick zero, and the
+  # war begins whether or not you begin it.
+  STRESS_LEVELS = {
+    "chill" => "Chill — nothing stirs until provoked",
+    "restless" => "Restless — the frontier wakes on its own"
+  }.freeze
+
+  # What becomes of a faction's territory once its capital is taken. One outcome for now;
+  # the column exists so alternatives are an entry here rather than a migration.
+  FALLEN_OUTCOMES = {
+    "decay" => "Survivors go idle and decay"
+  }.freeze
+
   # What a session-creation screen offers. `tiny` exists for tests and local poking and
   # is far too small to play a campaign in.
   PLAYABLE_SIZES = %w[small medium large].freeze
@@ -52,6 +70,8 @@ class Galaxy < ApplicationRecord
   validates :victory_condition, inclusion: { in: VICTORY_CONDITIONS.keys }
   validates :threat_level, inclusion: { in: THREAT_LEVELS.keys }
   validates :awareness_level, inclusion: { in: AWARENESS_LEVELS.keys }
+  validates :stress_level, inclusion: { in: STRESS_LEVELS.keys }
+  validates :fallen_outcome, inclusion: { in: FALLEN_OUTCOMES.keys }
   validates :faction_count,
             numericality: { only_integer: true, greater_than_or_equal_to: MINIMUM_FACTIONS,
                             less_than_or_equal_to: MAXIMUM_FACTIONS }
@@ -87,6 +107,11 @@ class Galaxy < ApplicationRecord
   # spawn and the centre, and the rest of the disc goes unexplored.
   def core
     { x: core_x, y: core_y }
+  end
+
+  # Whether the galaxy escalates without being provoked.
+  def restless?
+    stress_level != "chill"
   end
 
   def inside?(x, y)

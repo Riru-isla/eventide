@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_19_190000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_19_210000) do
   create_table "build_orders", force: :cascade do |t|
     t.integer "completes_at_tick"
     t.datetime "created_at", null: false
@@ -75,10 +75,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_190000) do
     t.datetime "created_at", null: false
     t.integer "current_tick"
     t.integer "faction_count", default: 4, null: false
+    t.string "fallen_outcome", default: "decay", null: false
     t.integer "height"
     t.string "name"
     t.string "size", default: "small", null: false
     t.string "status"
+    t.string "stress_level", default: "chill", null: false
     t.integer "team_count", default: 1, null: false
     t.string "threat_level", default: "standard", null: false
     t.datetime "updated_at", null: false

@@ -232,6 +232,14 @@ RSpec.describe GalaxyGenerator, type: :service do
     it "gives nothing a clock, so the first move in a run is always a player's" do
       expect(galaxy.npc_factions.map(&:wake_at_tick).uniq).to eq([ nil ])
     end
+
+    it "starts the frontier counting down in a restless galaxy, and only the frontier" do
+      restless = described_class.new(name: "Restless", size: "tiny", stress_level: "restless").generate
+      frontier = restless.spawn_sector.neighbours.select(:id)
+
+      expect(restless.npc_factions.where(sector_id: frontier).map(&:wake_at_tick)).to all(be_positive)
+      expect(restless.npc_factions.where.not(sector_id: frontier).map(&:wake_at_tick).uniq).to eq([ nil ])
+    end
   end
 
   # These need more sectors than `tiny` has, so they pay for a real generation.

@@ -126,7 +126,7 @@ class GalaxyGenerator
 
   def initialize(name:, size: "small", faction_count: nil, victory_condition: "reach_the_core",
                  team_count: 1, threat_level: "standard", awareness_level: "standard",
-                 player_configs: [])
+                 stress_level: "chill", fallen_outcome: "decay", player_configs: [])
     @name = name
     @size = size.to_s
     @dimension = Galaxy.dimension_for(@size)
@@ -138,8 +138,10 @@ class GalaxyGenerator
     @team_count = team_count
     @threat = Galaxy::THREAT_LEVELS.fetch(threat_level)
     @awareness = Galaxy::AWARENESS_LEVELS.fetch(awareness_level)
+    @restless = stress_level != "chill"
     @settings = { victory_condition: victory_condition, team_count: team_count,
-                  threat_level: threat_level, awareness_level: awareness_level }
+                  threat_level: threat_level, awareness_level: awareness_level,
+                  stress_level: stress_level, fallen_outcome: fallen_outcome }
     @player_configs = player_configs
   end
 
@@ -559,10 +561,12 @@ class GalaxyGenerator
   # arrive on their border, so they are primed and answer properly when struck. Everything
   # behind them is `unaware`.
   #
-  # Nobody gets a clock. Nothing in the galaxy stirs on its own — the first move is always
-  # a player's, and `contact!` handles it. A clock running from tick zero would have meant
-  # a group that took their time facing a roused faction through no decision of their own,
-  # which is the one thing this design exists to prevent.
+  # In a `chill` galaxy nobody gets a clock: nothing stirs on its own, the first move is
+  # always a commander's, and `contact!` handles it. A clock from tick zero would mean a
+  # group that took their time facing a roused faction through no decision of their own.
+  #
+  # A `restless` galaxy gives that guarantee up on purpose — the frontier starts counting
+  # down and the war begins whether or not the players begin it.
   def create_factions(galaxy, sectors)
     names = faction_names(sectors.size)
     frontier = sectors.find(&:spawn?).neighbours.pluck(:id).to_set
@@ -578,6 +582,7 @@ class GalaxyGenerator
         aggression: frontier.include?(sector.id) ? :dormant : :unaware,
         awareness: (Random.rand(AWARENESS_RANGE) * @awareness).round.clamp(1, 100)
       )
+      faction.wake_at_tick = faction.wake_delay if @restless && frontier.include?(sector.id)
       faction.save!
 
       [ sector.id, faction ]

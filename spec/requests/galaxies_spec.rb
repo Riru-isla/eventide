@@ -131,7 +131,8 @@ RSpec.describe "Galaxies", type: :request do
       get new_galaxy_path
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("NPC factions", "Threat level", "Awareness level", "Victory condition")
+      expect(response.body).to include("NPC factions", "Threat level", "Awareness level",
+                                       "Victory condition", "Stress level", "When a faction falls")
     end
 
     it "shows teams as a fixed field, since everybody shares one spawn sector" do
@@ -157,7 +158,8 @@ RSpec.describe "Galaxies", type: :request do
       post galaxies_path, params: {
         galaxy: {
           name: "Fresh", size: "tiny", faction_count: 4,
-          victory_condition: "reach_the_core", threat_level: "harsh", awareness_level: "alert"
+          victory_condition: "reach_the_core", threat_level: "harsh", awareness_level: "alert",
+          stress_level: "restless", fallen_outcome: "decay"
         }.merge(overrides)
       }
     end
@@ -170,7 +172,8 @@ RSpec.describe "Galaxies", type: :request do
       built = Galaxy.order(:created_at).last
       expect(built).to have_attributes(
         name: "Fresh", size: "tiny", faction_count: 4,
-        threat_level: "harsh", awareness_level: "alert"
+        threat_level: "harsh", awareness_level: "alert",
+        stress_level: "restless", fallen_outcome: "decay"
       )
       expect(built.npc_factions.count).to eq(4)
       expect(built.sectors.count).to eq(5)

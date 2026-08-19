@@ -68,6 +68,21 @@
     </div>
 
     <div>
+      <%= f.label :stress_level, "Stress level", class: "label mb-1 block" %>
+      <%= f.select :stress_level, Galaxy::STRESS_LEVELS.map { |key, label| [ label, key ] }, {},
+                   class: "w-full border border-line bg-ground-2 px-3 py-2 font-sans text-[0.9375rem] text-ink" %>
+      <p class="mt-1 font-sans text-xs text-ink-3">
+        Chill means a slow week costs you nothing: the galaxy waits. Restless gives that up.
+      </p>
+    </div>
+
+    <div>
+      <%= f.label :fallen_outcome, "When a faction falls", class: "label mb-1 block" %>
+      <%= f.select :fallen_outcome, Galaxy::FALLEN_OUTCOMES.map { |key, label| [ label, key ] }, {},
+                   class: "w-full border border-line bg-ground-2 px-3 py-2 font-sans text-[0.9375rem] text-ink" %>
+    </div>
+
+    <div>
       <%= f.label :awareness_level, "Awareness level", class: "label mb-1 block" %>
       <%= f.select :awareness_level,
                    Galaxy::AWARENESS_LEVELS.map { |key, factor| [ "#{key.capitalize} — ×#{factor} reaction", key ] }, {},

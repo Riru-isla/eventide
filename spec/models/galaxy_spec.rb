@@ -34,6 +34,16 @@ RSpec.describe Galaxy, type: :model do
     end
   end
 
+  describe "#restless?" do
+    it "is false when the galaxy waits to be provoked" do
+      expect(build(:galaxy, stress_level: "chill")).not_to be_restless
+    end
+
+    it "is true when the frontier wakes on its own" do
+      expect(build(:galaxy, stress_level: "restless")).to be_restless
+    end
+  end
+
   describe "#center" do
     it "returns the integer center coordinate" do
       galaxy = build(:galaxy, width: 21, height: 21)

@@ -42,7 +42,7 @@
                 <span class="block text-xs text-ink-3">
                   <%= galaxy.size %> · <%= galaxy.width %>×<%= galaxy.height %> ·
                   <%= galaxy.threat_level %> threat · <%= galaxy.awareness_level %> awareness ·
-                  <%= galaxy.status %>
+                  <%= galaxy.stress_level %> · <%= galaxy.status %>
                 </span>
               </td>
               <td class="num px-2 py-2 text-right text-ink-2"><%= @factions.fetch(galaxy.id, 0) %></td>

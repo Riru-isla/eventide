@@ -46,7 +46,8 @@
                [ "Commanders", @commanders.fetch(galaxy.id, 0) ],
                [ "Objective", Galaxy::VICTORY_CONDITIONS.fetch(galaxy.victory_condition, galaxy.victory_condition) ],
                [ "Threat", galaxy.threat_level ],
-               [ "Awareness", galaxy.awareness_level ]
+               [ "Awareness", galaxy.awareness_level ],
+               [ "Stress", galaxy.stress_level ]
              ].each do |label, value| %>
             <dt class="label self-center"><%= label %></dt>
             <dd class="num text-ink capitalize"><%= value %></dd>

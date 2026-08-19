@@ -179,16 +179,33 @@ anything. But its remaining systems still carry its `npc_faction_id`, still hold
 defence, and still have to be cleared one at a time — so falling currently means nothing
 to the ground it held.
 
-Every possible answer is a combat decision, which is why it waits for this step:
+It is a **galaxy setting** — `fallen_outcome`, chosen when a session is created — so
+alternatives are an entry in `Galaxy::FALLEN_OUTCOMES` rather than a migration. The column
+exists already; the behaviour is what waits for this step.
 
-- Do the survivors go neutral, so a beaten faction's territory is free to walk through?
-- Does defence collapse, or decay over some number of ticks?
-- Do they defect to a neighbouring faction, which would make killing a capital *feed* the
-  next one — dangerous, but a genuinely interesting cost.
-- Does the sector stay contested, with the remnant fighting on leaderless and unable to
-  rebuild?
+### `decay` — the default, and the only one so far
 
-Whatever the answer, it has to be legible: a player who takes a capital should be able to
+The faction is **out of the game**: it stops acting, stops producing, stops defending
+itself as an organisation. What it held does not vanish, it **rots**:
+
+- Its remaining systems and worlds keep their id but stop being reinforced.
+- `defense_strength` decays over some number of ticks, so a system that was a hard fight
+  becomes an easy one the longer it is left.
+- Stockpiles and yields decay with it, so there is still something worth taking — a player
+  who mops up a dead faction's territory pillages a diminishing prize.
+
+The shape of that is deliberate: clearing up after a kill stays *worth doing* without being
+urgent, and the reward for doing it promptly is that there is more left.
+
+### Alternatives worth keeping in mind
+
+- **Neutral** — survivors simply stop being hostile, so the territory becomes free ground.
+  Simplest, but taking a capital then means the sector is instantly solved.
+- **Defect** — the remnant joins a neighbouring faction, which makes killing a capital
+  *feed* the next enemy. Dangerous, and genuinely interesting.
+- **Leaderless** — they fight on at full strength but cannot rebuild or coordinate.
+
+Whichever is picked has to be **legible**: someone who takes a capital should be able to
 tell what they just won.
 
 ---

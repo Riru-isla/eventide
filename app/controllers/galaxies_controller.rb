@@ -65,7 +65,7 @@ class GalaxiesController < ApplicationController
     @settings ||= begin
       permitted = params.require(:galaxy)
                         .permit(:name, :size, :faction_count, :victory_condition,
-                                :threat_level, :awareness_level)
+                                :threat_level, :awareness_level, :stress_level, :fallen_outcome)
       permitted.merge(faction_count: permitted[:faction_count].to_i)
     end
   end
@@ -81,7 +81,9 @@ class GalaxiesController < ApplicationController
       faction_count: Galaxy.faction_count_for("small"),
       victory_condition: Galaxy::VICTORY_CONDITIONS.keys.first,
       threat_level: "standard",
-      awareness_level: "standard"
+      awareness_level: "standard",
+      stress_level: Galaxy::STRESS_LEVELS.keys.first,
+      fallen_outcome: Galaxy::FALLEN_OUTCOMES.keys.first
     }
   end
 
