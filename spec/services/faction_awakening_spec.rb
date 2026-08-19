@@ -146,12 +146,12 @@ RSpec.describe FactionAwakening, type: :service do
     it "never rouses a faction with no clock, however long the galaxy runs" do
       # The whole point: nothing beyond the front has a clock, so a slow group is never
       # overtaken by an escalation they did not provoke.
-      deep = galaxy.npc_factions.where(wake_at_tick: nil)
+      unprovoked = galaxy.npc_factions.where(wake_at_tick: nil)
       galaxy.update!(current_tick: 500_000)
 
       awakening.advance!
 
-      expect(deep.reload.map(&:aggression).uniq).to eq([ "unaware" ])
+      expect(unprovoked.reload.map(&:roused?)).to all(be(false))
     end
 
     it "leaves the fallen where they lie" do

@@ -221,19 +221,16 @@ RSpec.describe GalaxyGenerator, type: :service do
       expect(frontier.map(&:aggression).uniq).to eq([ "dormant" ])
     end
 
-    it "leaves everything behind them unaware, with no clock at all" do
+    it "leaves everything behind them unaware" do
       frontier = galaxy.spawn_sector.neighbours.select(:id)
       behind = galaxy.npc_factions.where.not(sector_id: frontier)
 
       expect(behind).to be_any
       expect(behind.map(&:aggression).uniq).to eq([ "unaware" ])
-      expect(behind.map(&:wake_at_tick).uniq).to eq([ nil ])
     end
 
-    it "starts the frontier counting down, or the galaxy would sleep forever" do
-      frontier = galaxy.spawn_sector.neighbours.filter_map(&:npc_faction)
-
-      expect(frontier.map(&:wake_at_tick)).to all(be_positive)
+    it "gives nothing a clock, so the first move in a run is always a player's" do
+      expect(galaxy.npc_factions.map(&:wake_at_tick).uniq).to eq([ nil ])
     end
   end
 

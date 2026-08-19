@@ -81,13 +81,18 @@ RSpec.describe GalaxyPreview, type: :service do
       expect(row[:neighbours]).to match_array(galaxy.npc_factions.find_by(name: row[:name]).neighbours.pluck(:name))
     end
 
-    it "shows the frontier counting down and everything behind it unprovoked" do
-      rows = preview.awakening.index_by { |row| row[:name] }
-      frontier = galaxy.spawn_sector.neighbours.filter_map(&:npc_faction)
-      behind = galaxy.npc_factions.where.not(id: frontier.map(&:id))
+    it "shows nothing counting down, since a fresh galaxy stirs only when provoked" do
+      expect(preview.awakening.map { |row| row[:wake_at_tick] }.uniq).to eq([ nil ])
+    end
 
-      expect(frontier.map { |f| rows[f.name][:wake_at_tick] }).to all(be_present)
-      expect(behind.map { |f| rows[f.name][:wake_at_tick] }.uniq).to eq([ nil ])
+    it "shows a clock once a neighbour has fallen" do
+      frontier = galaxy.spawn_sector.neighbours.filter_map(&:npc_faction).first
+      allow(Random).to receive(:rand).and_return(1.0)
+      FactionAwakening.new(galaxy).captured!(frontier.capital_system, frontier)
+
+      counting = preview.awakening.select { |row| row[:wake_at_tick] }
+
+      expect(counting.map { |row| row[:name] }).to match_array(frontier.neighbours.pluck(:name))
     end
   end
 

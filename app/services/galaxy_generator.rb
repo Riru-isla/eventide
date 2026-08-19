@@ -555,10 +555,14 @@ class GalaxyGenerator
 
   # One faction per sector, except the players'.
   #
-  # Only the factions whose territory actually touches the spawn begin knowing players
-  # exist, with a clock already running — otherwise nothing would ever have a reason to
-  # stir and the galaxy would sleep forever. Everything behind them is `unaware` and has no
-  # clock at all until a neighbour falls.
+  # Factions whose territory touches the spawn begin `dormant`: they can see commanders
+  # arrive on their border, so they are primed and answer properly when struck. Everything
+  # behind them is `unaware`.
+  #
+  # Nobody gets a clock. Nothing in the galaxy stirs on its own — the first move is always
+  # a player's, and `contact!` handles it. A clock running from tick zero would have meant
+  # a group that took their time facing a roused faction through no decision of their own,
+  # which is the one thing this design exists to prevent.
   def create_factions(galaxy, sectors)
     names = faction_names(sectors.size)
     frontier = sectors.find(&:spawn?).neighbours.pluck(:id).to_set
@@ -574,7 +578,6 @@ class GalaxyGenerator
         aggression: frontier.include?(sector.id) ? :dormant : :unaware,
         awareness: (Random.rand(AWARENESS_RANGE) * @awareness).round.clamp(1, 100)
       )
-      faction.wake_at_tick = faction.wake_delay if frontier.include?(sector.id)
       faction.save!
 
       [ sector.id, faction ]

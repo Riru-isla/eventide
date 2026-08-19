@@ -172,6 +172,25 @@ intercepted, met in orbit, or beaten before it lands.
 unanswerably. Raids must cost the raider and be survivable — being caught out of position
 should hurt, not end you.
 
+### Open: what falling actually does to a faction's territory
+
+`fallen_at_tick` is set when a capital is taken, and it stops the faction rolling into
+anything. But its remaining systems still carry its `npc_faction_id`, still hold full
+defence, and still have to be cleared one at a time — so falling currently means nothing
+to the ground it held.
+
+Every possible answer is a combat decision, which is why it waits for this step:
+
+- Do the survivors go neutral, so a beaten faction's territory is free to walk through?
+- Does defence collapse, or decay over some number of ticks?
+- Do they defect to a neighbouring faction, which would make killing a capital *feed* the
+  next one — dangerous, but a genuinely interesting cost.
+- Does the sector stay contested, with the remnant fighting on leaderless and unable to
+  rebuild?
+
+Whatever the answer, it has to be legible: a player who takes a capital should be able to
+tell what they just won.
+
 ---
 
 ## 5. Threat and temperament
