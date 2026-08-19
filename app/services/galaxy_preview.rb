@@ -23,6 +23,16 @@ class GalaxyPreview
   # written into an attribute. Anything that is not a plain hex colour is drawn neutral.
   HEX_COLOUR = /\A#\h{3,8}\z/
 
+  # Breathing room around the disc so its outline, the edge rectangles and the sector
+  # labels are not sliced off by the edge of the viewBox.
+  MARGIN = 3
+  CAPTION_HEIGHT = 14
+
+  # Monospace at this size is about 0.6em per character, which is what a label needs to be
+  # kept clear of the edges by.
+  LABEL_SIZE = 2.6
+  LABEL_CHAR_WIDTH = LABEL_SIZE * 0.6
+
   def initialize(galaxy)
     @galaxy = galaxy
   end
@@ -108,11 +118,16 @@ class GalaxyPreview
     value.to_s.match?(HEX_COLOUR) ? value : SPAWN_COLOR
   end
 
+  # Sized by the viewBox with max-width rather than a fixed pixel width: a large galaxy is
+  # 2,400px across, which overflowed the panel it sits in and was sliced off on the right.
+  # The explicit width still gives a sensible size when the file is opened on its own.
   def header
     <<~SVG.strip
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 #{dimension} #{dimension + 14}"
-           width="#{dimension * 6}" height="#{(dimension + 14) * 6}" shape-rendering="crispEdges">
-      <rect width="100%" height="100%" fill="#{BACKGROUND}"/>
+      <svg xmlns="http://www.w3.org/2000/svg"
+           viewBox="#{-MARGIN} #{-MARGIN} #{dimension + (MARGIN * 2)} #{dimension + (MARGIN * 2) + CAPTION_HEIGHT}"
+           width="#{dimension * 6}" style="max-width:100%;height:auto" shape-rendering="crispEdges">
+      <rect x="#{-MARGIN}" y="#{-MARGIN}" width="#{dimension + (MARGIN * 2)}"
+            height="#{dimension + (MARGIN * 2) + CAPTION_HEIGHT}" fill="#{BACKGROUND}"/>
     SVG
   end
 
@@ -169,14 +184,20 @@ class GalaxyPreview
 
   def labels
     @galaxy.sectors.map do |sector|
-      %(<text x="#{sector.seed_x}" y="#{sector.seed_y - 3}" fill="#eae6f7" font-size="2.6" ) +
+      text = "#{sector.name} L#{sector.power_level}"
+      # Centred on the seed, but pulled back inside the frame when the seed sits near an
+      # edge — otherwise half the name falls outside the viewBox and is clipped.
+      reach = (text.length * LABEL_CHAR_WIDTH) / 2
+      x = sector.seed_x.clamp(reach - MARGIN, dimension + MARGIN - reach)
+
+      %(<text x="#{x.round(1)}" y="#{sector.seed_y - 3}" fill="#eae6f7" font-size="#{LABEL_SIZE}" ) +
         %(font-family="monospace" text-anchor="middle" opacity="0.75">) +
-        %(#{ERB::Util.html_escape(sector.name)} L#{sector.power_level}</text>)
+        %(#{ERB::Util.html_escape(text)}</text>)
     end
   end
 
   def legend
-    %(<text x="2" y="#{dimension + 9}" fill="#a49cc4" font-size="3.4" font-family="monospace">) +
+    %(<text x="0" y="#{dimension + MARGIN + 9}" fill="#a49cc4" font-size="3.4" font-family="monospace">) +
       %(#{ERB::Util.html_escape(@galaxy.name)} · #{@galaxy.size} · #{dimension}x#{dimension} · ) +
       %(#{rows.size} systems · #{@galaxy.sectors.count} sectors · core #{@galaxy.core_x},#{@galaxy.core_y}</text>)
   end
