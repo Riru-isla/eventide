@@ -230,6 +230,19 @@ RSpec.describe "Galaxies", type: :request do
 
       expect(response).to redirect_to(galaxies_path)
     end
+
+    it "opens for an administrator who commands nowhere at all" do
+      # The usual reason to inspect a galaxy is that nobody has joined it yet, so this
+      # must not sit behind the check that every game screen makes for an empire.
+      outsider = create(:user, admin: true)
+      expect(outsider.empires).to be_empty
+
+      sign_in(outsider)
+      get preview_galaxy_path(galaxy)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(galaxy.core_sector.name)
+    end
   end
 
   describe "POST /galaxies/:id/join" do

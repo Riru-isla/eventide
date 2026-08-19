@@ -1,6 +1,8 @@
 class GalaxiesController < ApplicationController
-  # The lobby is what you see *before* you have an empire, so it cannot demand one.
-  skip_before_action :require_empire, only: %i[index new create join]
+  # The lobby is what you see *before* you have an empire, so it cannot demand one — and
+  # neither can inspecting a galaxy, which an administrator does precisely when nobody has
+  # joined it yet.
+  skip_before_action :require_empire, only: %i[index new create join preview]
   before_action :require_admin, only: %i[new create preview]
 
   def index
