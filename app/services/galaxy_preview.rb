@@ -70,7 +70,7 @@ class GalaxyPreview
   # which of them are counting down. A faction with no clock has no reason to stir yet, and
   # seeing that laid out is what tells you whether a run will unfold or stall.
   def awakening
-    @galaxy.npc_factions.includes(:sector, :planets).sort_by(&:power_level).map do |faction|
+    @galaxy.npc_factions.includes(:sector, :planets, :projects).sort_by(&:power_level).map do |faction|
       {
         name: faction.name,
         sector: faction.sector&.name,
@@ -81,6 +81,12 @@ class GalaxyPreview
         worlds: faction.planets.size,
         stockpile: faction.metal,
         income: faction.systems.sum(:metal_rate),
+        building: faction.projects.size,
+        # Both counts exclude the capital. It is generated at six times an ordinary
+        # garrison against a ceiling of three, so it is never a fortification target and
+        # counting it would read as work already done.
+        garrisons: faction.ordinary_systems.count,
+        fortified: faction.ordinary_systems.where(defense_strength: faction.fortification_ceiling..).count,
         neighbours: faction.neighbours.order(:power_level).pluck(:name)
       }
     end

@@ -74,6 +74,19 @@ RSpec.describe GalaxyPreview, type: :service do
       expect(rows.map { |row| row[:power_level] }).to eq(rows.map { |row| row[:power_level] }.sort)
     end
 
+    it "reports what each faction has fortified and what it is building" do
+      faction = galaxy.npc_factions.first
+      faction.update!(aggression: :aware)
+      FactionProduction.new(galaxy).run!
+
+      row = preview.awakening.find { |entry| entry[:name] == faction.name }
+
+      # The capital is excluded: it is already past the ceiling and never worked on.
+      expect(row[:garrisons]).to eq(faction.systems.count - 1)
+      expect(row[:building]).to eq(faction.reload.projects.count)
+      expect(row[:fortified]).to be_zero
+    end
+
     it "names who each faction would react to" do
       row = preview.awakening.first
 

@@ -18,6 +18,7 @@ class NpcFaction < ApplicationRecord
   belongs_to :capital_system, class_name: "System", optional: true
   has_many :systems, dependent: :nullify
   has_many :planets, dependent: :destroy
+  has_many :projects, class_name: "FactionProject", dependent: :destroy
 
   enum :aggression, AGGRESSIONS, default: :unaware
 
@@ -35,6 +36,20 @@ class NpcFaction < ApplicationRecord
   # more alert it is: an alert rim faction is up in a few hours, an oblivious core faction
   # in days.
   WAKE_DELAY = 1_200
+
+  # How much of its own work a faction gets done per tick, by how hard it is playing.
+  # `aware` is a commander who logs in for a couple of hours and reacts; `total_war` is one
+  # who never logs off. Nothing below `aware` builds at all.
+  TEMPO = { "aware" => 1.0, "hunting" => 1.8, "total_war" => 3.0 }.freeze
+
+  # Each power level works this much faster again. This is where power level belongs —
+  # tempo, not income — because it is the constraint that actually binds.
+  SPEED_PER_LEVEL = 0.2
+
+  # How far above its built strength a garrison can be fortified. Bounded on purpose: a
+  # faction left alone should become *harder*, not untouchable, or ignoring one for a week
+  # would punish a slow group the way a tick-zero clock did.
+  MAX_FORTIFICATION = 3.0
 
   # What a faction can hold, calibrated against the player storage curve so the two
   # economies do not drift apart as either is tuned. A level 1 faction can bank about what
@@ -76,6 +91,26 @@ class NpcFaction < ApplicationRecord
     return 0 unless roused?
 
     (systems.sum(RATES.fetch(resource)) * income_multiplier).round
+  end
+
+  # A faction builds one thing at a time per world it runs, which is what makes its
+  # industry worth attacking: take a world and it works on fewer fronts for good.
+  def build_slots
+    planets.size
+  end
+
+  def build_speed
+    TEMPO.fetch(aggression, 0.0) * (1 + (power_level * SPEED_PER_LEVEL)) * galaxy.threat_multiplier
+  end
+
+  # Everything it holds bar the capital: the capital is built past the fortification
+  # ceiling from the start, so it is never work to be done.
+  def ordinary_systems
+    systems.where.not(id: capital_system_id)
+  end
+
+  def fortification_ceiling
+    (base_defence * MAX_FORTIFICATION).round
   end
 
   def wake_delay

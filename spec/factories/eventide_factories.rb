@@ -34,6 +34,15 @@ FactoryBot.define do
     power_level { 1 }
   end
 
+  factory :faction_project do
+    npc_faction
+    system { create(:system, galaxy: npc_faction.galaxy) }
+    kind { "fortify" }
+    defence_gain { 100 }
+    started_at_tick { 0 }
+    completes_at_tick { 60 }
+  end
+
   factory :empire do
     player
     galaxy

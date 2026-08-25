@@ -11,6 +11,7 @@ class TickProcessor
       complete_research
       collect_resources
       collect_faction_income
+      FactionProduction.new(@galaxy).run!
       resolve_fleet_arrivals
       awakening.advance!
       @galaxy.increment!(:current_tick)

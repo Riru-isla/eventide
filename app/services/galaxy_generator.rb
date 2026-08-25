@@ -595,7 +595,8 @@ class GalaxyGenerator
         strength_level: sector.power_level,
         tech_level: sector.power_level,
         aggression: frontier.include?(sector.id) ? :dormant : :unaware,
-        awareness: (Random.rand(AWARENESS_RANGE) * @awareness).round.clamp(1, 100)
+        awareness: (Random.rand(AWARENESS_RANGE) * @awareness).round.clamp(1, 100),
+        base_defence: (DEFENCE[sector.power_level - 1] * @threat).round
       )
       faction.wake_at_tick = faction.wake_delay if @restless && frontier.include?(sector.id)
       # A war chest rather than an empty purse, so a roused faction answers at once instead

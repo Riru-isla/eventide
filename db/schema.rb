@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_19_220000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_25_170000) do
   create_table "build_orders", force: :cascade do |t|
     t.integer "completes_at_tick"
     t.datetime "created_at", null: false
@@ -49,6 +49,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_220000) do
     t.datetime "updated_at", null: false
     t.index ["galaxy_id"], name: "index_empires_on_galaxy_id"
     t.index ["player_id"], name: "index_empires_on_player_id"
+  end
+
+  create_table "faction_projects", force: :cascade do |t|
+    t.integer "completes_at_tick", null: false
+    t.datetime "created_at", null: false
+    t.integer "defence_gain", default: 0, null: false
+    t.string "kind", default: "fortify", null: false
+    t.integer "npc_faction_id", null: false
+    t.integer "started_at_tick", null: false
+    t.integer "system_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["completes_at_tick"], name: "index_faction_projects_on_completes_at_tick"
+    t.index ["npc_faction_id"], name: "index_faction_projects_on_npc_faction_id"
+    t.index ["system_id"], name: "index_faction_projects_on_system_id"
   end
 
   create_table "fleets", force: :cascade do |t|
@@ -91,6 +105,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_220000) do
   create_table "npc_factions", force: :cascade do |t|
     t.string "aggression", default: "unaware", null: false
     t.integer "awareness", default: 50, null: false
+    t.integer "base_defence", default: 0, null: false
     t.integer "capital_system_id"
     t.string "color"
     t.datetime "created_at", null: false
@@ -232,6 +247,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_220000) do
   add_foreign_key "empire_technologies", "empires"
   add_foreign_key "empires", "galaxies"
   add_foreign_key "empires", "players"
+  add_foreign_key "faction_projects", "npc_factions"
+  add_foreign_key "faction_projects", "systems"
   add_foreign_key "fleets", "empires"
   add_foreign_key "fleets", "galaxies"
   add_foreign_key "npc_factions", "galaxies"

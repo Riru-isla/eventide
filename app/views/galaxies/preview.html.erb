@@ -81,6 +81,10 @@
                   <%= number_with_delimiter(row[:stockpile]) %> banked ·
                   <%= number_with_delimiter(row[:income]) %>/tick once roused
                 </span>
+                <span class="block text-xs text-ink-2">
+                  <%= row[:fortified] %>/<%= row[:garrisons] %> garrisons at ceiling
+                  <%= "· building #{row[:building]}" if row[:building].positive? %>
+                </span>
                 <span class="block text-xs text-ink-3">borders <%= row[:neighbours].join(", ") %></span>
               </td>
               <td class="num px-2 py-2 text-right text-ink-2"><%= row[:awareness] %></td>
