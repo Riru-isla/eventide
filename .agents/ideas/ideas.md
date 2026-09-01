@@ -244,3 +244,39 @@ would reward scouting early and picking fights on your own schedule.
 
 Probably belongs beside the existing threat and awareness settings on the new-galaxy form.
 
+---
+
+## Research and doctrine reshaping combat
+
+**Status:** idea only — the combat foundation is deliberately flat for now.
+
+Every combat figure is currently a plain number on a hull: shield, armour, hull, damage
+against each layer, signature, and one shared `SHIELD_REGEN` fraction. The interesting
+version is that research and role bend all of them.
+
+- **Shield recharge** as a researched multiplier on `SHIELD_REGEN`. Measured, this single
+  fraction decides whether specialised weapons work at all, so a faction or commander who
+  invests in it changes what can hurt them rather than merely how much.
+- **Armour soak** — a flat reduction before a layer takes damage, so armour becomes good
+  against *many small hits* specifically, where shields are good against *sustained* fire.
+  That would give the three layers genuinely different characters rather than three pools.
+- **Weapon research** raising damage against one layer, so a commander's build decides
+  which enemies they are efficient against.
+- **Role doctrine** — the existing cultivator/foundry/warden bonuses reaching into combat.
+
+### Why it waits
+
+The counter triangle only just works, and the window is narrow: a five point change in
+shield recharge either erases the shield tank's identity or seizes every fight up. Layering
+research multipliers on top of numbers that are not yet settled would make it impossible to
+tell whether a bad fight came from the hull stats or the modifiers.
+
+Hull stats first, with a tool that prints the counter matrix, then modifiers on top of
+something known to be balanced.
+
+### The shape it should keep
+
+Whatever is added, a modifier should multiply an existing figure rather than introduce a
+new rule. The resolver knows nothing about research or roles today, and it should stay that
+way — translation into a `Combat::Unit` is where a commander's technology belongs.
+

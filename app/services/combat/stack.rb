@@ -22,7 +22,16 @@ module Combat
     #
     # It still resists a burst — a volley that cannot out-damage the recharge is absorbed
     # entirely — so a shield-heavy hull remains a hard counter rather than merely a tough
-    # one. A galaxy setting making shields more or less effective belongs here.
+    # one.
+    #
+    # A fraction rather than a flat figure on purpose: research that improves shield
+    # recharge, or a galaxy setting making shields more or less effective, multiplies this
+    # and nothing else needs to know.
+    #
+    # The window is narrow. Measured across a roster of specialised guns and tanks, at 20%
+    # a shield-heavy hull stops being special — a plain generalist clears twenty of twenty
+    # where at 25% it manages nine. At 30% the whole thing seizes up and even the right gun
+    # kills a third of what it should. This is not a round number by accident.
     SHIELD_REGEN = 0.25
 
     attr_reader :unit, :losses
