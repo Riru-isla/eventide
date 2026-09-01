@@ -39,7 +39,32 @@ it happening.
 
 ---
 
-## 1. Adjacency and awakening
+## Where this stands
+
+Steps 1–3 are built. A faction wakes only when something falls next door, holds territory
+and worlds, banks a war chest it spends only once roused, and hardens its garrisons up to a
+ceiling. Factions became **empires** partway through — see `design-decisions.md` — which
+deleted most of what step 4 was going to cost.
+
+**Combat comes before fleets and raids.** Raiding is a form of combat, and the current
+resolution cannot support it: a winning attacker loses *nothing*, and the fight only fires
+when the defender is a faction. Fixing that is felt by players immediately, and leaves the
+machinery ready for faction fleets rather than building both at once.
+
+Not yet true, despite the foundation being done:
+
+- **Factions have no fleets.** They can own one — `Fleet` belongs to an empire, and
+  `power`/`retreat!` work fine for an NPC — but nothing builds one.
+- **Combat is one-directional.** Point a faction fleet at a commander's system and the
+  fight never fires; the fleet parks there.
+- **Nothing escalates past `aware`.** `rouse!` is the only writer, so `hunting` and
+  `total_war` are unreachable and their `TEMPO` entries are dead until threat exists.
+- **`fallen_outcome: decay` is a setting with no behaviour.** A beaten faction's systems
+  keep full defence and never rot.
+
+---
+
+## 1. Adjacency and awakening — **done**
 
 Persist which sectors border which — the generator already builds the ownership grid, so
 it is one scan over it — then wire the design already settled: a faction has **no clock at
@@ -58,7 +83,7 @@ players have actually pushed.
 
 ---
 
-## 2. Worlds and an economy
+## 2. Worlds and an economy — **done**
 
 Factions get **real infrastructure**, for the same reason they get real fleets: if a
 shipyard is what lets a player build a ship, a faction conjuring one from a stockpile is
@@ -97,7 +122,7 @@ answer shrinks.
 
 ---
 
-## 3. Production — defences first
+## 3. Production — defences first — **done**
 
 Awake factions spend on raising `defense_strength` and on their own structures, over ticks,
 at a rate set by their build-speed multiplier. Defences before fleets deliberately: it
@@ -144,7 +169,46 @@ frontier early is now worth something, and dithering costs.
 
 ---
 
-## 4. Fleets and raids
+## 4. The combat rewrite
+
+Raiding is a form of combat, so this comes first: the current resolution cannot carry it,
+and fixing it is felt by commanders straight away rather than only once the AI can attack.
+
+What is wrong with what exists:
+
+```ruby
+if attacker_power >= defender_power
+  # attacker takes the system and loses NOTHING
+else
+  # attacker loses EVERYTHING, bar an armour retreat
+end
+```
+
+- **Winning is free.** Survivable while only commanders attack, because they choose when to
+  commit. Point it the other way and one faction fleet grinds a planet down forever at no
+  cost.
+- **It is binary.** A thousand fighters against 999 defence is a flawless victory; against
+  1,001 it is annihilation. Nothing in between, and no reason to bring a margin.
+- **It only fires when the defender is a faction.** A faction fleet arriving at a
+  commander's system falls through to `join_garrison!` and simply parks there.
+- **Composition does not matter.** Only the total matters, so hulls are interchangeable.
+- **Nothing is reported.** A fleet leaves and either the system changes hands or the fleet
+  is gone.
+
+What it has to deliver:
+
+- Casualties on **both** sides, in proportion to what was faced.
+- Resolution that does not care who owns the attacker or the defender.
+- An outcome a player can read afterwards and learn from.
+- A home system that can be **raided rather than captured**, so being away for a weekend
+  cannot end a run.
+
+Deliberately still out: staging several fleets into one strike, and scouting — that is
+telegraphing, further down.
+
+---
+
+## 5. Fleets and raids *(after combat)*
 
 `Fleet` currently `belongs_to :empire`, so a faction cannot own one. Make a fleet belong to
 *either*, teach combat to resolve NPC-versus-player, and let factions build ships from the
@@ -210,7 +274,7 @@ tell what they just won.
 
 ---
 
-## 5. Threat and temperament
+## 6. Threat and temperament
 
 **Threat**, held per faction *per commander*: rises when you take their systems, hit their
 capital, or are seen in their space; decays over time. It is both the "different behaviour
@@ -231,7 +295,7 @@ comes for them.
 
 ---
 
-## 6. Telegraphing
+## 7. Telegraphing
 
 Scouting reports, and a visible faction posture on the galaxy view. A faction massing for
 three days is only tense if there is a way to find out.
@@ -245,5 +309,10 @@ thing to reach for, not a bigger brain.
 ## Sequencing
 
 The order is forced by dependency: awakening decides *when* a faction acts, the economy and
-production give it the *means*, behaviour decides *what*, and telegraphing makes any of it
-land. Steps 1–3 need no new combat code at all, which is why they come first.
+production give it the *means*, combat decides how a fight *resolves*, behaviour decides
+*what* to do, and telegraphing makes any of it land.
+
+Steps 1–3 needed no combat code at all, which is why they came first. Combat then comes
+before fleets because raiding is a form of combat and the current resolution cannot carry
+it — and because a better fight is something commanders feel immediately, long before the
+AI is able to start one.

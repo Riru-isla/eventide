@@ -377,3 +377,32 @@ is what makes building up before pushing inward a strategy rather than a stall.
 `GARRISON_WEIGHT` and `DEFENCE` in `GalaxyGenerator` are the two curves this rests on, and
 they compound — deeper factions hold more systems *and* defend each one harder. Flattening
 either one turns the campaign into a straight run at the core.
+
+## Factions are empires; NpcFaction is the brain
+
+An `Empire` holds systems, runs planets, banks resources and sends fleets. `empire_type`
+says whether a commander or the AI is driving. `NpcFaction` is the AI state attached to an
+NPC empire — aggression, awareness, power level, capital, wake clock, projects.
+
+Rationale: the AI and a commander travel identical code for economy, build queue, shipyard
+and combat, so balance cannot quietly diverge between them and there is no second rulebook
+to keep in step by hand. It is the structural version of "the AI plays by the same rules".
+
+It also deleted a lot: `systems` and `planets` each carried two owner columns kept
+exclusive by hand on every capture, Planet had a custom "exactly one owner" validation, and
+step 4 was going to need PlanetEconomy, BuildQueue and Shipyard made owner-agnostic.
+`Fleet` needed no change at all — it already belonged to an empire, which was exactly why a
+faction could not send one.
+
+Kept as two tables rather than one: an `empires` table carrying every faction column would
+be a dozen permanent nulls for every human player.
+
+**Factions carry a real `npc` role** rather than a nil, so nothing downstream guards against
+its absence. It grants no bonus — their edge is tempo and scale, never yield — and
+`COMMANDER_ROLES` is what a join form offers, so it never appears in the picker.
+
+Two bugs this surfaced, both from every faction suddenly being an empire: `collect_resources`
+was unscoped, paying factions twice and paying unprovoked ones at all; and faction
+production read "the front" as any system with an owner, so a faction reinforced against its
+own territory. Both are now scoped to commanders.
+
