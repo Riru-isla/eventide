@@ -23,10 +23,9 @@ class EmpireFounder
       system = claim_home_system
       empire = create_empire(player, system)
 
-      # npc_faction is cleared explicitly: on small galaxies the ring can fall on an
-      # NPC-held system, and leaving the faction set would make an owned home system
-      # still read as hostile to combat resolution and the map.
-      system.update!(empire: empire, npc_faction: nil, **HOME_SYSTEM)
+      # A spawn sector holds no faction, but claiming the system explicitly keeps a
+      # hand-built or legacy galaxy from leaving a home reading as hostile.
+      system.update!(empire: empire, **HOME_SYSTEM)
       create_planet(empire, system)
       create_starting_fleet(empire, system)
 
@@ -57,7 +56,10 @@ class EmpireFounder
   end
 
   def create_empire(player, system)
-    @galaxy.empires.create!(player: player, role: @role, home_system: system, **STARTING_RESOURCES)
+    @galaxy.empires.create!(
+      player: player, empire_type: :player, name: "#{player.name}'s Empire",
+      role: @role, home_system: system, **STARTING_RESOURCES
+    )
   end
 
   def create_starting_fleet(empire, system)

@@ -587,10 +587,18 @@ class GalaxyGenerator
     frontier = sectors.find(&:spawn?).neighbours.pluck(:id).to_set
 
     sectors.reject(&:spawn?).each_with_index.to_h do |sector, index|
-      faction = galaxy.npc_factions.new(
-        sector: sector,
+      # The empire is what holds ground and banks resources; the faction is the brain
+      # driving it. Both are created together and neither is useful alone.
+      empire = galaxy.empires.create!(
+        empire_type: :npc, role: Empire::NPC_ROLE,
         name: sector.core? ? CORE_FACTION_NAME : names[index],
         color: LEVEL_COLORS[sector.power_level - 1][index % LEVEL_COLORS.first.size],
+        metal: 0, crystal: 0, energy: 0
+      )
+
+      faction = galaxy.npc_factions.new(
+        empire: empire,
+        sector: sector,
         power_level: sector.power_level,
         strength_level: sector.power_level,
         tech_level: sector.power_level,
@@ -599,11 +607,10 @@ class GalaxyGenerator
         base_defence: (DEFENCE[sector.power_level - 1] * @threat).round
       )
       faction.wake_at_tick = faction.wake_delay if @restless && frontier.include?(sector.id)
+      faction.save!
       # A war chest rather than an empty purse, so a roused faction answers at once instead
       # of saving up first. Resources are the stock; build time is still the tempo.
-      faction.metal = faction.capacity
-      faction.crystal = faction.capacity
-      faction.save!
+      empire.update!(metal: faction.capacity, crystal: faction.capacity)
 
       [ sector.id, faction ]
     end
@@ -656,7 +663,7 @@ class GalaxyGenerator
 
     base_system(galaxy, sector, x, y, now).merge(
       kind: "outpost",
-      npc_faction_id: faction.id,
+      empire_id: faction.empire_id,
       metal_rate: 20 + (sector.power_level * 12),
       crystal_rate: 20 + (sector.power_level * 12),
       energy_rate: 0,
@@ -672,7 +679,7 @@ class GalaxyGenerator
 
     base_system(galaxy, sector, x, y, now).merge(
       kind: resource ? "resource" : "empty",
-      npc_faction_id: nil,
+      empire_id: nil,
       metal_rate: resource ? richness + 10 : (richness / 3),
       crystal_rate: resource ? richness + 10 : (richness / 3),
       energy_rate: 0,
@@ -683,7 +690,7 @@ class GalaxyGenerator
   def core_system(galaxy, sector, faction, x, y, now)
     base_system(galaxy, sector, x, y, now).merge(
       kind: "core",
-      npc_faction_id: faction.id,
+      empire_id: faction.empire_id,
       metal_rate: 200, crystal_rate: 200, energy_rate: 0,
       defense_strength: (DEFENCE.last * @threat * CAPITAL_DEFENCE_MULTIPLIER).round
     )
@@ -729,12 +736,12 @@ class GalaxyGenerator
   # its territory allows, so taking one is a real blow rather than a rounding error.
   def create_faction_worlds(galaxy, factions)
     factions.each_value do |faction|
-      candidates = galaxy.systems.where(npc_faction_id: faction.id)
+      candidates = galaxy.systems.where(empire_id: faction.empire_id)
                          .where.not(id: faction.capital_system_id).to_a
       next if candidates.empty?
 
       spread(candidates, WORLDS_PER_LEVEL[faction.power_level - 1]).each_with_index do |system, index|
-        planet = Planet.create!(npc_faction: faction, system: system,
+        planet = Planet.create!(empire: faction.empire, system: system,
                                 name: "#{faction.name} #{index + 1}")
 
         WORLD_STRUCTURES.each do |kind, per_level|

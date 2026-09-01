@@ -2,8 +2,9 @@ class System < ApplicationRecord
   KINDS = %w[empty home resource outpost fortress core].freeze
 
   belongs_to :galaxy
+  # One owner, whoever it is. Before factions were empires this was two columns that had
+  # to be kept exclusive by hand on every capture.
   belongs_to :empire, optional: true
-  belongs_to :npc_faction, optional: true
   belongs_to :sector, optional: true
   has_many :stationed_fleets, class_name: "Fleet", foreign_key: "origin_system_id", dependent: :nullify
   has_one :planet, dependent: :destroy
@@ -14,7 +15,11 @@ class System < ApplicationRecord
 
   scope :at, ->(x, y) { where(x: x, y: y) }
   scope :owned_by, ->(empire) { where(empire: empire) }
-  scope :npc, -> { where.not(npc_faction_id: nil) }
+  scope :held, -> { where.not(empire_id: nil) }
+  # Held by a faction rather than by a commander. Before factions were empires this was
+  # simply "has an npc_faction_id".
+  scope :garrisoned, -> { joins(:empire).merge(Empire.artificial) }
+  scope :commanded, -> { joins(:empire).merge(Empire.commanded) }
 
   def coordinate
     "#{x},#{y}"
@@ -38,8 +43,8 @@ class System < ApplicationRecord
   end
 
   def owner_name
-    return empire.player.name if empire
-    return npc_faction.name if npc_faction
-    "Unclaimed"
+    return "Unclaimed" if empire.nil?
+
+    empire.run_by_npc? ? empire.name : empire.player.name
   end
 end

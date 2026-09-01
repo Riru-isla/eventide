@@ -21,7 +21,7 @@ class FactionProduction
 
   def run!
     complete_finished
-    @galaxy.npc_factions.standing.roused.includes(:planets).find_each { |faction| commission(faction) }
+    @galaxy.npc_factions.standing.roused.includes(:empire).find_each { |faction| commission(faction) }
   end
 
   private
@@ -50,7 +50,7 @@ class FactionProduction
       # Nothing is queued that cannot be paid for outright, the same as a build order.
       break if faction.metal < cost || faction.crystal < cost
 
-      faction.update!(metal: faction.metal - cost, crystal: faction.crystal - cost)
+      faction.empire.update!(metal: faction.metal - cost, crystal: faction.crystal - cost)
       faction.projects.create!(
         system: target, kind: "fortify", defence_gain: gain,
         started_at_tick: @galaxy.current_tick,
@@ -79,6 +79,8 @@ class FactionProduction
   end
 
   def front
-    @front ||= @galaxy.systems.where.not(empire_id: nil).pluck(:x, :y)
+    # Commanders only. Every faction is an empire now, so "anything with an owner" would
+    # have a faction reinforcing against its own territory.
+    @front ||= @galaxy.systems.commanded.pluck(:x, :y)
   end
 end

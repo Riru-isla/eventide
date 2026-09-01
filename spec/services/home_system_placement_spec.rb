@@ -42,14 +42,14 @@ RSpec.describe HomeSystemPlacement, type: :service do
 
     it "skips systems an NPC faction holds" do
       taken = galaxy.systems.at(5, 5).first
-      taken.update!(npc_faction: create(:npc_faction, galaxy: galaxy))
+      taken.update!(empire: create(:empire, :artificial, galaxy: galaxy))
 
       expect(seat!).not_to eq(taken)
     end
 
     it "returns nil when nothing is free" do
       faction = create(:npc_faction, galaxy: galaxy)
-      galaxy.systems.find_each { |system| system.update!(npc_faction: faction) }
+      galaxy.systems.find_each { |system| system.update!(empire: faction.empire) }
 
       expect(described_class.new(galaxy).next_free_system).to be_nil
     end

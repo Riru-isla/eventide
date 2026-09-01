@@ -6,8 +6,7 @@ RSpec.describe Planet, type: :model do
   let(:system) { create(:system, galaxy: galaxy) }
 
   describe "associations" do
-    it { is_expected.to belong_to(:empire).optional }
-    it { is_expected.to belong_to(:npc_faction).optional }
+    it { is_expected.to belong_to(:empire) }
     it { is_expected.to belong_to(:system) }
     it { is_expected.to have_many(:structures).dependent(:destroy) }
   end
@@ -53,33 +52,25 @@ RSpec.describe Planet, type: :model do
     let(:galaxy) { create(:galaxy) }
     let(:system) { create(:system, galaxy: galaxy) }
 
-    it "may be held by a faction instead of a commander" do
-      faction = create(:npc_faction, galaxy: galaxy)
-      planet = described_class.new(npc_faction: faction, system: system, name: "Forge")
+    it "belongs to whichever empire holds it, commander or AI" do
+      faction = create(:empire, :artificial, galaxy: galaxy)
+      planet = described_class.new(empire: faction, system: system, name: "Forge")
 
       expect(planet).to be_valid
-      expect(planet.owner).to eq(faction)
     end
 
-    it "refuses to belong to nobody" do
-      planet = described_class.new(system: system, name: "Orphan")
+    it "holds a commander to one planet" do
+      commander = create(:empire, galaxy: galaxy)
+      described_class.create!(empire: commander, system: system, name: "Home")
+      second = described_class.new(empire: commander, system: create(:system, galaxy: galaxy), name: "Second")
 
-      expect(planet).not_to be_valid
-      expect(planet.errors[:base]).to include(/one empire or one faction/)
+      expect(second).not_to be_valid
     end
 
-    it "refuses to belong to both" do
-      planet = described_class.new(empire: create(:empire, galaxy: galaxy),
-                                   npc_faction: create(:npc_faction, galaxy: galaxy),
-                                   system: system, name: "Contested")
-
-      expect(planet).not_to be_valid
-    end
-
-    it "still allows a faction more than one, unlike a commander" do
-      faction = create(:npc_faction, galaxy: galaxy)
-      described_class.create!(npc_faction: faction, system: system, name: "Forge")
-      second = described_class.new(npc_faction: faction, system: create(:system, galaxy: galaxy), name: "Yard")
+    it "lets a faction run several, which is the point of its industry" do
+      faction = create(:empire, :artificial, galaxy: galaxy)
+      described_class.create!(empire: faction, system: system, name: "Forge")
+      second = described_class.new(empire: faction, system: create(:system, galaxy: galaxy), name: "Yard")
 
       expect(second).to be_valid
     end

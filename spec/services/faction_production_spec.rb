@@ -51,7 +51,7 @@ RSpec.describe FactionProduction, type: :service do
 
     it "queues nothing it cannot pay for outright" do
       rouse!
-      faction.update!(metal: 1, crystal: 1)
+      faction.empire.update!(metal: 1, crystal: 1)
 
       production.run!
 
@@ -147,7 +147,7 @@ RSpec.describe FactionProduction, type: :service do
       held = faction.systems.where.not(id: faction.capital_system_id).last
       # A commander sitting on top of one of its systems: the neighbouring garrison is the
       # one under threat, so that is what gets reinforced first.
-      beachhead = galaxy.systems.where(npc_faction_id: nil, empire_id: nil).min_by { |s| s.distance_to(held.x, held.y) }
+      beachhead = galaxy.systems.where(empire_id: nil).min_by { |s| s.distance_to(held.x, held.y) }
       beachhead.update!(empire: empire)
 
       production.run!
@@ -165,7 +165,7 @@ RSpec.describe FactionProduction, type: :service do
 
       production.run!
 
-      expect(faction.reload.projects.first.system.npc_faction_id).to eq(faction.id)
+      expect(faction.reload.projects.first.system.empire_id).to eq(faction.empire_id)
     end
   end
 end

@@ -13,8 +13,8 @@ RSpec.describe GalaxiesHelper, type: :helper do
     end
 
     it "uses the faction's own colour for NPC systems" do
-      faction = create(:npc_faction, galaxy: galaxy, color: "#a855f7")
-      system = create(:system, galaxy: galaxy, npc_faction: faction)
+      faction = create(:empire, :artificial, galaxy: galaxy, color: "#a855f7")
+      system = create(:system, galaxy: galaxy, empire: faction)
 
       expect(helper.system_color(system, colors)).to eq("#a855f7")
     end

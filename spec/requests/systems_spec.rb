@@ -9,7 +9,7 @@ RSpec.describe "Systems", type: :request do
     ).generate
   end
 
-  let(:empire) { galaxy.empires.first }
+  let(:empire) { galaxy.empires.commanded.first }
   let(:user) { empire.player.user }
 
   before { sign_in(user) }
@@ -23,7 +23,7 @@ RSpec.describe "Systems", type: :request do
     end
 
     it "does not allow viewing another empire's system as owned" do
-      other_empire_system = galaxy.systems.find_by(empire: nil, npc_faction: nil)
+      other_empire_system = galaxy.systems.find_by(empire: nil)
       get galaxy_system_path(galaxy, other_empire_system)
       expect(response).to have_http_status(:ok)
       expect(response.body).not_to include("Build Ships")

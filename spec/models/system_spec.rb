@@ -4,7 +4,6 @@ RSpec.describe System, type: :model do
   describe "associations" do
     it { is_expected.to belong_to(:galaxy) }
     it { is_expected.to belong_to(:empire).optional }
-    it { is_expected.to belong_to(:npc_faction).optional }
   end
 
   describe "validations" do
@@ -44,9 +43,10 @@ RSpec.describe System, type: :model do
       expect(system.owner_name).to eq("Ada")
     end
 
-    it "returns the faction name for NPC systems" do
-      faction = build(:npc_faction, name: "Void Hegemony")
-      system = build(:system, npc_faction: faction)
+    it "returns the faction name for systems the AI holds" do
+      faction = build(:empire, :artificial, name: "Void Hegemony")
+      system = build(:system, empire: faction)
+
       expect(system.owner_name).to eq("Void Hegemony")
     end
 

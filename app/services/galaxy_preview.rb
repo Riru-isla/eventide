@@ -70,7 +70,7 @@ class GalaxyPreview
   # which of them are counting down. A faction with no clock has no reason to stir yet, and
   # seeing that laid out is what tells you whether a run will unfold or stall.
   def awakening
-    @galaxy.npc_factions.includes(:sector, :planets, :projects).sort_by(&:power_level).map do |faction|
+    @galaxy.npc_factions.includes(:sector, :projects, :empire).sort_by(&:power_level).map do |faction|
       {
         name: faction.name,
         sector: faction.sector&.name,
@@ -87,7 +87,7 @@ class GalaxyPreview
         # counting it would read as work already done.
         garrisons: faction.ordinary_systems.count,
         fortified: faction.ordinary_systems.where(defense_strength: faction.fortification_ceiling..).count,
-        neighbours: faction.neighbours.order(:power_level).pluck(:name)
+        neighbours: faction.neighbours.order(:power_level).includes(:empire).map(&:name)
       }
     end
   end
@@ -97,7 +97,7 @@ class GalaxyPreview
   # was 40 ticks from the frontier capital and another 117 — so it belongs in front of you
   # whenever the generation constants move.
   def frontier
-    garrisons = @galaxy.systems.where.not(npc_faction_id: nil).to_a
+    garrisons = @galaxy.systems.garrisoned.to_a
     capitals = @galaxy.npc_factions.includes(:capital_system).filter_map(&:capital_system)
     return [] if garrisons.empty? || capitals.empty?
 
@@ -121,18 +121,29 @@ class GalaxyPreview
 
   def dimension = @galaxy.width
 
-  def sectors = @sectors ||= @galaxy.sectors.includes(:npc_faction).index_by(&:id)
+  def sectors = @sectors ||= @galaxy.sectors.includes(npc_faction: :empire).index_by(&:id)
 
   def rows
-    @rows ||= @galaxy.systems.pluck(:x, :y, :kind, :sector_id, :npc_faction_id)
+    @rows ||= @galaxy.systems.pluck(:x, :y, :kind, :sector_id, :empire_id)
   end
 
   def counts_by_sector
     @counts_by_sector ||= rows.group_by { |row| row[3] }.transform_values(&:size)
   end
 
+  # Which empire ids belong to factions. Every row now carries an empire id whoever holds
+  # it, so "has an owner" no longer means "garrisoned" — a commander's home would count.
+  def artificial_ids
+    @artificial_ids ||= @galaxy.empires.artificial.pluck(:id).to_set
+  end
+
+  def garrisoned?(empire_id)
+    artificial_ids.include?(empire_id)
+  end
+
   def garrison_by_sector
-    @garrison_by_sector ||= rows.select { |row| row[4] }.group_by { |row| row[3] }.transform_values(&:size)
+    @garrison_by_sector ||= rows.select { |row| garrisoned?(row[4]) }
+                                .group_by { |row| row[3] }.transform_values(&:size)
   end
 
   def colour_for(sector_id)
@@ -168,13 +179,13 @@ class GalaxyPreview
   end
 
   def system_rects
-    rows.filter_map do |x, y, kind, sector_id, faction_id|
+    rows.filter_map do |x, y, kind, sector_id, empire_id|
       # Homes and garrisons are the whole point of the picture, so they are drawn whether
       # or not they land on the sampling grid.
-      next unless step == 1 || kind == "home" || faction_id || ((x % step).zero? && (y % step).zero?)
+      next unless step == 1 || kind == "home" || garrisoned?(empire_id) || ((x % step).zero? && (y % step).zero?)
 
       %(<rect x="#{x}" y="#{y}" width="#{step}" height="#{step}" fill="#{fill_for(kind, sector_id)}" ) +
-        %(opacity="#{opacity_for(kind, faction_id)}"/>)
+        %(opacity="#{opacity_for(kind, empire_id)}"/>)
     end
   end
 
@@ -184,9 +195,9 @@ class GalaxyPreview
     colour_for(sector_id)
   end
 
-  def opacity_for(kind, faction_id)
+  def opacity_for(kind, empire_id)
     return 1.0 if kind == "home"
-    return HELD_OPACITY if faction_id
+    return HELD_OPACITY if garrisoned?(empire_id)
     return RESOURCE_OPACITY if kind == "resource"
 
     EMPTY_OPACITY
@@ -194,7 +205,7 @@ class GalaxyPreview
 
   # Capitals and the core get a ring so they can be picked out of their own territory.
   def markers
-    marks = @galaxy.npc_factions.includes(:capital_system).filter_map do |faction|
+    marks = @galaxy.npc_factions.includes(:capital_system, :empire).filter_map do |faction|
       capital = faction.capital_system
       next if capital.nil?
 

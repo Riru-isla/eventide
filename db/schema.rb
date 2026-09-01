@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_25_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_01_140000) do
   create_table "build_orders", force: :cascade do |t|
     t.integer "completes_at_tick"
     t.datetime "created_at", null: false
@@ -37,14 +37,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_170000) do
   end
 
   create_table "empires", force: :cascade do |t|
+    t.string "color"
     t.datetime "created_at", null: false
     t.integer "crew", default: 0, null: false
     t.integer "crystal"
+    t.string "empire_type", default: "player", null: false
     t.integer "energy"
     t.integer "galaxy_id", null: false
     t.integer "home_system_id"
     t.integer "metal"
-    t.integer "player_id", null: false
+    t.string "name"
+    t.integer "player_id"
     t.string "role"
     t.datetime "updated_at", null: false
     t.index ["galaxy_id"], name: "index_empires_on_galaxy_id"
@@ -107,13 +110,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_170000) do
     t.integer "awareness", default: 50, null: false
     t.integer "base_defence", default: 0, null: false
     t.integer "capital_system_id"
-    t.string "color"
     t.datetime "created_at", null: false
-    t.integer "crystal", default: 0, null: false
+    t.integer "empire_id"
     t.integer "fallen_at_tick"
     t.integer "galaxy_id", null: false
-    t.integer "metal", default: 0, null: false
-    t.string "name"
     t.integer "power_level", default: 1, null: false
     t.integer "sector_id"
     t.integer "strength_level"
@@ -121,6 +121,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_170000) do
     t.datetime "updated_at", null: false
     t.integer "wake_at_tick"
     t.index ["capital_system_id"], name: "index_npc_factions_on_capital_system_id"
+    t.index ["empire_id"], name: "index_npc_factions_on_empire_id"
     t.index ["galaxy_id", "power_level"], name: "index_npc_factions_on_galaxy_id_and_power_level"
     t.index ["galaxy_id"], name: "index_npc_factions_on_galaxy_id"
     t.index ["sector_id"], name: "index_npc_factions_on_sector_id"
@@ -141,11 +142,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_170000) do
     t.datetime "created_at", null: false
     t.integer "empire_id"
     t.string "name", null: false
-    t.integer "npc_faction_id"
     t.integer "system_id", null: false
     t.datetime "updated_at", null: false
     t.index ["empire_id"], name: "index_planets_on_empire_id"
-    t.index ["npc_faction_id"], name: "index_planets_on_npc_faction_id"
     t.index ["system_id"], name: "index_planets_on_system_id", unique: true
   end
 
@@ -219,14 +218,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_170000) do
     t.string "kind"
     t.integer "metal_rate"
     t.string "name"
-    t.integer "npc_faction_id"
     t.integer "sector_id"
     t.datetime "updated_at", null: false
     t.integer "x"
     t.integer "y"
     t.index ["empire_id"], name: "index_systems_on_empire_id"
     t.index ["galaxy_id"], name: "index_systems_on_galaxy_id"
-    t.index ["npc_faction_id"], name: "index_systems_on_npc_faction_id"
     t.index ["sector_id"], name: "index_systems_on_sector_id"
   end
 
@@ -251,12 +248,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_170000) do
   add_foreign_key "faction_projects", "systems"
   add_foreign_key "fleets", "empires"
   add_foreign_key "fleets", "galaxies"
+  add_foreign_key "npc_factions", "empires"
   add_foreign_key "npc_factions", "galaxies"
   add_foreign_key "npc_factions", "sectors"
   add_foreign_key "npc_factions", "systems", column: "capital_system_id"
   add_foreign_key "planet_structures", "planets"
   add_foreign_key "planets", "empires"
-  add_foreign_key "planets", "npc_factions"
   add_foreign_key "planets", "systems"
   add_foreign_key "players", "galaxies"
   add_foreign_key "players", "users"
@@ -267,6 +264,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_170000) do
   add_foreign_key "ship_orders", "planets"
   add_foreign_key "systems", "empires"
   add_foreign_key "systems", "galaxies"
-  add_foreign_key "systems", "npc_factions"
   add_foreign_key "systems", "sectors"
 end

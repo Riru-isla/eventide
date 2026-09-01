@@ -46,12 +46,18 @@ class TickProcessor
     @galaxy.empires.includes(:technologies, :research_orders).find_each { |empire| empire.research.advance! }
   end
 
+  # Only commanders bank from planets and outlying systems; a faction earns from territory
+  # through its own income, collected separately.
+  #
   # Income comes from two places: the empire's planet, where structure levels and
   # the energy balance decide the yield, and any other system it holds, which still
   # contributes its flat rate. Energy is not collected — it is a balance on the
   # planet, not a stored resource.
   def collect_resources
-    @galaxy.empires.includes(planet: [ :structures, :system ]).find_each do |empire|
+    # Commanders only. A faction earns from the ground it holds, and only once roused —
+    # see collect_faction_income. Leaving this unscoped paid factions twice and paid
+    # unprovoked ones at all.
+    @galaxy.empires.commanded.includes(planet: [ :structures, :system ]).find_each do |empire|
       income = planet_income(empire)
       add_system_income(empire, income)
 
@@ -95,12 +101,13 @@ class TickProcessor
   # to a faction nobody has provoked, so most of the map costs nothing to simulate for most
   # of a run.
   def collect_faction_income
-    @galaxy.npc_factions.standing.roused.find_each do |faction|
+    @galaxy.npc_factions.standing.roused.includes(:empire).find_each do |faction|
+      empire = faction.empire
       ceiling = faction.capacity
 
-      faction.update!(
-        metal: [ faction.metal + faction.income(:metal), ceiling ].min,
-        crystal: [ faction.crystal + faction.income(:crystal), ceiling ].min
+      empire.update!(
+        metal: [ empire.metal + faction.income(:metal), ceiling ].min,
+        crystal: [ empire.crystal + faction.income(:crystal), ceiling ].min
       )
     end
   end
@@ -159,7 +166,8 @@ class TickProcessor
 
   def resolve_combat(fleet)
     target = fleet.target_system
-    faction = target.npc_faction
+    defender = target.empire
+    faction = defender&.npc_faction
 
     if faction
       # Read before the fight: a won attack clears the faction off the system, and a lost
@@ -172,7 +180,6 @@ class TickProcessor
       if attacker_power >= defender_power
         plunder!(fleet, target)
         target.update!(
-          npc_faction: nil,
           empire: fleet.empire,
           kind: "resource",
           defense_strength: [ attacker_power / 2, 1 ].max

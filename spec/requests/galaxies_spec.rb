@@ -31,7 +31,7 @@ RSpec.describe "Galaxies", type: :request do
     it "draws only the systems somebody holds" do
       # A galaxy is 22,500 systems at its smallest. Drawing empty space would lock the
       # browser and show nothing; a viewport arrives with fog of war.
-      held = galaxy.systems.where.not(empire_id: nil).or(galaxy.systems.where.not(npc_faction_id: nil)).count
+      held = galaxy.systems.held.count
 
       get galaxy_path(galaxy)
 
@@ -271,7 +271,7 @@ RSpec.describe "Galaxies", type: :request do
     it "reports why joining failed rather than falling over" do
       sign_in(newcomer)
       faction = galaxy.npc_factions.first
-      galaxy.systems.find_each { |system| system.update!(npc_faction: faction) }
+      galaxy.systems.find_each { |system| system.update!(empire: faction.empire) }
 
       post join_galaxy_path(galaxy), params: { role: "warden" }
 

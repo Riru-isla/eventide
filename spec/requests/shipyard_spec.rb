@@ -9,7 +9,7 @@ RSpec.describe "Shipyard", type: :request do
     ).generate
   end
 
-  let(:empire) { galaxy.empires.first }
+  let(:empire) { galaxy.empires.commanded.first }
   let(:user) { empire.player.user }
   let(:planet) { empire.planet }
 

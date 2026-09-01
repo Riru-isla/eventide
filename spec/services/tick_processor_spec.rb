@@ -9,7 +9,7 @@ RSpec.describe TickProcessor, type: :service do
     ).generate
   end
 
-  let(:empire) { galaxy.empires.first }
+  let(:empire) { galaxy.empires.commanded.first }
 
   describe "#process" do
     it "increments the galaxy tick" do
@@ -144,7 +144,7 @@ RSpec.describe TickProcessor, type: :service do
 
     it "resolves fleet arrivals and captures NPC systems" do
       origin = empire.home_system
-      target = galaxy.systems.npc.first
+      target = galaxy.systems.garrisoned.first
       target.update!(defense_strength: 10)
 
       fleet = galaxy.fleets.create!(
@@ -160,12 +160,12 @@ RSpec.describe TickProcessor, type: :service do
 
       target.reload
       expect(target.empire).to eq(empire)
-      expect(target.npc_faction).to be_nil
+      expect(target.reload.empire).to eq(empire)
       expect(fleet.reload.status).to eq("orbiting")
     end
 
     it "hauls plunder out of a captured system, up to the fleet's cargo space" do
-      target = galaxy.systems.npc.first
+      target = galaxy.systems.garrisoned.first
       target.update!(defense_strength: 10, metal_rate: 20, crystal_rate: 20)
 
       galaxy.fleets.create!(
@@ -178,7 +178,7 @@ RSpec.describe TickProcessor, type: :service do
     end
 
     it "takes the ground but no spoils when a fleet has no cargo space" do
-      target = galaxy.systems.npc.first
+      target = galaxy.systems.garrisoned.first
       target.update!(defense_strength: 10, metal_rate: 20, crystal_rate: 20)
 
       fleet = galaxy.fleets.create!(
@@ -218,7 +218,7 @@ RSpec.describe TickProcessor, type: :service do
 
     it "lets an armoured fleet retreat instead of being destroyed" do
       origin = empire.home_system
-      target = galaxy.systems.npc.first
+      target = galaxy.systems.garrisoned.first
       target.update!(defense_strength: 10_000)
       empire.technologies.create!(kind: "armor_technology", level: 5)
 
@@ -240,7 +240,7 @@ RSpec.describe TickProcessor, type: :service do
 
     it "destroys fleets that lose combat" do
       origin = empire.home_system
-      target = galaxy.systems.npc.first
+      target = galaxy.systems.garrisoned.first
       target.update!(defense_strength: 10_000)
 
       fleet = galaxy.fleets.create!(
@@ -361,7 +361,7 @@ RSpec.describe TickProcessor, type: :service do
     it "skips a fleet under way with no destination left" do
       fleet = galaxy.fleets.create!(
         empire: empire, origin_system: empire.home_system,
-        target_system: galaxy.systems.npc.first,
+        target_system: galaxy.systems.garrisoned.first,
         arrival_tick: galaxy.current_tick, status: "moving", ships: { "light_fighter" => 1 }
       )
       fleet.update_column(:target_system_id, nil)
@@ -399,40 +399,43 @@ RSpec.describe TickProcessor, type: :service do
 
     it "pays a roused faction for the ground it holds" do
       faction = galaxy.npc_factions.by_power.last
-      faction.update!(aggression: :aware, metal: 0, crystal: 0)
+      faction.update!(aggression: :aware)
+      faction.empire.update!(metal: 0, crystal: 0)
 
       described_class.new(galaxy).process
 
-      expect(faction.reload.metal).to eq(faction.systems.sum(:metal_rate) * galaxy.threat_multiplier)
+      expect(faction.empire.reload.metal).to eq(faction.systems.sum(:metal_rate) * galaxy.threat_multiplier)
     end
 
     it "pays a faction nobody has provoked nothing at all" do
       # Most of the map, for most of a run: an unprovoked faction costs nothing to simulate.
       faction = galaxy.npc_factions.slumbering.first
-      faction.update!(metal: 100, crystal: 100)
+      faction.empire.update!(metal: 100, crystal: 100)
 
       described_class.new(galaxy).process
 
-      expect(faction.reload.metal).to eq(100)
+      expect(faction.empire.reload.metal).to eq(100)
     end
 
     it "stops paying at what the faction can store" do
       faction = galaxy.npc_factions.by_power.last
-      faction.update!(aggression: :aware, metal: faction.capacity - 1, crystal: 0)
+      faction.update!(aggression: :aware)
+      faction.empire.update!(metal: faction.capacity - 1, crystal: 0)
 
       described_class.new(galaxy).process
 
-      expect(faction.reload.metal).to eq(faction.capacity)
+      expect(faction.empire.reload.metal).to eq(faction.capacity)
     end
 
     it "pays a harsher galaxy more for the same ground" do
       faction = galaxy.npc_factions.by_power.last
-      faction.update!(aggression: :aware, metal: 0)
+      faction.update!(aggression: :aware)
+      faction.empire.update!(metal: 0)
       galaxy.update!(threat_level: "brutal")
 
       described_class.new(galaxy).process
 
-      expect(faction.reload.metal).to eq((faction.systems.sum(:metal_rate) * 2.4).round)
+      expect(faction.empire.reload.metal).to eq((faction.systems.sum(:metal_rate) * 2.4).round)
     end
   end
 end

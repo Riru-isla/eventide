@@ -43,11 +43,12 @@ class FleetsController < ApplicationController
     @empire.fleets.find_by(origin_system: @empire.planet.system, status: "orbiting")
   end
 
-  # Every planet in the galaxy is a valid destination — this is a cooperative game, so
-  # shipping to another commander is the point rather than an exploit.
+  # Every *commander's* planet is a valid destination — this is a cooperative game, so
+  # shipping to another player is the point rather than an exploit. Faction worlds are
+  # not somewhere you can send cargo.
   def destination_planets
     Planet.includes(:system, empire: :player)
-          .where(empire: @galaxy.empires)
+          .where(empire: @galaxy.empires.commanded)
           .reject { |planet| planet.id == @empire.planet.id }
   end
 

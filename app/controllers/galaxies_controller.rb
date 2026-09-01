@@ -88,7 +88,7 @@ class GalaxiesController < ApplicationController
   end
 
   def load_map
-    @empires = @galaxy.empires.includes(:player).order(:created_at)
+    @empires = @galaxy.empires.commanded.includes(:player).order(:created_at)
 
     # Only systems somebody holds are drawn. A galaxy is 17,663 systems at its smallest
     # and 125,627 at its largest — drawing every one would lock the browser, and empty
@@ -96,8 +96,7 @@ class GalaxiesController < ApplicationController
     #
     # This is a stopgap: the real answer is a viewport that renders the neighbourhood a
     # player can actually see, which arrives with fog of war.
-    @systems = @galaxy.systems.where.not(empire_id: nil).or(@galaxy.systems.where.not(npc_faction_id: nil))
-                      .includes({ empire: :player }, :npc_faction, { planet: :structures })
+    @systems = @galaxy.systems.held.includes({ empire: :player }, { planet: :structures })
 
     # Built once and handed to the view. Resolving each system's colour from the system
     # itself used to run a query per system.

@@ -53,26 +53,26 @@ RSpec.describe EmpireFounder, type: :service do
   it "clears any NPC faction from the claimed home system" do
     faction = galaxy.npc_factions.first
     spawn = galaxy.spawn_sector
-    spawn.systems.find_each { |system| system.update!(npc_faction: faction) }
+    spawn.systems.find_each { |system| system.update!(empire: faction.empire) }
     free = spawn.systems.first
-    free.update!(npc_faction: nil)
+    free.update!(empire: nil)
 
     empire = found
 
     expect(empire.home_system).to eq(free)
-    expect(empire.home_system.npc_faction).to be_nil
+    expect(empire.home_system.empire).to eq(empire)
   end
 
   it "raises when the galaxy has no free system left" do
     faction = galaxy.npc_factions.first
-    galaxy.systems.find_each { |system| system.update!(npc_faction: faction) }
+    galaxy.systems.find_each { |system| system.update!(empire: faction.empire) }
 
     expect { found }.to raise_error(described_class::NoHomeSystemAvailable)
   end
 
   it "does not leave a player behind when founding fails" do
     faction = galaxy.npc_factions.first
-    galaxy.systems.find_each { |system| system.update!(npc_faction: faction) }
+    galaxy.systems.find_each { |system| system.update!(empire: faction.empire) }
 
     expect { found rescue nil }.not_to change(Player, :count)
   end

@@ -102,7 +102,7 @@ RSpec.describe GalaxyGenerator, type: :service do
 
       expect(core.kind).to eq("core")
       expect(core.sector).to eq(galaxy.core_sector)
-      expect(core.npc_faction.power_level).to eq(described_class::POWER_LEVELS)
+      expect(core.empire.npc_faction.power_level).to eq(described_class::POWER_LEVELS)
     end
 
     it "puts the players at the far end of the disc from it" do
@@ -135,7 +135,7 @@ RSpec.describe GalaxyGenerator, type: :service do
     end
 
     it "spends roughly the garrison budget the size allows" do
-      expect(galaxy.systems.where.not(npc_faction_id: nil).count)
+      expect(galaxy.systems.held.joins(:empire).merge(Empire.artificial).count)
         .to be_within(BUDGET_TOLERANCE).of(Galaxy.npc_systems_for("tiny"))
     end
 
@@ -183,7 +183,7 @@ RSpec.describe GalaxyGenerator, type: :service do
 
     it "puts worlds only on ground the faction already holds" do
       galaxy.npc_factions.each do |faction|
-        expect(faction.planets.map { |planet| planet.system.npc_faction_id }.uniq).to eq([ faction.id ])
+        expect(faction.planets.map { |planet| planet.system.empire_id }.uniq).to eq([ faction.empire_id ])
       end
     end
 
@@ -214,7 +214,8 @@ RSpec.describe GalaxyGenerator, type: :service do
       spawn = galaxy.spawn_sector
 
       expect(spawn.npc_faction).to be_nil
-      expect(spawn.systems.where.not(npc_faction_id: nil)).to be_empty
+      # Commanders live here; no faction does.
+      expect(spawn.systems.garrisoned).to be_empty
     end
 
     it "holds every commander, so the whole group shares one frontier" do

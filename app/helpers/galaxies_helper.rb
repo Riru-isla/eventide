@@ -22,7 +22,7 @@ module GalaxiesHelper
   }.freeze
 
   def role_options
-    Empire::ROLES.map { |role| [ ROLE_LABELS.fetch(role), role ] }
+    Empire::COMMANDER_ROLES.map { |role| [ ROLE_LABELS.fetch(role), role ] }
   end
 
   def empire_color(index)
@@ -31,11 +31,12 @@ module GalaxiesHelper
 
   # Takes a prebuilt {empire_id => colour} map rather than looking the empire up, which
   # is what previously made this run a query for every system on the map.
+  # A faction carries its own colour; a commander is given one by position in the roster.
   def system_color(system, empire_colors)
-    return empire_colors.fetch(system.empire_id, EMPTY_COLOR) if system.empire_id
-    return system.npc_faction.color if system.npc_faction
+    return UNOWNED_COLORS.fetch(system.kind, EMPTY_COLOR) if system.empire.nil?
+    return system.empire.color if system.empire.run_by_npc?
 
-    UNOWNED_COLORS.fetch(system.kind, EMPTY_COLOR)
+    empire_colors.fetch(system.empire_id, EMPTY_COLOR)
   end
 
   # Grid coordinates placed on the galaxy disc, centred on the core. Scaled so the

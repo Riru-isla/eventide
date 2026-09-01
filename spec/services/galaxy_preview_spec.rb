@@ -26,7 +26,7 @@ RSpec.describe GalaxyPreview, type: :service do
       svg = preview.to_svg
 
       galaxy.sectors.each { |sector| expect(svg).to include(sector.name) }
-      expect(svg.scan("<circle").size).to eq(galaxy.npc_factions.count + galaxy.empires.count + 1)
+      expect(svg.scan("<circle").size).to eq(galaxy.npc_factions.count + galaxy.empires.commanded.count + 1)
     end
 
     it "names the galaxy and its core in the caption" do
@@ -54,7 +54,7 @@ RSpec.describe GalaxyPreview, type: :service do
       core = galaxy.core_sector
 
       expect(row[:systems]).to eq(core.systems.count)
-      expect(row[:garrisoned]).to eq(core.systems.where.not(npc_faction_id: nil).count)
+      expect(row[:garrisoned]).to eq(core.systems.where.not(empire_id: nil).count)
       expect(row[:faction]).to eq(core.npc_faction.name)
     end
 
@@ -91,7 +91,8 @@ RSpec.describe GalaxyPreview, type: :service do
       row = preview.awakening.first
 
       expect(row[:neighbours]).to be_any
-      expect(row[:neighbours]).to match_array(galaxy.npc_factions.find_by(name: row[:name]).neighbours.pluck(:name))
+      neighbour = galaxy.npc_factions.joins(:empire).find_by(empires: { name: row[:name] })
+      expect(row[:neighbours]).to match_array(neighbour.neighbours.map(&:name))
     end
 
     it "shows nothing counting down, since a fresh galaxy stirs only when provoked" do
@@ -105,7 +106,7 @@ RSpec.describe GalaxyPreview, type: :service do
 
       counting = preview.awakening.select { |row| row[:wake_at_tick] }
 
-      expect(counting.map { |row| row[:name] }).to match_array(frontier.neighbours.pluck(:name))
+      expect(counting.map { |row| row[:name] }).to match_array(frontier.neighbours.map(&:name))
     end
   end
 
@@ -126,7 +127,7 @@ RSpec.describe GalaxyPreview, type: :service do
     end
 
     it "reports nothing when there is no enemy on the map yet" do
-      galaxy.systems.update_all(npc_faction_id: nil)
+      galaxy.systems.update_all(empire_id: nil)
 
       expect(preview.frontier).to be_empty
     end

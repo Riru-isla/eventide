@@ -25,10 +25,10 @@ FactoryBot.define do
     power_level { 1 }
   end
 
+  # The brain and the empire it drives are made together; neither is useful alone.
   factory :npc_faction do
     galaxy
-    sequence(:name) { |n| "Faction #{n}" }
-    color { "#ef4444" }
+    empire { association :empire, :artificial, galaxy: galaxy }
     strength_level { 1 }
     tech_level { 1 }
     power_level { 1 }
@@ -46,10 +46,20 @@ FactoryBot.define do
   factory :empire do
     player
     galaxy
+    empire_type { "player" }
+    sequence(:name) { |n| "Empire #{n}" }
     role { "foundry" }
     metal { 500 }
     crystal { 500 }
     energy { 500 }
+
+    trait :artificial do
+      player { nil }
+      empire_type { "npc" }
+      sequence(:name) { |n| "Faction #{n}" }
+      color { "#ef4444" }
+      role { Empire::NPC_ROLE }
+    end
   end
 
   factory :system do

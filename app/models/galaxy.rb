@@ -64,6 +64,10 @@ class Galaxy < ApplicationRecord
   has_many :empires, dependent: :destroy
   has_many :players, dependent: :destroy
 
+  # Only the ones a commander is driving. Most screens mean this when they say "empires".
+  has_many :commanded_empires, -> { commanded }, class_name: "Empire", inverse_of: :galaxy,
+           dependent: nil
+
   validates :name, presence: true
   validates :width, :height, numericality: { greater_than: 0 }
   validates :size, inclusion: { in: SIZES.keys }

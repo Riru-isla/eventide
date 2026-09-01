@@ -12,11 +12,11 @@ RSpec.describe "Fleets", type: :request do
     ).generate
   end
 
-  let(:empire) { galaxy.empires.first }
-  let(:other) { galaxy.empires.last }
+  let(:empire) { galaxy.empires.commanded.first }
+  let(:other) { galaxy.empires.commanded.last }
   let(:user) { empire.player.user }
   let(:origin) { empire.planet.system }
-  let(:npc_target) { galaxy.systems.npc.first }
+  let(:npc_target) { galaxy.systems.garrisoned.first }
   let(:garrison) { empire.fleets.find_by(origin_system: origin, status: "orbiting") }
 
   before { sign_in(user) }

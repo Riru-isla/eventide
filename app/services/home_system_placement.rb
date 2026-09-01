@@ -32,7 +32,7 @@ class HomeSystemPlacement
   def free_systems
     scope = @galaxy.spawn_sector&.systems || @galaxy.systems
 
-    scope.where(empire_id: nil, npc_faction_id: nil).to_a
+    scope.where(empire_id: nil).to_a
   end
 
   def gap_from(system, claimed)

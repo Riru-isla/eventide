@@ -192,11 +192,13 @@ class PlanetEconomy
     resource == :metal ? @system.metal_rate.to_i : @system.crystal_rate.to_i
   end
 
+  # A faction has no doctrine — no role, and so no bonus. Its advantages are tempo and
+  # scale, which is what keeps the two economies comparable.
   def role_contribution(resource, subtotal)
     multiplier = @empire.resource_bonus(resource)
 
     Contribution.new(
-      label: "#{@empire.role.capitalize} doctrine",
+      label: @empire.run_by_npc? ? "No doctrine" : "#{@empire.role.capitalize} doctrine",
       value: subtotal * (multiplier - 1),
       kind: :role
     )

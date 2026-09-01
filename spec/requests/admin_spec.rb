@@ -31,6 +31,18 @@ RSpec.describe "Administration", type: :request do
       expect(response.body).to include(galaxy.threat_level, galaxy.awareness_level, galaxy.size)
     end
 
+    it "reports how the AI is doing, which is why an admin looks at all" do
+      faction = galaxy.npc_factions.first
+      faction.update!(aggression: :aware)
+      FactionProduction.new(galaxy).run!
+      sign_in(administrator)
+
+      get admin_dashboard_path
+
+      expect(response.body).to include("Roused", "AI banked", "Building")
+      expect(response.body).to include(ActiveSupport::NumberHelper.number_to_delimited(galaxy.empires.artificial.sum(:metal)))
+    end
+
     it "says which accounts command where, and which administer" do
       sign_in(administrator)
 

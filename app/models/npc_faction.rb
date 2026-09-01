@@ -14,15 +14,17 @@ class NpcFaction < ApplicationRecord
   }.freeze
 
   belongs_to :galaxy
+  belongs_to :empire
   belongs_to :sector, optional: true
   belongs_to :capital_system, class_name: "System", optional: true
-  has_many :systems, dependent: :nullify
-  has_many :planets, dependent: :destroy
   has_many :projects, class_name: "FactionProject", dependent: :destroy
+
+  # The faction is the AI's brain; the empire is what it drives. Everything it owns and
+  # everything it banks lives there, on exactly the columns a commander uses.
+  delegate :name, :color, :metal, :crystal, :systems, :planets, :galaxy_id, to: :empire
 
   enum :aggression, AGGRESSIONS, default: :unaware
 
-  validates :name, presence: true
   validates :strength_level, numericality: { greater_than_or_equal_to: 0 }
   validates :power_level, numericality: { only_integer: true, greater_than: 0 }
 
@@ -128,5 +130,5 @@ class NpcFaction < ApplicationRecord
   # A faction dies when its capital is taken, not when every system it holds is
   # cleared — so each sector ends in one battle worth organising for rather than a
   # mop-up nobody wants to do.
-  def capital_held? = capital_system&.npc_faction_id == id
+  def capital_held? = capital_system&.empire_id == empire_id
 end

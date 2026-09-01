@@ -19,7 +19,8 @@ RSpec.describe GalaxyGenerationJob, type: :job do
       player_configs: [ { name: "Ada", role: "foundry", username: "job-ada" } ]
     )
 
-    expect(Galaxy.last.empires.count).to eq(1)
+    # Factions are empires too now, so count only the ones a commander drives.
+    expect(Galaxy.last.empires.commanded.count).to eq(1)
   end
 
   it "defaults to a small galaxy" do

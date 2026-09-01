@@ -29,6 +29,9 @@
           <tr class="text-ink-3">
             <th class="px-4 py-2 text-left font-medium">Galaxy</th>
             <th class="px-2 py-2 text-right font-medium">Factions</th>
+            <th class="px-2 py-2 text-right font-medium">Roused</th>
+            <th class="px-2 py-2 text-right font-medium">AI banked</th>
+            <th class="px-2 py-2 text-right font-medium">Building</th>
             <th class="px-2 py-2 text-right font-medium">Commanders</th>
             <th class="px-2 py-2 text-right font-medium">Tick</th>
             <th class="px-4 py-2 text-right font-medium"></th>
@@ -46,6 +49,11 @@
                 </span>
               </td>
               <td class="num px-2 py-2 text-right text-ink-2"><%= @factions.fetch(galaxy.id, 0) %></td>
+              <td class="num px-2 py-2 text-right <%= @roused.fetch(galaxy.id, 0).positive? ? "text-amber" : "text-ink-3" %>">
+                <%= @roused.fetch(galaxy.id, 0) %>
+              </td>
+              <td class="num px-2 py-2 text-right text-ink-2"><%= number_with_delimiter(@banked.fetch(galaxy.id, 0)) %></td>
+              <td class="num px-2 py-2 text-right text-ink-2"><%= @building.fetch(galaxy.id, 0) %></td>
               <td class="num px-2 py-2 text-right text-ink-2"><%= @commanders.fetch(galaxy.id, 0) %></td>
               <td class="num px-2 py-2 text-right text-ink-2"><%= number_with_delimiter(galaxy.current_tick) %></td>
               <td class="px-4 py-2 text-right">

@@ -118,7 +118,7 @@ RSpec.describe FactionAwakening, type: :service do
     end
 
     it "shrugs off a system nobody held" do
-      system = galaxy.systems.find_by(npc_faction_id: nil)
+      system = galaxy.systems.find_by(empire_id: nil)
 
       expect { awakening.captured!(system, nil) }.not_to raise_error
     end
