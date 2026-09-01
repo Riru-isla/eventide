@@ -1,0 +1,108 @@
+require 'rails_helper'
+
+RSpec.describe Combat::Stack, type: :service do
+  def unit(shield: 10, armour: 10, hull: 40, damage: { shield: 50, armour: 50, hull: 50 })
+    Combat::Unit.new(key: :test, name: "Test", category: "ship",
+                     shield: shield, armour: armour, hull: hull, damage: damage)
+  end
+
+  let(:rng) { Random.new(1) }
+  let(:killing_blow) { { shield: 1_000, armour: 1_000, hull: 1_000 } }
+  let(:scratch) { { shield: 5, armour: 5, hull: 5 } }
+
+  describe "spreading damage" do
+    it "wounds a different unit each time rather than finishing one off" do
+      # Five hundred shots into ten thousand corvettes should wound five hundred of them,
+      # not destroy a handful. Those are completely different battles.
+      stack = described_class.new(unit: unit, count: 10_000)
+
+      500.times { stack.take(scratch, rng) }
+
+      expect(stack.losses).to be_zero
+      expect(stack.alive).to eq(10_000)
+    end
+
+    it "keeps only the wounded in memory, so fleet size does not cost anything" do
+      stack = described_class.new(unit: unit, count: 1_000_000)
+
+      expect { 100.times { stack.take(scratch, rng) } }.not_to raise_error
+      expect(stack.alive).to eq(1_000_000)
+    end
+  end
+
+  describe "layers" do
+    it "eats shield, then armour, then hull, and needs all three to kill" do
+      # Thirty points of integrity spread across three layers: twenty-nine leaves it
+      # standing, thirty does not.
+      survives = described_class.new(unit: unit(shield: 10, armour: 10, hull: 10), count: 1)
+      survives.take({ shield: 29, armour: 29, hull: 29 }, rng)
+
+      dies = described_class.new(unit: unit(shield: 10, armour: 10, hull: 10), count: 1)
+      dies.take({ shield: 30, armour: 30, hull: 30 }, rng)
+
+      expect(survives.alive).to eq(1)
+      expect(dies.alive).to be_zero
+      expect(dies.losses).to eq(1)
+    end
+
+    it "leaves a unit standing when the shot runs out inside a layer" do
+      stack = described_class.new(unit: unit(shield: 100, armour: 0, hull: 10), count: 1)
+
+      stack.take({ shield: 30, armour: 30, hull: 30 }, rng)
+
+      expect(stack.alive).to eq(1)
+    end
+
+    it "skips a layer a weapon does nothing against" do
+      # Scaffolding for weapons that are useless against shields: with a zero rate the shot
+      # carries straight through rather than being swallowed.
+      stack = described_class.new(unit: unit(shield: 500, armour: 0, hull: 10), count: 1)
+
+      stack.take({ shield: 0, armour: 20, hull: 20 }, rng)
+
+      expect(stack.alive).to be_zero
+    end
+  end
+
+  describe "regeneration" do
+    it "brings shields back between rounds, so a trickle never accumulates" do
+      stack = described_class.new(unit: unit(shield: 40, armour: 0, hull: 10), count: 1)
+
+      3.times do
+        stack.take({ shield: 30, armour: 30, hull: 30 }, rng)
+        stack.regenerate!
+      end
+
+      expect(stack.alive).to eq(1)
+    end
+
+    it "does not undo damage that already reached the hull" do
+      stack = described_class.new(unit: unit(shield: 10, armour: 0, hull: 100), count: 1)
+
+      stack.take({ shield: 60, armour: 60, hull: 60 }, rng)
+      stack.regenerate!
+      stack.take({ shield: 60, armour: 60, hull: 60 }, rng)
+
+      expect(stack.alive).to be_zero
+    end
+  end
+
+  describe "counting" do
+    it "reports what is left and what was lost" do
+      stack = described_class.new(unit: unit, count: 3)
+
+      expect(stack).to be_any
+      2.times { stack.take(killing_blow, rng) }
+
+      expect(stack.alive).to eq(1)
+      expect(stack.losses).to eq(2)
+    end
+
+    it "says when a stack is gone" do
+      stack = described_class.new(unit: unit, count: 1)
+      stack.take(killing_blow, rng)
+
+      expect(stack).not_to be_any
+    end
+  end
+end
