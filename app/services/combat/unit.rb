@@ -12,13 +12,21 @@ module Combat
   # else that fights, are a new entry here rather than a change to how a battle works.
   CATEGORIES = %w[ship ground_defence].freeze
 
-  Unit = Data.define(:key, :name, :category, :shield, :armour, :hull, :damage) do
+  Unit = Data.define(:key, :name, :category, :shield, :armour, :hull, :damage, :signature) do
     def ship? = category == "ship"
 
     # Immobile things only fight where they stand.
     def mobile? = ship?
 
     def damage_against(layer) = damage.fetch(layer)
+
+    # How much fire this hull draws relative to anything else standing beside it. A heavy
+    # ship pulls shots away from the fragile ones behind it, which is the only thing that
+    # makes a defensive hull worth building in a fleet somebody else is also flying in.
+    #
+    # Deliberately not proportional to integrity: a hull that soaked exactly in proportion
+    # to what it can take would screen nobody, it would just be a bigger corvette.
+    def draw = signature
 
     def total_integrity = shield + armour + hull
   end

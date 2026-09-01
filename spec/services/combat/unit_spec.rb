@@ -3,13 +3,13 @@ require 'rails_helper'
 RSpec.describe Combat::Unit, type: :service do
   subject(:corvette) do
     described_class.new(key: :corvette, name: "Corvette", category: "ship",
-                        shield: 10, armour: 20, hull: 40,
+                        shield: 10, armour: 20, hull: 40, signature: 1,
                         damage: { shield: 50, armour: 40, hull: 30 })
   end
 
   let(:turret) do
     described_class.new(key: :light_turret, name: "Light Turret", category: "ground_defence",
-                        shield: 100, armour: 100, hull: 200,
+                        shield: 100, armour: 100, hull: 200, signature: 8,
                         damage: { shield: 60, armour: 60, hull: 60 })
   end
 

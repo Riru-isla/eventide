@@ -1,9 +1,9 @@
 require 'rails_helper'
 
 RSpec.describe Combat::Resolver, type: :service do
-  def unit(key, shield:, armour:, hull:, damage:, category: "ship")
+  def unit(key, shield:, armour:, hull:, damage:, signature: 1, category: "ship")
     Combat::Unit.new(key: key, name: key.to_s, category: category,
-                     shield: shield, armour: armour, hull: hull,
+                     shield: shield, armour: armour, hull: hull, signature: signature,
                      damage: { shield: damage, armour: damage, hull: damage })
   end
 
@@ -68,6 +68,37 @@ RSpec.describe Combat::Resolver, type: :service do
       dear = fight({ corvette => 50 }, { battleship => 1 }).to_h[:attacker][:losses]
 
       expect(dear).to be > cheap
+    end
+  end
+
+  describe "screening" do
+    # A hull that draws fire away from the fragile ships beside it is the only reason to
+    # build a defensive one in a fleet somebody else is also flying in.
+    let(:screen) { unit(:screen, shield: 400, armour: 400, hull: 1_200, damage: 20, signature: 10) }
+
+    it "pulls fire off the ships behind it" do
+      alone = fight({ corvette => 100 }, { corvette => 100 }, seed: 5)
+      screened = fight({ corvette => 100, screen => 10 }, { corvette => 100 }, seed: 5)
+
+      expect(screened.to_h[:attacker][:casualties][:corvette])
+        .to be < alone.to_h[:attacker][:casualties][:corvette]
+    end
+
+    it "takes the shots it drew rather than dodging them" do
+      # Uniform targeting had heavy hulls soaking only their own share, so ten of them
+      # saved a single corvette and came through untouched.
+      report = fight({ corvette => 40, screen => 4 }, { corvette => 400 }, seed: 8)
+
+      expect(report.to_h[:attacker][:casualties][:screen]).to be_positive
+    end
+
+    it "draws in proportion to its signature, not its numbers" do
+      heavy = unit(:heavy, shield: 10, armour: 10, hull: 40, damage: 50, signature: 20)
+      mixed = fight({ corvette => 20, heavy => 1 }, { corvette => 60 }, seed: 2).to_h
+
+      # One heavy pulling twenty times a corvette's share dies well before twenty
+      # corvettes of identical toughness would have.
+      expect(mixed[:attacker][:casualties][:heavy]).to eq(1)
     end
   end
 

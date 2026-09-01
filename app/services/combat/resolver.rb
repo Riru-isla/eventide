@@ -60,27 +60,30 @@ module Combat
 
     def deliver(volley, force)
       targets = force.stacks
-      remaining = force.alive
+      weight = targets.sum(&:weight)
 
       volley.each do |damage, count|
         count.times do
-          break if remaining.zero?
+          break if weight <= 0
 
-          remaining -= 1 if pick(targets, remaining).take(damage, @rng)
+          target = pick(targets, weight)
+          weight -= target.unit.draw if target.take(damage, @rng)
         end
       end
     end
 
-    # Uniform across *units*, not across stacks — one battleship must not soak as many
-    # shots as ten thousand corvettes standing beside it.
-    def pick(targets, remaining)
-      roll = @rng.rand(remaining)
+    # Weighted by what each hull draws, not by how many of them there are. Uniform
+    # targeting meant a heavy ship soaked only its own share, so bringing ten of them to
+    # screen a hundred corvettes saved exactly one corvette — the tanks survived untouched
+    # and protected nobody, which makes a defensive hull pointless in a shared fleet.
+    def pick(targets, weight)
+      roll = @rng.rand(weight)
 
-      # `remaining` is kept equal to the number still standing, so the roll always lands.
+      # `weight` is kept equal to what is still standing, so the roll always lands.
       targets.each do |stack|
-        return stack if roll < stack.alive
+        return stack if roll < stack.weight
 
-        roll -= stack.alive
+        roll -= stack.weight
       end
     end
   end

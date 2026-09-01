@@ -22,6 +22,9 @@ module Combat
 
     def alive = @intact + @wounded.size
 
+    # What this stack pulls of the incoming fire.
+    def weight = alive * @unit.draw
+
     def any? = alive.positive?
 
     # Picks a unit uniformly from everything in this stack still standing and puts one shot

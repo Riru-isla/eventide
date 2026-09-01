@@ -1,8 +1,8 @@
 require 'rails_helper'
 
 RSpec.describe Combat::Stack, type: :service do
-  def unit(shield: 10, armour: 10, hull: 40, damage: { shield: 50, armour: 50, hull: 50 })
-    Combat::Unit.new(key: :test, name: "Test", category: "ship",
+  def unit(shield: 10, armour: 10, hull: 40, damage: { shield: 50, armour: 50, hull: 50 }, signature: 1)
+    Combat::Unit.new(key: :test, name: "Test", category: "ship", signature: signature,
                      shield: shield, armour: armour, hull: hull, damage: damage)
   end
 

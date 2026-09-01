@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe Combat::Force, type: :service do
   def unit(key)
-    Combat::Unit.new(key: key, name: key.to_s, category: "ship",
+    Combat::Unit.new(key: key, name: key.to_s, category: "ship", signature: 1,
                      shield: 0, armour: 0, hull: 10, damage: { shield: 5, armour: 5, hull: 5 })
   end
 
