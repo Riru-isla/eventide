@@ -83,15 +83,30 @@ RSpec.describe Combat::Stack, type: :service do
   end
 
   describe "regeneration" do
-    it "brings shields back between rounds, so a trickle never accumulates" do
-      stack = described_class.new(unit: unit(shield: 40, armour: 0, hull: 10), count: 1)
+    it "recharges part of a shield between rounds, so a trickle cannot accumulate" do
+      # A shot that a shield absorbs, followed by a recharge larger than what got through,
+      # never adds up to anything.
+      stack = described_class.new(unit: unit(shield: 400, armour: 0, hull: 10), count: 1)
 
-      3.times do
-        stack.take({ shield: 30, armour: 30, hull: 30 }, rng)
+      6.times do
+        stack.take({ shield: 50, armour: 50, hull: 50 }, rng)
         stack.regenerate!
       end
 
       expect(stack.alive).to eq(1)
+    end
+
+    it "recharges only part of it, so a heavy enough volley still wears one down" do
+      # At full recharge a weapon poor against shields could never get through one at all,
+      # and specialised guns were useless outright.
+      stack = described_class.new(unit: unit(shield: 400, armour: 0, hull: 10), count: 1)
+
+      6.times do
+        4.times { stack.take({ shield: 100, armour: 100, hull: 100 }, rng) if stack.any? }
+        stack.regenerate!
+      end
+
+      expect(stack.alive).to be_zero
     end
 
     it "does not undo damage that already reached the hull" do

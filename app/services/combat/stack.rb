@@ -11,6 +11,20 @@ module Combat
   class Stack
     LAYERS = %i[shield armour hull].freeze
 
+    # How much of a shield comes back between rounds.
+    #
+    # This is the master dial for whether specialisation works at all. At full
+    # regeneration the shield is an absolute gatekeeper: a weapon poor against shields can
+    # never chew through one before it resets, so it never reaches the layer it is good
+    # at, and being bad against shields means being useless outright. Measured against
+    # armour and hull tanks, anti-armour and anti-hull guns killed *nothing* at any
+    # density. At a quarter, the whole counter triangle appears.
+    #
+    # It still resists a burst — a volley that cannot out-damage the recharge is absorbed
+    # entirely — so a shield-heavy hull remains a hard counter rather than merely a tough
+    # one. A galaxy setting making shields more or less effective belongs here.
+    SHIELD_REGEN = 0.25
+
     attr_reader :unit, :losses
 
     def initialize(unit:, count:)
@@ -53,7 +67,8 @@ module Combat
     # getting through a heavy hull, while a volley big enough to outpace regeneration still
     # goes straight through — the threshold is a matter of rate, not a rule.
     def regenerate!
-      @wounded.each { |layers| layers[0] = @unit.shield }
+      cap = @unit.shield
+      @wounded.each { |layers| layers[0] = [ layers[0] + (cap * SHIELD_REGEN), cap ].min }
     end
 
     private
