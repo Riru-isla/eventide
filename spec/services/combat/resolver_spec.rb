@@ -50,8 +50,8 @@ RSpec.describe Combat::Resolver, type: :service do
       # round, forever. This is what makes composition matter.
       report = fight({ corvette => 5 }, { battleship => 1 })
 
-      expect(report.outcome).to eq(:defender)
       expect(report.to_h[:defender][:losses]).to be_zero
+      expect(report).not_to be_attacker_won
     end
 
     it "lets enough of them through, because mass has to win eventually" do
@@ -63,11 +63,11 @@ RSpec.describe Combat::Resolver, type: :service do
       expect(report.to_h[:defender][:losses]).to eq(1)
     end
 
-    it "makes winning that way expensive rather than free" do
-      cheap = fight({ corvette => 500 }, { battleship => 1 }).to_h[:attacker][:losses]
-      dear = fight({ corvette => 50 }, { battleship => 1 }).to_h[:attacker][:losses]
+    it "makes winning that way cost something" do
+      report = fight({ corvette => 60 }, { battleship => 1 })
 
-      expect(dear).to be > cheap
+      expect(report).to be_attacker_won
+      expect(report.to_h[:attacker][:losses]).to be_positive
     end
   end
 

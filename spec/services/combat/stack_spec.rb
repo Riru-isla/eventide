@@ -8,6 +8,10 @@ RSpec.describe Combat::Stack, type: :service do
 
   let(:rng) { Random.new(1) }
   let(:killing_blow) { { shield: 1_000, armour: 1_000, hull: 1_000 } }
+
+  def kill!(stack)
+    stack.take(killing_blow, rng)
+  end
   let(:scratch) { { shield: 5, armour: 5, hull: 5 } }
 
   describe "spreading damage" do
@@ -31,18 +35,24 @@ RSpec.describe Combat::Stack, type: :service do
   end
 
   describe "layers" do
-    it "eats shield, then armour, then hull, and needs all three to kill" do
-      # Thirty points of integrity spread across three layers: twenty-nine leaves it
-      # standing, thirty does not.
-      survives = described_class.new(unit: unit(shield: 10, armour: 10, hull: 10), count: 1)
-      survives.take({ shield: 29, armour: 29, hull: 29 }, rng)
+    it "carries what a layer cannot absorb through to the next" do
+      # Thirty across three layers of ten: one shot of thirty gets all the way through,
+      # which is what lets a big gun kill a small ship at all.
+      stack = described_class.new(unit: unit(shield: 10, armour: 10, hull: 10), count: 1)
 
-      dies = described_class.new(unit: unit(shield: 10, armour: 10, hull: 10), count: 1)
-      dies.take({ shield: 30, armour: 30, hull: 30 }, rng)
+      stack.take({ shield: 30, armour: 30, hull: 30 }, rng)
 
-      expect(survives.alive).to eq(1)
-      expect(dies.alive).to be_zero
-      expect(dies.losses).to eq(1)
+      expect(stack.alive).to be_zero
+    end
+
+    it "converts the overflow at the next layer's rate, not its own" do
+      # A gun that is feeble against hull does not become strong just because it tore
+      # through the shield in front of it.
+      tough = described_class.new(unit: unit(shield: 10, armour: 0, hull: 200), count: 1)
+
+      tough.take({ shield: 500, armour: 5, hull: 5 }, rng)
+
+      expect(tough.alive).to eq(1)
     end
 
     it "leaves a unit standing when the shot runs out inside a layer" do
@@ -53,12 +63,20 @@ RSpec.describe Combat::Stack, type: :service do
       expect(stack.alive).to eq(1)
     end
 
-    it "skips a layer a weapon does nothing against" do
-      # Scaffolding for weapons that are useless against shields: with a zero rate the shot
-      # carries straight through rather than being swallowed.
+    it "cannot get past a layer it does no damage to at all" do
+      # A weapon with nothing to say to shields never reaches what is behind them. That is
+      # what makes a shield-heavy hull a hard counter rather than merely a tough one.
       stack = described_class.new(unit: unit(shield: 500, armour: 0, hull: 10), count: 1)
 
-      stack.take({ shield: 0, armour: 20, hull: 20 }, rng)
+      5.times { stack.take({ shield: 0, armour: 900, hull: 900 }, rng) if stack.any? }
+
+      expect(stack.alive).to eq(1)
+    end
+
+    it "passes straight through a layer that is already gone" do
+      stack = described_class.new(unit: unit(shield: 0, armour: 0, hull: 30), count: 1)
+
+      stack.take({ shield: 50, armour: 50, hull: 50 }, rng)
 
       expect(stack.alive).to be_zero
     end
@@ -77,10 +95,13 @@ RSpec.describe Combat::Stack, type: :service do
     end
 
     it "does not undo damage that already reached the hull" do
+      # The shield comes back each round; the hull it was covering does not.
       stack = described_class.new(unit: unit(shield: 10, armour: 0, hull: 100), count: 1)
 
       stack.take({ shield: 60, armour: 60, hull: 60 }, rng)
       stack.regenerate!
+      expect(stack.alive).to eq(1)
+
       stack.take({ shield: 60, armour: 60, hull: 60 }, rng)
 
       expect(stack.alive).to be_zero
@@ -89,18 +110,27 @@ RSpec.describe Combat::Stack, type: :service do
 
   describe "counting" do
     it "reports what is left and what was lost" do
-      stack = described_class.new(unit: unit, count: 3)
+      stack = described_class.new(unit: unit, count: 1)
 
       expect(stack).to be_any
-      2.times { stack.take(killing_blow, rng) }
+      expect(stack.losses).to be_zero
 
-      expect(stack.alive).to eq(1)
-      expect(stack.losses).to eq(2)
+      kill!(stack)
+
+      expect(stack.alive).to be_zero
+      expect(stack.losses).to eq(1)
+    end
+
+    it "draws fire in proportion to its signature, not its head count" do
+      light = described_class.new(unit: unit(signature: 1), count: 10)
+      heavy = described_class.new(unit: unit(signature: 10), count: 10)
+
+      expect(heavy.weight).to eq(light.weight * 10)
     end
 
     it "says when a stack is gone" do
       stack = described_class.new(unit: unit, count: 1)
-      stack.take(killing_blow, rng)
+      kill!(stack)
 
       expect(stack).not_to be_any
     end

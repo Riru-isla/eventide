@@ -58,23 +58,36 @@ module Combat
 
     private
 
-    # One shot spends itself across shield, then armour, then hull. `spent` tracks how much
-    # of the shot is used up as a fraction, so a layer that absorbs everything ends it and a
-    # layer that cannot carries the rest on at the *next* layer's rate. With all three
-    # figures equal — which is every unit today — this is plain sequential depletion.
+    # A shot works outward-in. Whatever a layer cannot absorb carries on to the next,
+    # converted at that layer's rate — so a weapon poor against shields still punches
+    # through a *thin* one, while a genuinely shield-heavy hull stops it dead.
+    #
+    # Two models were tried and measured before this one. Letting a shot spend a shared
+    # budget across all three layers punished specialisation: an anti-armour gun had to pay
+    # its way through shields at its own worst rate, so a mediocre generalist beat it even
+    # against armour, killing 20 of 20 where the specialist killed 0.2. Restricting a shot
+    # to a single layer produced clean counters but broke the other end — fifteen
+    # battleships killed *zero* corvettes, because each 800-damage shot was spent stripping
+    # ten points of shield.
+    #
+    # Carrying the excess gives both: specialists still counter, and big guns still kill
+    # small ships, wastefully.
     def absorb(layers, damage)
-      spent = 0.0
+      carried = nil
+      previous = nil
 
       LAYERS.each_with_index do |layer, index|
-        break if spent >= 1.0
-
         rate = damage.fetch(layer).to_f
-        next if rate <= 0
+        # A weapon with nothing at all to say to a layer never gets past it.
+        break if rate <= 0
 
-        available = rate * (1.0 - spent)
-        dealt = [ available, layers[index] ].min
+        incoming = carried.nil? ? rate : (carried * rate / previous)
+        previous = rate
+
+        dealt = [ incoming, layers[index] ].min
         layers[index] -= dealt
-        spent += dealt / rate
+        carried = incoming - dealt
+        break if carried <= 0
       end
     end
 
