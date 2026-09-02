@@ -78,9 +78,9 @@ module Combat
       theirs = affordable(defender)
 
       wins = (1..@seeds).count do |seed|
-        Resolver.new(attacker: Force.of(attacker.key, { attacker.combat_unit => mine }),
-                     defender: Force.of(defender.key, { defender.combat_unit => theirs }),
-                     seed: seed, rounds: @rounds).resolve.attacker_won?
+        Resolver.new(forces: [ Force.of("attacker", { attacker.combat_unit => mine }),
+                               Force.of("defender", { defender.combat_unit => theirs }) ],
+                     seed: seed, rounds: @rounds).resolve.won?("attacker")
       end
 
       Result.new(attacker: attacker, defender: defender,
